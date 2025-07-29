@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import confetti from 'canvas-confetti';
 import './GameComponent.css';
 
 interface PlayerPath {
@@ -79,6 +80,7 @@ const GameComponent: React.FC = () => {
       return updated;
     });
     setScore((prev) => prev + pts);
+    if (isCorrect) confetti({ spread: 100, origin: { y: 0.6 } });
   };
 
   const getEmojiSummary = () => {
