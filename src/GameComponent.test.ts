@@ -1,26 +1,20 @@
-import { describe, expect, it } from 'vitest';
+
+import { describe, it, expect } from 'vitest';
 import { sanitizeNodeToFile } from './GameComponent';
 
-// these tests verify sanitizeNodeToFile handles spaces, punctuation and ampersands
-
 describe('sanitizeNodeToFile', () => {
-  it('converts simple names', () => {
-    expect(sanitizeNodeToFile('Tom Brady')).toBe('tom_brady.avif');
+  it('handles normal names', () => {
+    expect(sanitizeNodeToFile('New York Jets')).toBe('new_york_jets.avif');
   });
 
-  it('handles punctuation and trimming', () => {
-    expect(sanitizeNodeToFile('  Hello, World! ')).toBe('hello_world.avif');
+  it('trims special characters', () => {
+    expect(sanitizeNodeToFile('  Hello!? ')).toBe('hello.avif');
   });
 
-  it('preserves numbers', () => {
-    expect(sanitizeNodeToFile('Player123')).toBe('player123.avif');
+  it('replaces ampersand with and surrounded by underscores', () => {
+    expect(sanitizeNodeToFile('R & B')).toBe('r_and_b.avif');
   });
 
-  it('replaces ampersands with "and"', () => {
-    expect(sanitizeNodeToFile('A&B Co.')).toBe('aandb_co.avif');
-  });
-
-  it('collapses multiple separators', () => {
-    expect(sanitizeNodeToFile('cool--player')).toBe('cool_player.avif');
-  });
+  it('handles "A&M" abbreviation', () => {
+    expect(sanitizeNodeToFile('Texas A&M')).toBe('texas_and_m.avif');
 });

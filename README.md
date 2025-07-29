@@ -41,3 +41,11 @@ Run unit tests with:
 npm test
 ```
 
+## Running Tests
+
+Execute the test suite with:
+
+```bash
+npm test
+```
+
