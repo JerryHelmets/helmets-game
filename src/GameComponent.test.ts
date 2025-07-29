@@ -1,3 +1,4 @@
+
 import { describe, it, expect } from 'vitest';
 import { sanitizeNodeToFile } from './GameComponent';
 
@@ -16,5 +17,4 @@ describe('sanitizeNodeToFile', () => {
 
   it('handles "A&M" abbreviation', () => {
     expect(sanitizeNodeToFile('Texas A&M')).toBe('texas_and_m.avif');
-  });
 });
