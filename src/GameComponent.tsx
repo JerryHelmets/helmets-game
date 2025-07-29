@@ -62,6 +62,10 @@ const GameComponent: React.FC = () => {
     };
   };
 
+  const sanitizeImageName = (name: string) => {
+    return name.replace(/[^a-zA-Z0-9]/g, '_');
+  };
+
   const handleGuess = (levelIndex: number, guess: string) => {
     const correctPath = dailyPaths[levelIndex].path.join(',');
     const matched = players.find(
@@ -87,6 +91,14 @@ const GameComponent: React.FC = () => {
     alert('Score copied to clipboard!');
   };
 
+  const shareOnTwitter = () => {
+    const text = encodeURIComponent(
+      `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\n${getEmojiSummary()}`
+    );
+    const url = `https://twitter.com/intent/tweet?text=${text}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div>
       <h2>Helmets Game</h2>
@@ -97,7 +109,7 @@ const GameComponent: React.FC = () => {
             {path.path.map((team, i) => (
               <img
                 key={i}
-                src={`/images/${team}.png`}
+                src={`/images/${sanitizeImageName(team)}.png`}
                 alt={team}
                 className="helmet-img"
               />
@@ -116,11 +128,14 @@ const GameComponent: React.FC = () => {
       ))}
 
       {showPopup && (
-        <div className="popup">
-          <h3>🎉 Game Complete!</h3>
-          <p>You scored {score} pts</p>
-          <p>{getEmojiSummary()}</p>
-          <button onClick={copyToClipboard}>Copy Score</button>
+        <div className="popup-modal">
+          <div className="popup-content">
+            <h3>🎉 Game Complete!</h3>
+            <p>You scored {score} pts</p>
+            <p>{getEmojiSummary()}</p>
+            <button onClick={copyToClipboard}>Copy Score</button>
+            <button onClick={shareOnTwitter}>Share on Twitter</button>
+          </div>
         </div>
       )}
     </div>
