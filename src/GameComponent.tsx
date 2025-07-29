@@ -130,6 +130,7 @@ const GameComponent: React.FC = () => {
       {showPopup && (
         <div className="popup-modal">
           <div className="popup-content">
+            <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
             <h3>🎉 Game Complete!</h3>
             <p>You scored {score} pts</p>
             <p>{getEmojiSummary()}</p>
