@@ -58,3 +58,12 @@
   border: none;
   cursor: pointer;
 }
+.close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+}
