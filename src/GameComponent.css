@@ -11,3 +11,23 @@
 .pulse-red {
   animation: pulse-red 1.2s ease-in-out 1 forwards;
 }
+.helmet-img {
+  height: 80px;
+  max-width: 100%;
+  margin: 0 6px;
+  object-fit: contain;
+}
+
+.helmet-sequence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .helmet-img {
+    height: 50px;
+    margin: 2px;
+  }
+}
