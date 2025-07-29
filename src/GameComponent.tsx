@@ -28,6 +28,9 @@ function getDateKey(date: Date) {
 function sanitizeNodeToFile(node: string) {
   return (
     node
+      // Handle common A&M pattern used in image filenames
+      .replace(/A&M/gi, "and_m")
+      // Replace remaining ampersands with the word 'and'
       .replace(/&/g, "and")
       .replace(/[^a-zA-Z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
