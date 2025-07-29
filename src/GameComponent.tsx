@@ -21,7 +21,7 @@ const GameComponent: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    const data = localStorage.getItem('players');
+    const data = localStorage.getItem('nflFullPlayerPool');
     if (data) {
       try {
         const parsedPlayers: PlayerPath[] = JSON.parse(data);
