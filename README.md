@@ -1,31 +1,43 @@
 # Helmets Game
 
-Helmets is a small web game built with [Vite](https://vitejs.dev/), React and Tailwind CSS. It includes a simple admin panel and gameplay interface implemented in TypeScript.
+Helmets is a small React and TypeScript game where you guess NFL players by matching their helmet paths. It is built with [Vite](https://vitejs.dev/) and Tailwind CSS.
 
-## Install dependencies
+## Installation
 
-Use npm to install the project dependencies:
+1. Install [Node.js](https://nodejs.org/) if you don't have it.
+2. Install dependencies:
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-## Development server
+## Development
 
-Run the development server with:
+Start the development server with hot reload:
 
 ```bash
 npm run dev
 ```
 
-This starts Vite in development mode. Open the printed local URL in your browser to play the game while developing.
+Open the shown localhost URL in your browser to play while developing.
 
-## Build
+## Building
 
-Create an optimized production build with:
+Create an optimized production build:
 
 ```bash
 npm run build
 ```
 
-The built files will be placed in the `dist` directory.
+You can preview the build locally using:
+
+```bash
+npm run preview
+```
+
+Run unit tests with:
+
+```
+npm test
+```
+

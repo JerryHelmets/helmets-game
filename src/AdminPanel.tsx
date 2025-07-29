@@ -50,13 +50,15 @@ export default function AdminPanel() {
             if (!isNaN(parsed)) pathLevel = parsed;
           }
 
+          const rawTeams = row["teams"] ?? row["Teams"] ?? "";
+
           return {
             name: row["name"] || row["Name"] || "",
             college: row["college"] || row["College"] || "",
             position: row["position"] || row["Position"] || "",
             teams:
-              typeof row["teams"] === "string"
-                ? row["teams"].split(",").map((s) => s.trim())
+              typeof rawTeams === "string"
+                ? rawTeams.split(",").map((s) => s.trim())
                 : [],
             difficulty: Number(row["difficulty"] ?? row["Difficulty"] ?? 1),
             path: pathArr,
