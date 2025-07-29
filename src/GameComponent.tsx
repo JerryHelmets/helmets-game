@@ -25,11 +25,13 @@ function getDateKey(date: Date) {
   return date.toLocaleDateString("en-US", { timeZone: "America/New_York" });
 }
 
-function sanitizeNodeToFile(node: string) {
+export function sanitizeNodeToFile(node: string) {
   return (
     node
-      .replace(/&/g, "and")
+      .replace(/A&M/gi, "and_m")
+      .replace(/&/g, "_and_")
       .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/_+/g, "_")
       .replace(/^_+|_+$/g, "")
       .toLowerCase() +
     ".avif"
