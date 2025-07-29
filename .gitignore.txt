@@ -1,0 +1,14 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.vite/
+
+# local env files
+.env
+.env.local
+
+# IDE/editor folders
+.vscode/
+*.log
