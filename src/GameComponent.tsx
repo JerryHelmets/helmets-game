@@ -25,7 +25,7 @@ function getDateKey(date: Date) {
   return date.toLocaleDateString("en-US", { timeZone: "America/New_York" });
 }
 
-function sanitizeNodeToFile(node: string) {
+export function sanitizeNodeToFile(node: string) {
   return (
     node
       .replace(/&/g, "and")
