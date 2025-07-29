@@ -1,0 +1,13 @@
+/* white → light red → white → light red → final dark red with glow */
+@keyframes pulse-red {
+  0%   { background-color: white; box-shadow: none; }
+  25%  { background-color: #fee2e2; box-shadow: 0 0 6px rgba(248,113,113,0.3); }
+  50%  { background-color: white; box-shadow: none; }
+  75%  { background-color: #fee2e2; box-shadow: 0 0 6px rgba(248,113,113,0.3); }
+  100% { background-color: #fca5a5; box-shadow: 0 0 4px rgba(248,113,113,0.2); }
+}
+
+/* 1.2s total, ease-in-out, single run */
+.pulse-red {
+  animation: pulse-red 1.2s ease-in-out 1 forwards;
+}
