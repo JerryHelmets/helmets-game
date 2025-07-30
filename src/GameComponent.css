@@ -71,3 +71,8 @@
   margin-top: 12px;
   text-align: center;
 }
+.arrow {
+  margin: 0 4px;
+  font-size: 24px;
+  vertical-align: middle;
+}
