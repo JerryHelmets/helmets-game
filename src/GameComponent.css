@@ -113,3 +113,35 @@
   color: #555;
   margin-top: 4px;
 }
+.guess-input.correct input {
+  border: 2px solid #28a745;
+  background-color: #eaf8ef;
+  transition: all 0.3s ease;
+}
+
+.guess-input.incorrect input {
+  border: 2px solid #dc3545;
+  background-color: #fdecec;
+  transition: all 0.3s ease;
+}
+
+.guess-input p.correct {
+  color: white;
+  background: #28a745;
+  border-radius: 6px;
+  padding: 4px 8px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.guess-input p.incorrect {
+  color: white;
+  background: #dc3545;
+  border-radius: 6px;
+  padding: 4px 8px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
