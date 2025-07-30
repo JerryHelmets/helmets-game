@@ -23,6 +23,7 @@ const GameComponent: React.FC = () => {
   });
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState(false);
+  const [timer, setTimer] = useState(0);
 
   useEffect(() => {
     const data = localStorage.getItem('nflFullPlayerPool');
@@ -41,10 +42,21 @@ const GameComponent: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const interval = setInterval(() => setTimer((prev) => prev + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (guesses.length === 5 && guesses.every((g) => g !== undefined)) {
       setTimeout(() => setShowPopup(true), 500);
     }
     localStorage.setItem('helmetGuesses', JSON.stringify(guesses));
+  }, [guesses]);
+
+  useEffect(() => {
+    if (guesses.length === 5 && guesses.every((g) => g !== undefined)) {
+      clearInterval();
+    }
   }, [guesses]);
 
   const selectDailyPaths = (players: PlayerPath[]): PlayerPath[] => {
@@ -77,9 +89,7 @@ const GameComponent: React.FC = () => {
     };
   };
 
-  const sanitizeImageName = (name: string) => {
-    return name.replace(/[^a-zA-Z0-9]/g, '_');
-  };
+  const sanitizeImageName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '_');
 
   const handleGuess = (levelIndex: number, guess: string) => {
     if (guesses.some((g, i) => i !== levelIndex && g?.guess?.toLowerCase() === guess.toLowerCase())) {
@@ -122,19 +132,17 @@ const GameComponent: React.FC = () => {
     setGuesses(updated);
   };
 
-  const getEmojiSummary = () => {
-    return guesses.map(g => g?.correct ? '✅' : '❌').join(' ');
-  };
+  const getEmojiSummary = () => guesses.map(g => g?.correct ? '✅' : '❌').join(' ');
 
   const copyToClipboard = () => {
-    const text = `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\n${getEmojiSummary()}`;
+    const text = `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}`;
     navigator.clipboard.writeText(text);
     alert('Score copied to clipboard!');
   };
 
   const shareOnTwitter = () => {
     const text = encodeURIComponent(
-      `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\n${getEmojiSummary()}`
+      `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}`
     );
     const url = `https://twitter.com/intent/tweet?text=${text}`;
     window.open(url, '_blank');
@@ -144,12 +152,7 @@ const GameComponent: React.FC = () => {
 
   return (
     <div>
-      <div className="title-container">
-        <span role="img" aria-label="football">🏈</span>
-        <h1 className="game-title">Helmets</h1>
-        <p className="game-meta">Date: {new Date().toLocaleDateString()} | Score: {score} pts</p>
-      </div>
-
+      <div className="game-timer">Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
       {sortedPaths.map((path, idx) => (
         <div key={idx} className="path-block">
           <div className="helmet-sequence">
@@ -174,7 +177,9 @@ const GameComponent: React.FC = () => {
               />
               {guesses[idx] && (
                 <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
-                  {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
+                  {guesses[idx].correct
+                    ? `✅ Correct (${path.name})`
+                    : (showPopup ? `❌ Incorrect (${guesses[idx].guess}) | Answer: ${path.name}` : `❌ Incorrect (${guesses[idx].guess})`)}
                 </p>
               )}
             </div>
@@ -192,6 +197,7 @@ const GameComponent: React.FC = () => {
             <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
             <h3>🎉 Game Complete!</h3>
             <p>You scored {score} pts</p>
+            <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
             <p>{getEmojiSummary()}</p>
             <button onClick={copyToClipboard}>Copy Score</button>
             <button onClick={shareOnTwitter}>Share on Twitter</button>
