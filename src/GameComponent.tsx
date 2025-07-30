@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
-import './GameComponent.css';
 import Papa from 'papaparse';
+import './GameComponent.css';
 
 interface PlayerPath {
   name: string;
@@ -26,26 +26,23 @@ const GameComponent: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [timer, setTimer] = useState(0);
 
-useEffect(() => {
-  fetch('/data/players.csv')
-    .then((res) => res.text())
-    .then((csvText) => {
-      const { data } = Papa.parse(csvText, { header: true });
-      const parsedPlayers: PlayerPath[] = data.map((row: any) => ({
-        name: row.name,
-        path: row.path.split(',').map((s: string) => s.trim()),
-        difficulty: parseInt(row.difficulty, 10),
-        path_level: parseInt(row['path level'], 10),
-      }));
-      setPlayers(parsedPlayers);
-      const todaysPaths = selectDailyPaths(parsedPlayers);
-      setDailyPaths(todaysPaths);
-    })
-    .catch((err) => {
-      console.error('Failed to load CSV player data:', err);
-    });
-}, []);
-
+  useEffect(() => {
+    fetch('/data/players.csv')
+      .then((response) => response.text())
+      .then((csvText) => {
+        const parsed = Papa.parse(csvText, { header: true });
+        const parsedPlayers: PlayerPath[] = (parsed.data as any[]).map((row) => ({
+          name: row.name,
+          path: row.path.split(',').map((s: string) => s.trim()),
+          difficulty: parseInt(row.difficulty),
+          path_level: parseInt(row['path level'])
+        }));
+        setPlayers(parsedPlayers);
+        const todaysPaths = selectDailyPaths(parsedPlayers);
+        setDailyPaths(todaysPaths);
+      })
+      .catch((err) => console.error('Error loading CSV:', err));
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setTimer((prev) => prev + 1), 1000);
