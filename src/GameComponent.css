@@ -67,9 +67,23 @@
   border: none;
   cursor: pointer;
 }
-.guess-input {
-  margin-top: 12px;
-  text-align: center;
+.guess-input p {
+  margin-top: 6px;
+  font-weight: bold;
+}
+.guess-input p.correct {
+  color: white;
+  background-color: #28a745;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.guess-input p.incorrect {
+  color: white;
+  background-color: #dc3545;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
 }
 .arrow {
   font-size: 14px;
