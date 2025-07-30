@@ -131,6 +131,7 @@ const GameComponent: React.FC = () => {
   };
 
   const handleGuess = (index: number, value: string) => {
+    if (guesses[index]) return;
     const correctPath = dailyPaths[index]?.path.join('>');
     const matched = players.find(
       (p) => p.name.toLowerCase() === value.toLowerCase() && p.path.join('>') === correctPath
