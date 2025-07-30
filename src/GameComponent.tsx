@@ -51,27 +51,36 @@ const GameComponent: React.FC = () => {
 
         setPlayers(playerData);
 
-        const uniquePaths: { [key: string]: PlayerPath[] } = {};
+        const uniquePathMap = new Map<string, PlayerPath>();
         playerData.forEach((p) => {
-          const pathKey = p.path.join('>');
-          if (!uniquePaths[pathKey]) {
-            uniquePaths[pathKey] = [];
+          const key = p.path.join('>');
+          if (!uniquePathMap.has(key)) {
+            uniquePathMap.set(key, p);
           }
-          uniquePaths[pathKey].push(p);
         });
 
-        const daily: PlayerPath[] = [];
+        const uniquePaths = Array.from(uniquePathMap.values());
+
+        const pathsByLevel: { [key: number]: PlayerPath[] } = {};
+        for (let i = 1; i <= 5; i++) pathsByLevel[i] = [];
+        uniquePaths.forEach(p => {
+          if (p.path_level >= 1 && p.path_level <= 5) {
+            pathsByLevel[p.path_level].push(p);
+          }
+        });
+
+        const selected: PlayerPath[] = [];
         for (let level = 1; level <= 5; level++) {
-          const levelPaths = Object.values(uniquePaths).map(group => group[0]).filter(p => p.path_level === level);
-          if (levelPaths.length > 0) {
-            const random = levelPaths[Math.floor(Math.random() * levelPaths.length)];
-            daily.push(random);
+          const pool = pathsByLevel[level];
+          if (pool.length > 0) {
+            const rand = pool[Math.floor(Math.random() * pool.length)];
+            selected.push(rand);
           }
         }
 
-        setDailyPaths(daily);
-        setFilteredSuggestions(Array(daily.length).fill([]));
-        setGuesses(Array(daily.length).fill(undefined));
+        setDailyPaths(selected);
+        setFilteredSuggestions(Array(selected.length).fill([]));
+        setGuesses(Array(selected.length).fill(undefined));
       })
       .catch((error) => console.error('Error loading CSV:', error));
   }, []);
