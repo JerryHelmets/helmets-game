@@ -128,15 +128,17 @@ const GameComponent: React.FC = () => {
               />
             ))}
           </div>
-          <input
-            type="text"
-            placeholder="(Type to search...)"
-            disabled={!!guesses[idx]}
-            onBlur={(e) => handleGuess(idx, e.target.value)}
-          />
-          {guesses[idx] && (
-            <p>{guesses[idx].correct ? '✅ Correct!' : '❌ Incorrect'}</p>
-          )}
+          <div className="guess-input">
+            <input
+              type="text"
+              placeholder="(Type to search...)"
+              disabled={!!guesses[idx]}
+              onBlur={(e) => handleGuess(idx, e.target.value)}
+            />
+            {guesses[idx] && (
+              <p>{guesses[idx].correct ? '✅ Correct!' : '❌ Incorrect'}</p>
+            )}
+          </div>
         </div>
       ))}
 
