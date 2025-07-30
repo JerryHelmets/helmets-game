@@ -104,6 +104,16 @@ const GameComponent: React.FC = () => {
     }
   };
 
+  const handleGiveUp = () => {
+    const updated = [...guesses];
+    dailyPaths.forEach((_, idx) => {
+      if (!updated[idx]) {
+        updated[idx] = { guess: '', correct: false };
+      }
+    });
+    setGuesses(updated);
+  };
+
   const getEmojiSummary = () => {
     return guesses.map(g => g?.correct ? '✅' : '❌').join(' ');
   };
@@ -157,6 +167,10 @@ const GameComponent: React.FC = () => {
           </div>
         </div>
       ))}
+
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <button onClick={handleGiveUp} style={{ padding: '8px 16px', fontSize: '16px' }}>Give Up</button>
+      </div>
 
       {showPopup && (
         <div className="popup-modal">
