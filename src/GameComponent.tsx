@@ -120,12 +120,14 @@ const GameComponent: React.FC = () => {
         <div key={idx} className="path-block">
           <div className="helmet-sequence">
             {path.path.map((team, i) => (
-              <img
-                key={i}
-                src={`/images/${sanitizeImageName(team)}.png`}
-                alt={team}
-                className="helmet-img"
-              />
+              <React.Fragment key={i}>
+                <img
+                  src={`/images/${sanitizeImageName(team)}.png`}
+                  alt={team}
+                  className="helmet-img"
+                />
+                {i < path.path.length - 1 && <span className="arrow">→</span>}
+              </React.Fragment>
             ))}
           </div>
           <div className="guess-input">
