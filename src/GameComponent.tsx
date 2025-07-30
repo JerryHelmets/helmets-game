@@ -15,6 +15,13 @@ interface Guess {
   correct: boolean;
 }
 
+function seededRandom(seed: number) {
+  return function () {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+  };
+}
+
 const GameComponent: React.FC = () => {
   const [players, setPlayers] = useState<PlayerPath[]>([]);
   const [dailyPaths, setDailyPaths] = useState<PlayerPath[]>([]);
@@ -44,12 +51,17 @@ const GameComponent: React.FC = () => {
         const validRows = rows.filter(row => row.name && row.path);
         const playerData: PlayerPath[] = validRows.map((row) => ({
           name: row.name.trim(),
-          path: row.path.split('>').map((x: string) => x.trim()),
+          path: row.path.split(',').map((x: string) => x.trim()),
           difficulty: parseInt(row.difficulty || '1', 10),
           path_level: parseInt(row.path_level || '1', 10),
         }));
 
         setPlayers(playerData);
+
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const hashSeed = todayKey.split('-').join('');
+        const seed = parseInt(hashSeed, 10);
+        const rng = seededRandom(seed);
 
         const uniquePathMap = new Map<string, PlayerPath>();
         playerData.forEach((p) => {
@@ -73,8 +85,8 @@ const GameComponent: React.FC = () => {
         for (let level = 1; level <= 5; level++) {
           const pool = pathsByLevel[level];
           if (pool.length > 0) {
-            const rand = pool[Math.floor(Math.random() * pool.length)];
-            selected.push(rand);
+            const index = Math.floor(rng() * pool.length);
+            selected.push(pool[index]);
           }
         }
 
