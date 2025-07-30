@@ -47,7 +47,17 @@ const GameComponent: React.FC = () => {
     const dateSeed = new Date().toISOString().slice(0, 10);
     const rng = seedRandom(dateSeed);
     const shuffled = [...players].sort(() => rng() - 0.5);
-    return shuffled.slice(0, 5);
+    const uniquePaths = new Set();
+    const result: PlayerPath[] = [];
+    for (const p of shuffled) {
+      const key = p.path.join(',');
+      if (!uniquePaths.has(key)) {
+        uniquePaths.add(key);
+        result.push(p);
+      }
+      if (result.length === 5) break;
+    }
+    return result;
   };
 
   const seedRandom = (seed: string) => {
