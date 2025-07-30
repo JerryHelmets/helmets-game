@@ -43,6 +43,13 @@ const GameComponent: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const localGuesses = localStorage.getItem('helmets-guesses');
+    if (localGuesses) {
+      setGuesses(JSON.parse(localGuesses));
+    }
+  }, []);
+
+  useEffect(() => {
     fetch('/data/players.csv')
       .then((response) => response.text())
       .then((csvText) => {
@@ -92,7 +99,9 @@ const GameComponent: React.FC = () => {
 
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
-        setGuesses(Array(selected.length).fill(undefined));
+        if (!localStorage.getItem('helmets-guesses')) {
+          setGuesses(Array(selected.length).fill(undefined));
+        }
       })
       .catch((error) => console.error('Error loading CSV:', error));
   }, []);
@@ -105,6 +114,10 @@ const GameComponent: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [score]);
+
+  useEffect(() => {
+    localStorage.setItem('helmets-guesses', JSON.stringify(guesses));
+  }, [guesses]);
 
   const sanitizeImageName = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
 
