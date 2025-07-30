@@ -115,7 +115,6 @@ const GameComponent: React.FC = () => {
   return (
     <div>
       <div className="title-container">
-        <span role="img" aria-label="helmet">🥽</span>
         <span role="img" aria-label="football">🏈</span>
         <h1 className="game-title">Helmets</h1>
         <p className="game-meta">Date: {new Date().toLocaleDateString()} | Score: {score} pts</p>
