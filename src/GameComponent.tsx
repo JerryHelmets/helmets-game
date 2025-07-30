@@ -80,7 +80,18 @@ const GameComponent: React.FC = () => {
       return updated;
     });
     setScore((prev) => prev + pts);
-    if (isCorrect) confetti({ spread: 100, origin: { y: 0.6 } });
+    if (isCorrect) {
+      const inputEl = document.querySelectorAll('input')[levelIndex];
+      const rect = inputEl.getBoundingClientRect();
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: {
+          x: rect.left / window.innerWidth + rect.width / window.innerWidth / 2,
+          y: rect.top / window.innerHeight + rect.height / window.innerHeight / 2
+        }
+      });
+    }
   };
 
   const getEmojiSummary = () => {
