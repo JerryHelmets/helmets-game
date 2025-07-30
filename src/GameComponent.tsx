@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import Papa from 'papaparse';
 import './GameComponent.css';
@@ -26,6 +26,9 @@ const GameComponent: React.FC = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [timer, setTimer] = useState(0);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([[], [], [], [], []]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusedInput, setFocusedInput] = useState<number | null>(null);
+  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/data/players.csv')
@@ -58,6 +61,26 @@ const GameComponent: React.FC = () => {
     }
     localStorage.setItem('helmetGuesses', JSON.stringify(guesses));
   }, [guesses]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (focusedInput !== null && filteredSuggestions[focusedInput]?.length > 0) {
+        const suggestions = filteredSuggestions[focusedInput];
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setHighlightIndex((prev) => (prev === null || prev === suggestions.length - 1 ? 0 : prev + 1));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setHighlightIndex((prev) => (prev === null || prev === 0 ? suggestions.length - 1 : prev - 1));
+        } else if (e.key === 'Enter' && highlightIndex !== null) {
+          handleGuess(focusedInput, suggestions[highlightIndex]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusedInput, filteredSuggestions, highlightIndex]);
 
   const selectDailyPaths = (players: PlayerPath[]): PlayerPath[] => {
     const dateSeed = new Date().toISOString().slice(0, 10);
@@ -130,6 +153,7 @@ const GameComponent: React.FC = () => {
       updated[levelIndex] = suggestions.slice(0, 5);
       return updated;
     });
+    setHighlightIndex(null);
   };
 
   const handleGiveUp = () => {
@@ -180,16 +204,23 @@ const GameComponent: React.FC = () => {
           <div className={`guess-input-container`}>
             <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
               <input
+                ref={(el) => (inputRefs.current[idx] = el)}
                 type="text"
                 placeholder="(Type to search...)"
                 disabled={!!guesses[idx]}
+                onFocus={() => setFocusedInput(idx)}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
                 onBlur={(e) => handleGuess(idx, e.target.value)}
               />
               {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
                 <ul className="suggestion-dropdown">
                   {filteredSuggestions[idx].map((name, i) => (
-                    <li key={i} onMouseDown={() => handleGuess(idx, name)}>{name}</li>
+                    <li
+                      key={i}
+                      className={highlightIndex === i ? 'highlighted' : ''}
+                      onMouseDown={() => handleGuess(idx, name)}>
+                      {name}
+                    </li>
                   ))}
                 </ul>
               )}
