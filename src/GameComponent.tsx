@@ -132,6 +132,8 @@ const GameComponent: React.FC = () => {
     window.open(url, '_blank');
   };
 
+  const sortedPaths = [...dailyPaths].sort((a, b) => a.path_level - b.path_level);
+
   return (
     <div>
       <div className="title-container">
@@ -140,7 +142,7 @@ const GameComponent: React.FC = () => {
         <p className="game-meta">Date: {new Date().toLocaleDateString()} | Score: {score} pts</p>
       </div>
 
-      {dailyPaths.map((path, idx) => (
+      {sortedPaths.map((path, idx) => (
         <div key={idx} className="path-block">
           <div className="helmet-sequence">
             {path.path.map((team, i) => (
@@ -154,18 +156,20 @@ const GameComponent: React.FC = () => {
               </React.Fragment>
             ))}
           </div>
-          <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
-            <input
-              type="text"
-              placeholder="(Type to search...)"
-              disabled={!!guesses[idx]}
-              onBlur={(e) => handleGuess(idx, e.target.value)}
-            />
-            {guesses[idx] && (
-              <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
-                {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
-              </p>
-            )}
+          <div className={`guess-input-container`}>
+            <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
+              <input
+                type="text"
+                placeholder="(Type to search...)"
+                disabled={!!guesses[idx]}
+                onBlur={(e) => handleGuess(idx, e.target.value)}
+              />
+              {guesses[idx] && (
+                <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
+                  {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       ))}
@@ -189,39 +193,5 @@ const GameComponent: React.FC = () => {
     </div>
   );
 };
-// Sort levels by path_level ascending before rendering
-const sortedPaths = [...dailyPaths].sort((a, b) => a.path_level - b.path_level);
-
-{sortedPaths.map((path, idx) => (
-  <div key={idx} className="path-block">
-    <div className="helmet-sequence">
-      {path.path.map((team, i) => (
-        <React.Fragment key={i}>
-          <img
-            src={`/images/${sanitizeImageName(team)}.png`}
-            alt={team}
-            className="helmet-img"
-          />
-          {i < path.path.length - 1 && <span className="arrow">→</span>}
-        </React.Fragment>
-      ))}
-    </div>
-    <div className={`guess-input-container`}>
-      <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
-        <input
-          type="text"
-          placeholder="(Type to search...)"
-          disabled={!!guesses[idx]}
-          onBlur={(e) => handleGuess(idx, e.target.value)}
-        />
-        {guesses[idx] && (
-          <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
-            {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
-          </p>
-        )}
-      </div>
-    </div>
-  </div>
-))}
 
 export default GameComponent;
