@@ -17,7 +17,10 @@ interface Guess {
 const GameComponent: React.FC = () => {
   const [players, setPlayers] = useState<PlayerPath[]>([]);
   const [dailyPaths, setDailyPaths] = useState<PlayerPath[]>([]);
-  const [guesses, setGuesses] = useState<Guess[]>([]);
+  const [guesses, setGuesses] = useState<Guess[]>(() => {
+    const stored = localStorage.getItem('helmetGuesses');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState(false);
 
@@ -41,6 +44,7 @@ const GameComponent: React.FC = () => {
     if (guesses.length === 5 && guesses.every((g) => g !== undefined)) {
       setTimeout(() => setShowPopup(true), 500);
     }
+    localStorage.setItem('helmetGuesses', JSON.stringify(guesses));
   }, [guesses]);
 
   const selectDailyPaths = (players: PlayerPath[]): PlayerPath[] => {
@@ -78,6 +82,10 @@ const GameComponent: React.FC = () => {
   };
 
   const handleGuess = (levelIndex: number, guess: string) => {
+    if (guesses.some((g, i) => i !== levelIndex && g?.guess?.toLowerCase() === guess.toLowerCase())) {
+      alert('That player has already been guessed on another level.');
+      return;
+    }
     const correctPath = dailyPaths[levelIndex].path.join(',');
     const matched = players.find(
       (p) => p.name.toLowerCase() === guess.toLowerCase() && p.path.join(',') === correctPath
