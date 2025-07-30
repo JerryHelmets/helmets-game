@@ -150,3 +150,18 @@
   justify-content: center;
   margin-top: 10px;
 }
+.game-header {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.game-title {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.game-subtitle {
+  font-size: 1rem;
+  color: #444;
+  margin-top: 4px;
+}
