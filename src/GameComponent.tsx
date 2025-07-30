@@ -31,12 +31,14 @@ const GameComponent: React.FC = () => {
       .then((response) => response.text())
       .then((csvText) => {
         const parsed = Papa.parse(csvText, { header: true });
-        const parsedPlayers: PlayerPath[] = (parsed.data as any[]).map((row) => ({
-          name: row.name,
-          path: row.path.split(',').map((s: string) => s.trim()),
-          difficulty: parseInt(row.difficulty),
-          path_level: parseInt(row['path level'])
-        }));
+        const parsedPlayers: PlayerPath[] = (parsed.data as any[])
+          .filter(row => row.name && row.path && row.difficulty && row['path level'])
+          .map((row) => ({
+            name: row.name,
+            path: row.path.split(',').map((s: string) => s.trim()),
+            difficulty: parseInt(row.difficulty),
+            path_level: parseInt(row['path level'])
+          }));
         setPlayers(parsedPlayers);
         const todaysPaths = selectDailyPaths(parsedPlayers);
         setDailyPaths(todaysPaths);
@@ -54,12 +56,6 @@ const GameComponent: React.FC = () => {
       setTimeout(() => setShowPopup(true), 500);
     }
     localStorage.setItem('helmetGuesses', JSON.stringify(guesses));
-  }, [guesses]);
-
-  useEffect(() => {
-    if (guesses.length === 5 && guesses.every((g) => g !== undefined)) {
-      clearInterval();
-    }
   }, [guesses]);
 
   const selectDailyPaths = (players: PlayerPath[]): PlayerPath[] => {
