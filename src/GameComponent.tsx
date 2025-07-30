@@ -114,8 +114,13 @@ const GameComponent: React.FC = () => {
 
   return (
     <div>
-      <h2>Helmets Game</h2>
-      <p>Date: {new Date().toLocaleDateString()} | Score: {score} pts</p>
+      <div className="title-container">
+        <span role="img" aria-label="helmet">🥽</span>
+        <span role="img" aria-label="football">🏈</span>
+        <h1 className="game-title">Helmets</h1>
+        <p className="game-meta">Date: {new Date().toLocaleDateString()} | Score: {score} pts</p>
+      </div>
+
       {dailyPaths.map((path, idx) => (
         <div key={idx} className="path-block">
           <div className="helmet-sequence">
