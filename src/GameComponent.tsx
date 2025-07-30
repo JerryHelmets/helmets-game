@@ -154,7 +154,7 @@ const GameComponent: React.FC = () => {
               </React.Fragment>
             ))}
           </div>
-          <div className="guess-input">
+          <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
             <input
               type="text"
               placeholder="(Type to search...)"
@@ -163,8 +163,8 @@ const GameComponent: React.FC = () => {
             />
             {guesses[idx] && (
               <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
-  {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
-</p>
+                {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
+              </p>
             )}
           </div>
         </div>
