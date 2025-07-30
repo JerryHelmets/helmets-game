@@ -25,6 +25,7 @@ const GameComponent: React.FC = () => {
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([[], [], [], [], []]);
 
   useEffect(() => {
     fetch('/data/players.csv')
@@ -95,9 +96,8 @@ const GameComponent: React.FC = () => {
       alert('That player has already been guessed on another level.');
       return;
     }
-    const correctPath = dailyPaths[levelIndex].path.join(',');
     const matched = players.find(
-      (p) => p.name.toLowerCase() === guess.toLowerCase() && p.path.join(',') === correctPath
+      (p) => p.name.toLowerCase() === guess.toLowerCase() && p.path_level === dailyPaths[levelIndex].path_level
     );
     const isCorrect = !!matched;
     const pts = isCorrect ? (6 - dailyPaths[levelIndex].difficulty) * 100 : 0;
@@ -119,6 +119,17 @@ const GameComponent: React.FC = () => {
         }
       });
     }
+  };
+
+  const handleInputChange = (levelIndex: number, value: string) => {
+    const suggestions = players
+      .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
+      .map((p) => p.name);
+    setFilteredSuggestions((prev) => {
+      const updated = [...prev];
+      updated[levelIndex] = suggestions.slice(0, 5);
+      return updated;
+    });
   };
 
   const handleGiveUp = () => {
@@ -172,8 +183,16 @@ const GameComponent: React.FC = () => {
                 type="text"
                 placeholder="(Type to search...)"
                 disabled={!!guesses[idx]}
+                onChange={(e) => handleInputChange(idx, e.target.value)}
                 onBlur={(e) => handleGuess(idx, e.target.value)}
               />
+              {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
+                <ul className="suggestion-dropdown">
+                  {filteredSuggestions[idx].map((name, i) => (
+                    <li key={i} onMouseDown={() => handleGuess(idx, name)}>{name}</li>
+                  ))}
+                </ul>
+              )}
               {guesses[idx] && (
                 <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
                   {guesses[idx].correct
