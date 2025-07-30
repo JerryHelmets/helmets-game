@@ -18,176 +18,139 @@ interface Guess {
 const GameComponent: React.FC = () => {
   const [players, setPlayers] = useState<PlayerPath[]>([]);
   const [dailyPaths, setDailyPaths] = useState<PlayerPath[]>([]);
-  const [guesses, setGuesses] = useState<Guess[]>(() => {
-    const stored = localStorage.getItem('helmetGuesses');
-    return stored ? JSON.parse(stored) : [];
-  });
-  const [score, setScore] = useState<number>(0);
-  const [showPopup, setShowPopup] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([[], [], [], [], []]);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [guesses, setGuesses] = useState<Guess[]>([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([]);
   const [focusedInput, setFocusedInput] = useState<number | null>(null);
-  const [highlightIndex, setHighlightIndex] = useState<number | null>(null);
+  const [highlightIndex, setHighlightIndex] = useState<number>(-1);
+  const [score, setScore] = useState<number>(0);
+  const [timer, setTimer] = useState<number>(0);
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimer((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetch('/data/players.csv')
       .then((response) => response.text())
       .then((csvText) => {
         const parsed = Papa.parse(csvText, { header: true });
-        const parsedPlayers: PlayerPath[] = (parsed.data as any[])
-          .filter(row => row.name && row.path && row.difficulty && row['path level'])
-          .map((row) => ({
-            name: row.name,
-            path: row.path.split(',').map((s: string) => s.trim()),
-            difficulty: parseInt(row.difficulty),
-            path_level: parseInt(row['path level'])
-          }));
-        setPlayers(parsedPlayers);
-        const todaysPaths = selectDailyPaths(parsedPlayers);
-        setDailyPaths(todaysPaths);
+        const rows = parsed.data as any[];
+        const validRows = rows.filter(row => row.name && row.path);
+        const playerData: PlayerPath[] = validRows.map((row) => ({
+          name: row.name.trim(),
+          path: row.path.split('>').map((x: string) => x.trim()),
+          difficulty: parseInt(row.difficulty || '1', 10),
+          path_level: parseInt(row.path_level || '1', 10),
+        }));
+
+        setPlayers(playerData);
+
+        const uniquePaths: { [key: string]: PlayerPath[] } = {};
+        playerData.forEach((p) => {
+          const pathKey = p.path.join('>');
+          if (!uniquePaths[pathKey]) {
+            uniquePaths[pathKey] = [];
+          }
+          uniquePaths[pathKey].push(p);
+        });
+
+        const daily: PlayerPath[] = [];
+        for (let level = 1; level <= 5; level++) {
+          const levelPaths = Object.values(uniquePaths).map(group => group[0]).filter(p => p.path_level === level);
+          if (levelPaths.length > 0) {
+            const random = levelPaths[Math.floor(Math.random() * levelPaths.length)];
+            daily.push(random);
+          }
+        }
+
+        setDailyPaths(daily);
+        setFilteredSuggestions(Array(daily.length).fill([]));
+        setGuesses(Array(daily.length).fill(undefined));
       })
-      .catch((err) => console.error('Error loading CSV:', err));
+      .catch((error) => console.error('Error loading CSV:', error));
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => setTimer((prev) => prev + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (guesses.length === 5 && guesses.every((g) => g !== undefined)) {
-      setTimeout(() => setShowPopup(true), 500);
+    const scoreEl = document.querySelector('.score-value');
+    if (scoreEl) {
+      scoreEl.classList.add('pulse');
+      const timer = setTimeout(() => scoreEl.classList.remove('pulse'), 300);
+      return () => clearTimeout(timer);
     }
-    localStorage.setItem('helmetGuesses', JSON.stringify(guesses));
-  }, [guesses]);
+  }, [score]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (focusedInput !== null && filteredSuggestions[focusedInput]?.length > 0) {
-        const suggestions = filteredSuggestions[focusedInput];
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setHighlightIndex((prev) => (prev === null || prev === suggestions.length - 1 ? 0 : prev + 1));
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setHighlightIndex((prev) => (prev === null || prev === 0 ? suggestions.length - 1 : prev - 1));
-        } else if (e.key === 'Enter' && highlightIndex !== null) {
-          handleGuess(focusedInput, suggestions[highlightIndex]);
-        }
-      }
-    };
+  const sanitizeImageName = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [focusedInput, filteredSuggestions, highlightIndex]);
-
-  const selectDailyPaths = (players: PlayerPath[]): PlayerPath[] => {
-    const dateSeed = new Date().toISOString().slice(0, 10);
-    const rng = seedRandom(dateSeed);
-    const shuffled = [...players].sort(() => rng() - 0.5);
-    const uniquePaths = new Set();
-    const result: PlayerPath[] = [];
-    for (const p of shuffled) {
-      const key = p.path.join(',');
-      if (!uniquePaths.has(key)) {
-        uniquePaths.add(key);
-        result.push(p);
-      }
-      if (result.length === 5) break;
-    }
-    return result;
-  };
-
-  const seedRandom = (seed: string) => {
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) {
-      h = Math.imul(31, h) + seed.charCodeAt(i);
-    }
-    return () => {
-      h ^= h >>> 13;
-      h ^= h << 17;
-      h ^= h >>> 5;
-      return (h >>> 0) / 4294967296;
-    };
-  };
-
-  const sanitizeImageName = (name: string) => name.replace(/[^a-zA-Z0-9]/g, '_');
-
-  const handleGuess = (levelIndex: number, guess: string) => {
-    if (guesses.some((g, i) => i !== levelIndex && g?.guess?.toLowerCase() === guess.toLowerCase())) {
-      alert('That player has already been guessed on another level.');
-      return;
-    }
-    const matched = players.find(
-      (p) => p.name.toLowerCase() === guess.toLowerCase() && p.path_level === dailyPaths[levelIndex].path_level
-    );
-    const isCorrect = !!matched;
-    const pts = isCorrect ? (6 - dailyPaths[levelIndex].difficulty) * 100 : 0;
-    setGuesses((prev) => {
-      const updated = [...prev];
-      updated[levelIndex] = { guess, correct: isCorrect };
-      return updated;
-    });
-    setScore((prev) => prev + pts);
-    if (isCorrect) {
-      const inputEl = document.querySelectorAll('input')[levelIndex];
-      const rect = inputEl.getBoundingClientRect();
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: {
-          x: rect.left / window.innerWidth + rect.width / window.innerWidth / 2,
-          y: rect.top / window.innerHeight + rect.height / window.innerHeight / 2
-        }
-      });
-    }
-  };
-
-  const handleInputChange = (levelIndex: number, value: string) => {
+  const handleInputChange = (index: number, value: string) => {
     const suggestions = players
       .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
       .map((p) => p.name);
-    setFilteredSuggestions((prev) => {
-      const updated = [...prev];
-      updated[levelIndex] = suggestions.slice(0, 5);
-      return updated;
-    });
-    setHighlightIndex(null);
+    const updated = [...filteredSuggestions];
+    updated[index] = suggestions.slice(0, 5);
+    setFilteredSuggestions(updated);
+  };
+
+  const handleGuess = (index: number, value: string) => {
+    const correctPath = dailyPaths[index]?.path.join('>');
+    const matched = players.find(
+      (p) => p.name.toLowerCase() === value.toLowerCase() && p.path.join('>') === correctPath
+    );
+
+    const updatedGuesses = [...guesses];
+    updatedGuesses[index] = {
+      guess: value,
+      correct: !!matched,
+    };
+    setGuesses(updatedGuesses);
+    if (matched) {
+      setScore((prev) => prev + 1);
+      confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } });
+    }
+
+    const allAnswered = updatedGuesses.every((g) => g);
+    if (allAnswered) setShowPopup(true);
   };
 
   const handleGiveUp = () => {
-    const updated = [...guesses];
-    dailyPaths.forEach((path, idx) => {
-      if (!updated[idx]) {
-        updated[idx] = { guess: `Answer: ${path.name}`, correct: false };
-      }
-    });
+    const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
     setGuesses(updated);
+    setShowPopup(true);
   };
 
-  const getEmojiSummary = () => guesses.map(g => g?.correct ? '✅' : '❌').join(' ');
-
   const copyToClipboard = () => {
-    const text = `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}`;
-    navigator.clipboard.writeText(text);
-    alert('Score copied to clipboard!');
+    const scoreText = `Helmets Score: ${score}/5\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`;
+    navigator.clipboard.writeText(scoreText);
   };
 
   const shareOnTwitter = () => {
-    const text = encodeURIComponent(
-      `Helmets Game - ${new Date().toLocaleDateString()}\nScore: ${score} pts\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}`
-    );
-    const url = `https://twitter.com/intent/tweet?text=${text}`;
-    window.open(url, '_blank');
+    const text = encodeURIComponent(`I scored ${score}/5 on Helmets 🏈 in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\nPlay now!`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
   };
 
-  const sortedPaths = [...dailyPaths].sort((a, b) => a.path_level - b.path_level);
+  const getEmojiSummary = () => {
+    return guesses
+      .map((g) => (g?.correct ? '🟩' : '🟥'))
+      .join('');
+  };
 
   return (
     <div>
-      <div className="game-timer">Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
-      {sortedPaths.map((path, idx) => (
+      <header className="game-header">
+        <h1 className="game-title">Helmets</h1>
+        <div className="game-subtitle">
+          <span>{new Date().toLocaleDateString()}</span>
+          <span className="score-value"> | Score: {score}</span>
+          <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
+        </div>
+      </header>
+
+      {dailyPaths.map((path, idx) => (
         <div key={idx} className="path-block">
           <div className="helmet-sequence">
             {path.path.map((team, i) => (
