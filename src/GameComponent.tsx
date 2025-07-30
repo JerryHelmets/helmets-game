@@ -162,7 +162,9 @@ const GameComponent: React.FC = () => {
               onBlur={(e) => handleGuess(idx, e.target.value)}
             />
             {guesses[idx] && (
-              <p>{guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}</p>
+              <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
+  {guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}
+</p>
             )}
           </div>
         </div>
