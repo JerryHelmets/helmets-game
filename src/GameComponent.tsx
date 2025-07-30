@@ -106,9 +106,9 @@ const GameComponent: React.FC = () => {
 
   const handleGiveUp = () => {
     const updated = [...guesses];
-    dailyPaths.forEach((_, idx) => {
+    dailyPaths.forEach((path, idx) => {
       if (!updated[idx]) {
-        updated[idx] = { guess: '', correct: false };
+        updated[idx] = { guess: `Answer: ${path.name}`, correct: false };
       }
     });
     setGuesses(updated);
@@ -162,7 +162,7 @@ const GameComponent: React.FC = () => {
               onBlur={(e) => handleGuess(idx, e.target.value)}
             />
             {guesses[idx] && (
-              <p>{guesses[idx].correct ? '✅ Correct!' : '❌ Incorrect'}</p>
+              <p>{guesses[idx].correct ? '✅ Correct!' : `❌ Incorrect (${guesses[idx].guess})`}</p>
             )}
           </div>
         </div>
