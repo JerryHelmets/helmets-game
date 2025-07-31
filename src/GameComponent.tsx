@@ -239,7 +239,6 @@ useEffect(() => {
                 disabled={!!guesses[idx]}
                 onFocus={() => setFocusedInput(idx)}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
-                onBlur={(e) => handleGuess(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, idx)}
               />
               {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
