@@ -283,4 +283,7 @@ if (allLevelsExist) {
   );
 };
 
+# Console Log
+console.log(Object.fromEntries(Object.entries(pathsByLevel).map(([k, v]) => [k, v.length])));
+
 export default GameComponent;
