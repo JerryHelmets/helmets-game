@@ -68,30 +68,23 @@ const GameComponent: React.FC = () => {
         const seed = parseInt(hashSeed, 10);
         const rng = seededRandom(seed);
 
-        const uniquePathMap = new Map<string, PlayerPath>();
+        const uniquePathsByLevel: { [level: number]: Map<string, PlayerPath> } = {};
+        for (let i = 1; i <= 5; i++) uniquePathsByLevel[i] = new Map();
+
         playerData.forEach((p) => {
           const key = p.path.join('>');
-          if (!uniquePathMap.has(key)) {
-            uniquePathMap.set(key, p);
-          }
-        });
-
-        const uniquePaths = Array.from(uniquePathMap.values());
-
-        const pathsByLevel: { [key: number]: PlayerPath[] } = {};
-        for (let i = 1; i <= 5; i++) pathsByLevel[i] = [];
-        uniquePaths.forEach(p => {
-          if (p.path_level >= 1 && p.path_level <= 5) {
-            pathsByLevel[p.path_level].push(p);
+          if (p.path_level >= 1 && p.path_level <= 5 && !uniquePathsByLevel[p.path_level].has(key)) {
+            uniquePathsByLevel[p.path_level].set(key, p);
           }
         });
 
         const selected: PlayerPath[] = [];
         for (let level = 1; level <= 5; level++) {
-          const pool = pathsByLevel[level];
-          if (pool.length > 0) {
-            const index = Math.floor(rng() * pool.length);
-            selected.push(pool[index]);
+          const uniqueMap = uniquePathsByLevel[level];
+          const values = Array.from(uniqueMap.values());
+          if (values.length > 0) {
+            const index = Math.floor(rng() * values.length);
+            selected.push(values[index]);
           }
         }
 
