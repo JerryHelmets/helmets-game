@@ -123,10 +123,26 @@ const GameComponent: React.FC = () => {
       .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
       .map((p) => p.name)
       .sort()
-      .slice(0, 20); // max suggestions kept sorted
+      .slice(0, 20);
     const updated = [...filteredSuggestions];
     updated[index] = suggestions;
     setFilteredSuggestions(updated);
+    setHighlightIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
+    if (!filteredSuggestions[idx]) return;
+    const max = filteredSuggestions[idx].length;
+
+    if (e.key === 'ArrowDown') {
+      setHighlightIndex((prev) => (prev + 1) % max);
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setHighlightIndex((prev) => (prev - 1 + max) % max);
+      e.preventDefault();
+    } else if (e.key === 'Enter' && highlightIndex >= 0) {
+      handleGuess(idx, filteredSuggestions[idx][highlightIndex]);
+    }
   };
 
   const handleGuess = (index: number, value: string) => {
@@ -208,6 +224,7 @@ const GameComponent: React.FC = () => {
                 onFocus={() => setFocusedInput(idx)}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
                 onBlur={(e) => handleGuess(idx, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, idx)}
               />
               {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
                 <ul className="suggestion-dropdown">
@@ -216,7 +233,13 @@ const GameComponent: React.FC = () => {
                       key={i}
                       className={highlightIndex === i ? 'highlighted' : ''}
                       onMouseDown={() => handleGuess(idx, name)}>
-                      {name}
+                      {(() => {
+                        const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
+                        if (match >= 0) {
+                          return <>{name.slice(0, match)}<strong>{name.slice(match, match + (inputRefs.current[idx]?.value.length || 0))}</strong>{name.slice(match + (inputRefs.current[idx]?.value.length || 0))}</>;
+                        }
+                        return name;
+                      })()}
                     </li>
                   ))}
                 </ul>
