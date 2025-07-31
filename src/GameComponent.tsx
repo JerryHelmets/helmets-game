@@ -205,13 +205,22 @@ useEffect(() => {
       .join('');
   };
 const [confettiFired, setConfettiFired] = useState(false);
+  const [showRules, setShowRules] = useState(() => {
+    return localStorage.getItem('rulesShown') !== 'true';
+  });
 
   useEffect(() => {
     if (showPopup && !confettiFired) {
-      confetti({ particleCount: 240, spread: 200, origin: { y: 0.6 } });
+      confetti({ particleCount: 120, spread: 120, origin: { y: 0.6 } });
       setConfettiFired(true);
     }
   }, [showPopup, confettiFired]);
+
+  useEffect(() => {
+    if (showRules) return;
+    localStorage.setItem('rulesShown', 'true');
+  }, [showRules]);
+
   return (
     <div>
       <header className="game-header">
@@ -221,10 +230,11 @@ const [confettiFired, setConfettiFired] = useState(false);
           <span className="score-value"> | Score: {score}</span>
           <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
         </div>
+        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
-      
-{showRules && (
-        <div className="popup-modal">
+
+      {showRules && (
+        <div className="popup-modal fade-in">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
             <h2>WELCOME TO HELMETS!</h2>
