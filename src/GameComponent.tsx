@@ -115,34 +115,20 @@ const GameComponent: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('helmets-guesses', JSON.stringify(guesses));
   }, [guesses]);
-  useEffect(() => {
-    const hasAnyGuess = guesses.some((g) => g);
-    const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
-    if (hasAnyGuess && allAnswered) {
-      setShowPopup(true);
-      if (!confettiFired) {
-        confetti({
-          particleCount: 200,
-          spread: 100,
-          origin: { y: 0.5 },
-        });
-        setConfettiFired(true);
-      }
-    }
-  }, [guesses, dailyPaths.length, confettiFired]);
+useEffect(() => {
+  const hasAnyGuess = guesses.some((g) => g);
+  const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
+  if (hasAnyGuess && allAnswered) setShowPopup(true);
+}, [guesses, dailyPaths.length]);
 
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
   const handleInputChange = (index: number, value: string) => {
-    const inputValue = value.toLowerCase();
     const suggestions = players
-      .map((player) => player.name)
-      .filter((name, i, self) =>
-        name.toLowerCase().includes(inputValue) && self.indexOf(name) === i
-      )
+      .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
+      .map((p) => p.name)
       .sort()
-      .slice(0, 5);
-
+      .slice(0, 20);
     const updated = [...filteredSuggestions];
     updated[index] = suggestions;
     setFilteredSuggestions(updated);
@@ -160,8 +146,7 @@ const GameComponent: React.FC = () => {
       setHighlightIndex((prev) => (prev - 1 + max) % max);
       e.preventDefault();
     } else if (e.key === 'Enter' && highlightIndex >= 0) {
-      handleGuess(idx, f
-                  ilteredSuggestions[idx][highlightIndex]);
+      handleGuess(idx, filteredSuggestions[idx][highlightIndex]);
     }
   };
 
@@ -182,10 +167,6 @@ const GameComponent: React.FC = () => {
       setScore((prev) => prev + 1);
      const inputBox = inputRefs.current[index];
       if (inputBox) {
-            const updatedSuggestions = [...filteredSuggestions];
-    updatedSuggestions[index] = [];
-    setFilteredSuggestions(updatedSuggestions);
-  }
         const rect = inputBox.getBoundingClientRect();
         confetti({
           particleCount: 60,
@@ -195,7 +176,12 @@ const GameComponent: React.FC = () => {
             y: rect.top / window.innerHeight,
           },
         });
-      };
+      }
+ }
+    const updatedSuggestions = [...filteredSuggestions];
+    updatedSuggestions[index] = [];
+    setFilteredSuggestions(updatedSuggestions);
+  };
 
   const handleGiveUp = () => {
     const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
@@ -218,8 +204,7 @@ const GameComponent: React.FC = () => {
       .map((g) => (g?.correct ? '🟩' : '🟥'))
       .join('');
   };
-  };
-  
+
   return (
     <div>
       <header className="game-header">
@@ -321,4 +306,6 @@ const GameComponent: React.FC = () => {
       )}
     </div>
   );
+};
+
 export default GameComponent;
