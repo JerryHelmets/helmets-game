@@ -88,7 +88,6 @@ for (let level = 1; level <= 5; level++) {
           if (values.length > 0) {
             const index = Math.floor(rng() * values.length);
             selected.push(values[index]);
-            console.log('Selected daily paths:', selected);
           }
         }
 
