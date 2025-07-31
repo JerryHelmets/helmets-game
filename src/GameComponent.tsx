@@ -166,10 +166,12 @@ const GameComponent: React.FC = () => {
     const updatedSuggestions = [...filteredSuggestions];
     updatedSuggestions[index] = [];
     setFilteredSuggestions(updatedSuggestions);
-
-    const allAnswered = updatedGuesses.every((g) => g);
-    if (allAnswered) setShowPopup(true);
   };
+
+  useEffect(() => {
+    const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
+    if (allAnswered) setShowPopup(true);
+  }, [guesses, dailyPaths.length]);
 
   const handleGiveUp = () => {
     const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
@@ -223,7 +225,7 @@ const GameComponent: React.FC = () => {
               <input
                 ref={(el) => (inputRefs.current[idx] = el)}
                 type="text"
-                placeholder="(Search Player)"
+                placeholder="Guess Player"
                 disabled={!!guesses[idx]}
                 onFocus={() => setFocusedInput(idx)}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
