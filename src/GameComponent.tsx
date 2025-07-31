@@ -160,7 +160,8 @@ const GameComponent: React.FC = () => {
       setHighlightIndex((prev) => (prev - 1 + max) % max);
       e.preventDefault();
     } else if (e.key === 'Enter' && highlightIndex >= 0) {
-      handleGuess(idx, filteredSuggestions[idx][highlightIndex]);
+      handleGuess(idx, f
+                  ilteredSuggestions[idx][highlightIndex]);
     }
   };
 
@@ -184,7 +185,7 @@ const GameComponent: React.FC = () => {
             const updatedSuggestions = [...filteredSuggestions];
     updatedSuggestions[index] = [];
     setFilteredSuggestions(updatedSuggestions);
-  };
+  }
         const rect = inputBox.getBoundingClientRect();
         confetti({
           particleCount: 60,
@@ -194,7 +195,7 @@ const GameComponent: React.FC = () => {
             y: rect.top / window.innerHeight,
           },
         });
-      }
+      };
 
   const handleGiveUp = () => {
     const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
@@ -320,5 +321,4 @@ const GameComponent: React.FC = () => {
       )}
     </div>
   );
-
 export default GameComponent;
