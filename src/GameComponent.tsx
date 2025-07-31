@@ -119,7 +119,7 @@ const GameComponent: React.FC = () => {
     localStorage.setItem('helmets-guesses', JSON.stringify(guesses));
   }, [guesses]);
 
-  const sanitizeImageName = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
+  const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
   const handleInputChange = (index: number, value: string) => {
     const suggestions = players
