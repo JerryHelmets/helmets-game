@@ -79,12 +79,16 @@ const GameComponent: React.FC = () => {
         });
 
         const selected: PlayerPath[] = [];
-        for (let level = 1; level <= 5; level++) {
+        console.log('Available unique paths per level:');
+for (let level = 1; level <= 5; level++) {
+  console.log(`Level ${level}: ${uniquePathsByLevel[level].size} paths`);
+}
           const uniqueMap = uniquePathsByLevel[level];
           const values = Array.from(uniqueMap.values());
           if (values.length > 0) {
             const index = Math.floor(rng() * values.length);
             selected.push(values[index]);
+            console.log('Selected daily paths:', selected);
           }
         }
 
@@ -195,7 +199,7 @@ const GameComponent: React.FC = () => {
               <input
                 ref={(el) => (inputRefs.current[idx] = el)}
                 type="text"
-                placeholder="(Type to search...)"
+                placeholder="Search Player"
                 disabled={!!guesses[idx]}
                 onFocus={() => setFocusedInput(idx)}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
