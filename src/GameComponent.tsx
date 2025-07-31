@@ -314,7 +314,7 @@ const [confettiFired, setConfettiFired] = useState(false);
       </div>
 
       {showPopup && (
-        <div className="popup-modal">
+        <div className="popup-modal fade-in">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
             <h3>🎉 Game Complete!</h3>
