@@ -165,8 +165,18 @@ useEffect(() => {
     setGuesses(updatedGuesses);
     if (matched) {
       setScore((prev) => prev + 1);
-      confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } });
-    }
+     const inputBox = inputRefs.current[index];
+      if (inputBox) {
+        const rect = inputBox.getBoundingClientRect();
+        confetti({
+          particleCount: 60,
+          spread: 80,
+          origin: {
+            x: rect.left / window.innerWidth,
+            y: rect.top / window.innerHeight,
+          },
+        });
+      }
 
     const updatedSuggestions = [...filteredSuggestions];
     updatedSuggestions[index] = [];
