@@ -204,7 +204,14 @@ useEffect(() => {
       .map((g) => (g?.correct ? '🟩' : '🟥'))
       .join('');
   };
+const [confettiFired, setConfettiFired] = useState(false);
 
+  useEffect(() => {
+    if (showPopup && !confettiFired) {
+      confetti({ particleCount: 120, spread: 120, origin: { y: 0.6 } });
+      setConfettiFired(true);
+    }
+  }, [showPopup, confettiFired]);
   return (
     <div>
       <header className="game-header">
@@ -300,13 +307,6 @@ useEffect(() => {
             </div>
             <button onClick={copyToClipboard}>Copy Score</button>
             <button onClick={shareOnTwitter}>Share on Twitter</button>
-            {
-              !confettiFired && confetti({
-                particleCount: 120,
-                spread: 120,
-                origin: { y: 0.6 },
-              }) && setConfettiFired(true)
-            }
           </div>
         </div>
       )}
