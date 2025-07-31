@@ -222,7 +222,28 @@ const [confettiFired, setConfettiFired] = useState(false);
           <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
         </div>
       </header>
-
+      
+{showRules && (
+        <div className="popup-modal">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
+            <h2>WELCOME TO HELMETS!</h2>
+            <p><em>Match each helmet path to an NFL player</em></p>
+            <h3>HOW TO PLAY</h3>
+            <ul style={{ textAlign: 'left' }}>
+              <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets (multiple players may fit one path).</li>
+              <li>🏈 Only one guess per level.</li>
+              <li>🏈 Players active or retired qualify but must have been drafted in 2000 or later.</li>
+              <li>🏈 Paths start with draft college, then list NFL teams in order.</li>
+              <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
+              <li>🏈 Correct answers score 100–500 pts by level; incorrect = 0 pts.</li>
+              <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
+            </ul>
+            <p><strong>Good Luck!</strong></p>
+          </div>
+        </div>
+      )}
+      
       {dailyPaths.map((path, idx) => (
         <div key={idx} className="path-block">
           <div className="helmet-sequence">
