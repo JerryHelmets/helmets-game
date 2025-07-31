@@ -89,13 +89,26 @@ const GameComponent: React.FC = () => {
         });
 
         const selected: PlayerPath[] = [];
-        for (let level = 1; level <= 5; level++) {
-          const pool = pathsByLevel[level];
-          if (pool.length > 0) {
-            const index = Math.floor(rng() * pool.length);
-            selected.push(pool[index]);
-          }
-        }
+let allLevelsExist = true;
+for (let level = 1; level <= 5; level++) {
+  const pool = pathsByLevel[level];
+  if (pool.length > 0) {
+    const index = Math.floor(rng() * pool.length);
+    selected.push(pool[index]);
+  } else {
+    allLevelsExist = false;
+  }
+}
+
+if (allLevelsExist) {
+  setDailyPaths(selected);
+  setFilteredSuggestions(Array(selected.length).fill([]));
+  if (!localStorage.getItem('helmets-guesses')) {
+    setGuesses(Array(selected.length).fill(undefined));
+  }
+} else {
+  console.warn("Not enough paths for all difficulty levels 1–5.");
+}
 
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
