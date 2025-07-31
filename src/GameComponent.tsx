@@ -90,7 +90,6 @@ for (let level = 1; level <= 5; level++) {
             selected.push(values[index]);
           }
         }
-
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
         if (!localStorage.getItem('helmets-guesses')) {
