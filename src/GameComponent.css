@@ -174,3 +174,22 @@
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
+.suggestion-box {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 4px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.suggestion-item {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background-color: #f0f0f0;
+}
