@@ -319,6 +319,5 @@ const GameComponent: React.FC = () => {
       )}
     </div>
   );
-};
 
 export default GameComponent;
