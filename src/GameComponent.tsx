@@ -115,6 +115,11 @@ const GameComponent: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('helmets-guesses', JSON.stringify(guesses));
   }, [guesses]);
+useEffect(() => {
+  const hasAnyGuess = guesses.some((g) => g);
+  const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
+  if (hasAnyGuess && allAnswered) setShowPopup(true);
+}, [guesses, dailyPaths.length]);
 
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
@@ -167,11 +172,6 @@ const GameComponent: React.FC = () => {
     updatedSuggestions[index] = [];
     setFilteredSuggestions(updatedSuggestions);
   };
-
-  useEffect(() => {
-    const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
-    if (allAnswered) setShowPopup(true);
-  }, [guesses, dailyPaths.length]);
 
   const handleGiveUp = () => {
     const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
