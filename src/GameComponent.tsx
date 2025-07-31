@@ -54,11 +54,18 @@ const GameComponent: React.FC = () => {
       .then((csvText) => {
         const parsed = Papa.parse(csvText, { header: true });
         const rows = parsed.data as any[];
-        const validRows = rows.filter(row => row.name && row.path);
+        const validRows = rows.filter(row => row.name && row.path && row.path_level);
+
+        // Validate and warn about rows with invalid path_level
+        const invalidRows = rows.filter(row => !row.path_level || isNaN(parseInt(row.path_level)));
+        if (invalidRows.length > 0) {
+          console.warn(`⚠️ CSV Validation: ${invalidRows.length} rows missing or invalid 'path_level'. They were ignored.`);
+        }
+
         const playerData: PlayerPath[] = validRows.map((row) => ({
           name: row.name.trim(),
           path: row.path.split(',').map((x: string) => x.trim()),
-          path_level: parseInt(row.path_level || '1', 10),
+          path_level: parseInt(row.path_level, 10),
         }));
 
         setPlayers(playerData);
@@ -79,10 +86,7 @@ const GameComponent: React.FC = () => {
         });
 
         const selected: PlayerPath[] = [];
-        console.log('Available unique paths per level:');
-for (let level = 1; level <= 5; level++) {
-  console.log(`Level ${level}: ${uniquePathsByLevel[level].size} paths`);
-}
+        for (let level = 1; level <= 5; level++) {
           const uniqueMap = uniquePathsByLevel[level];
           const values = Array.from(uniqueMap.values());
           if (values.length > 0) {
@@ -90,6 +94,7 @@ for (let level = 1; level <= 5; level++) {
             selected.push(values[index]);
           }
         }
+
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
         if (!localStorage.getItem('helmets-guesses')) {
@@ -197,7 +202,7 @@ for (let level = 1; level <= 5; level++) {
               <input
                 ref={(el) => (inputRefs.current[idx] = el)}
                 type="text"
-                placeholder="Search Player"
+                placeholder="(Search Player)"
                 disabled={!!guesses[idx]}
                 onFocus={() => setFocusedInput(idx)}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
