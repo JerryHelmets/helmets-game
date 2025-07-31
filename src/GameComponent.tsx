@@ -56,7 +56,6 @@ const GameComponent: React.FC = () => {
         const rows = parsed.data as any[];
         const validRows = rows.filter(row => row.name && row.path && row.path_level);
 
-        // Validate and warn about rows with invalid path_level
         const invalidRows = rows.filter(row => !row.path_level || isNaN(parseInt(row.path_level)));
         if (invalidRows.length > 0) {
           console.warn(`⚠️ CSV Validation: ${invalidRows.length} rows missing or invalid 'path_level'. They were ignored.`);
@@ -122,9 +121,11 @@ const GameComponent: React.FC = () => {
   const handleInputChange = (index: number, value: string) => {
     const suggestions = players
       .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
-      .map((p) => p.name);
+      .map((p) => p.name)
+      .sort()
+      .slice(0, 20); // max suggestions kept sorted
     const updated = [...filteredSuggestions];
-    updated[index] = suggestions.slice(0, 5);
+    updated[index] = suggestions;
     setFilteredSuggestions(updated);
   };
 
@@ -210,7 +211,7 @@ const GameComponent: React.FC = () => {
               />
               {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
                 <ul className="suggestion-dropdown">
-                  {filteredSuggestions[idx].map((name, i) => (
+                  {filteredSuggestions[idx].slice(0, 5).map((name, i) => (
                     <li
                       key={i}
                       className={highlightIndex === i ? 'highlighted' : ''}
