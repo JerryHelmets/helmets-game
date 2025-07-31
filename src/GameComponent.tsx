@@ -217,7 +217,8 @@ const GameComponent: React.FC = () => {
       .map((g) => (g?.correct ? '🟩' : '🟥'))
       .join('');
   };
-
+  };
+  
   return (
     <div>
       <header className="game-header">
