@@ -163,6 +163,10 @@ const GameComponent: React.FC = () => {
       confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 } });
     }
 
+    const updatedSuggestions = [...filteredSuggestions];
+    updatedSuggestions[index] = [];
+    setFilteredSuggestions(updatedSuggestions);
+
     const allAnswered = updatedGuesses.every((g) => g);
     if (allAnswered) setShowPopup(true);
   };
@@ -227,11 +231,11 @@ const GameComponent: React.FC = () => {
                 onKeyDown={(e) => handleKeyDown(e, idx)}
               />
               {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
-                <ul className="suggestion-dropdown">
-                  {filteredSuggestions[idx].slice(0, 5).map((name, i) => (
-                    <li
+                <div className="suggestion-box">
+                  {filteredSuggestions[idx].slice(0, 20).map((name, i) => (
+                    <div
                       key={i}
-                      className={highlightIndex === i ? 'highlighted' : ''}
+                      className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
                       onMouseDown={() => handleGuess(idx, name)}>
                       {(() => {
                         const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
@@ -240,9 +244,9 @@ const GameComponent: React.FC = () => {
                         }
                         return name;
                       })()}
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
               {guesses[idx] && (
                 <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
