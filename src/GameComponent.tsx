@@ -300,31 +300,6 @@ useEffect(() => {
             </div>
             <button onClick={copyToClipboard}>Copy Score</button>
             <button onClick={shareOnTwitter}>Share on Twitter</button>
-            ...      {showPopup && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
-            <h3>🎉 Game Complete!</h3>
-            <p>You scored {score} pts</p>
-            <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
-            <p>{getEmojiSummary()}</p>
-            <div style={{ marginTop: '1em', textAlign: 'left' }}>
-              <h4>Correct Answers:</h4>
-              <ul>
-                {dailyPaths.map((path, idx) => (
-                  <li key={idx}>
-                    {path.path.join(' > ')}: {
-                      players
-                        .filter(p => p.path.join('>') === path.path.join('>'))
-                        .map(p => p.name)
-                        .join(', ')
-                    }
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <button onClick={copyToClipboard}>Copy Score</button>
-            <button onClick={shareOnTwitter}>Share on Twitter</button>
             {
               !confettiFired && confetti({
                 particleCount: 120,
