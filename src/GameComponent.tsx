@@ -88,7 +88,7 @@ const GameComponent: React.FC = () => {
           }
         });
 
-        const selected: PlayerPath[] = [];
+const selected: PlayerPath[] = [];
 let allLevelsExist = true;
 for (let level = 1; level <= 5; level++) {
   const pool = pathsByLevel[level];
@@ -102,13 +102,14 @@ for (let level = 1; level <= 5; level++) {
 
 if (allLevelsExist) {
   setDailyPaths(selected);
-  setFilteredSuggestions(Array(selected.length).fill([]));
+  setFilteredSuggestions(Array(5).fill([]));
   if (!localStorage.getItem('helmets-guesses')) {
-    setGuesses(Array(selected.length).fill(undefined));
+    setGuesses(Array(5).fill(undefined));
   }
 } else {
-  console.warn("Not enough paths for all difficulty levels 1–5.");
+  console.warn('⚠️ Not enough path levels 1–5 in the CSV.');
 }
+
 
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
