@@ -181,6 +181,10 @@ const GameComponent: React.FC = () => {
       setScore((prev) => prev + 1);
      const inputBox = inputRefs.current[index];
       if (inputBox) {
+            const updatedSuggestions = [...filteredSuggestions];
+    updatedSuggestions[index] = [];
+    setFilteredSuggestions(updatedSuggestions);
+  };
         const rect = inputBox.getBoundingClientRect();
         confetti({
           particleCount: 60,
@@ -191,11 +195,6 @@ const GameComponent: React.FC = () => {
           },
         });
       }
-
-    const updatedSuggestions = [...filteredSuggestions];
-    updatedSuggestions[index] = [];
-    setFilteredSuggestions(updatedSuggestions);
-  };
 
   const handleGiveUp = () => {
     const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
