@@ -115,20 +115,34 @@ const GameComponent: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('helmets-guesses', JSON.stringify(guesses));
   }, [guesses]);
-useEffect(() => {
-  const hasAnyGuess = guesses.some((g) => g);
-  const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
-  if (hasAnyGuess && allAnswered) setShowPopup(true);
-}, [guesses, dailyPaths.length]);
+  useEffect(() => {
+    const hasAnyGuess = guesses.some((g) => g);
+    const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
+    if (hasAnyGuess && allAnswered) {
+      setShowPopup(true);
+      if (!confettiFired) {
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.5 },
+        });
+        setConfettiFired(true);
+      }
+    }
+  }, [guesses, dailyPaths.length, confettiFired]);
 
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
   const handleInputChange = (index: number, value: string) => {
+    const inputValue = value.toLowerCase();
     const suggestions = players
-      .filter((p) => p.name.toLowerCase().includes(value.toLowerCase()))
-      .map((p) => p.name)
+      .map((player) => player.name)
+      .filter((name, i, self) =>
+        name.toLowerCase().includes(inputValue) && self.indexOf(name) === i
+      )
       .sort()
-      .slice(0, 20);
+      .slice(0, 5);
+
     const updated = [...filteredSuggestions];
     updated[index] = suggestions;
     setFilteredSuggestions(updated);
