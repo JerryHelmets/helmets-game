@@ -6,7 +6,6 @@ import './GameComponent.css';
 interface PlayerPath {
   name: string;
   path: string[];
-  difficulty: number;
   path_level: number;
 }
 
@@ -59,7 +58,6 @@ const GameComponent: React.FC = () => {
         const playerData: PlayerPath[] = validRows.map((row) => ({
           name: row.name.trim(),
           path: row.path.split(',').map((x: string) => x.trim()),
-          difficulty: parseInt(row.difficulty || '1', 10),
           path_level: parseInt(row.path_level || '1', 10),
         }));
 
@@ -88,23 +86,15 @@ const GameComponent: React.FC = () => {
           }
         });
 
-const selected: PlayerPath[] = [];
-const seenPaths = new Set();
+        const selected: PlayerPath[] = [];
+        for (let level = 1; level <= 5; level++) {
+          const pool = pathsByLevel[level];
+          if (pool.length > 0) {
+            const index = Math.floor(rng() * pool.length);
+            selected.push(pool[index]);
+          }
+        }
 
-for (let level = 1; level <= 5; level++) {
-  const pool = pathsByLevel[level].filter(p => {
-    const key = p.path.join('>');
-    return !seenPaths.has(key);
-  });
-
-  if (pool.length > 0) {
-    const index = Math.floor(rng() * pool.length);
-    const picked = pool[index];
-    seenPaths.add(picked.path.join('>'));
-    selected.push(picked);
-  }
-}
-        
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
         if (!localStorage.getItem('helmets-guesses')) {
@@ -277,8 +267,5 @@ for (let level = 1; level <= 5; level++) {
     </div>
   );
 };
-
-# Console Log
-console.log(Object.fromEntries(Object.entries(pathsByLevel).map(([k, v]) => [k, v.length])));
 
 export default GameComponent;
