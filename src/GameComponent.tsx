@@ -359,8 +359,8 @@ useEffect(() => {
         padding: '2px 4px',
         marginBottom: '2px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '380px',
-        width: '94%',
+        maxWidth: '400px',
+        width: '96%',
         margin: '2px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
@@ -395,7 +395,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '100%', maxWidth: '300px', padding: '2px 4px', fontSize: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '96%', maxWidth: '340px', padding: '2px 6px', fontSize: '5px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -424,7 +424,7 @@ useEffect(() => {
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.75rem' }}
+                    style={{ padding: '6px 10px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.8rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
