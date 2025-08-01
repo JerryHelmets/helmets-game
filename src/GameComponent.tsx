@@ -288,7 +288,7 @@ const [confettiFired, setConfettiFired] = useState(false);
             alt={team}
             className="helmet-img"
           />
-          {i < path.path.length - 1 && <span className="arrow">→</span>}
+          {i < path.path.length - 1 && <span className="arrow" style={{ fontSize: '1rem', fontWeight: '600', margin: '0 2px', lineHeight: '1' }}>→</span>}
         </React.Fragment>
       ))}
     </div>
