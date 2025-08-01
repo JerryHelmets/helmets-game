@@ -475,10 +475,14 @@ useEffect(() => {
                   <button onClick={shareOnTwitter}>🐦 Twitter</button>
                   {copied && (
                     <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>
-                  )}
+                )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
