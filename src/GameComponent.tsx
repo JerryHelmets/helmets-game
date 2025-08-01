@@ -340,25 +340,25 @@ useEffect(() => {
         border: '2px solid',
         borderColor: guesses[idx] ? (guesses[idx].correct ? '#28a745' : '#dc3545') : '#ccc',
         backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
-        borderRadius: '12px',
-        padding: '4px 6px',
-        marginBottom: '4px',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-        maxWidth: '280px',
-        width: '92%',
-        margin: '6px auto',
+        borderRadius: '10px',
+        padding: '2px 4px',
+        marginBottom: '2px',
+        boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
+        maxWidth: '260px',
+        width: '90%',
+        margin: '4px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '4px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '2px', marginTop: '2px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
               src={`/images/${sanitizeImageName(team)}.png`}
               alt={team}
               className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg'
-              style={{ width: '44px', height: '44px', objectFit: 'contain', maxWidth: '44px', flexShrink: 0 }}
+              style={{ width: '40px', height: '40px', objectFit: 'contain', maxWidth: '40px', flexShrink: 0 }}
             />
             {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
           </React.Fragment>
@@ -372,22 +372,26 @@ useEffect(() => {
               ref={(el) => (inputRefs.current[idx] = el)}
               type="text"
               placeholder="Guess Player"
-              onFocus={() => setFocusedInput(idx)}
+              onFocus={(e) => {
+                setFocusedInput(idx);
+                e.target.style.fontSize = '16px';
+              }}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '84%', maxWidth: '120px', padding: '2px 4px', fontSize: '0.55rem', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
             <div
               className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
               style={{
-                padding: '4px 6px',
+                padding: '3px 5px',
                 borderRadius: '6px',
                 fontWeight: 'bold',
                 animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
                 color: '#fff',
                 backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
+                fontSize: '0.5rem',
                 textAlign: 'center'
               }}
             >
@@ -403,7 +407,7 @@ useEffect(() => {
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '3px 4px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.6rem' }}
+                    style={{ padding: '2px 3px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.5rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
