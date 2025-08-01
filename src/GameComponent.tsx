@@ -312,96 +312,96 @@ useEffect(() => {
       
       
 {dailyPaths.map((path, idx) => (
-  <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }} className="bubble-container-mobile">
-    <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
-      {path.path.map((team, i) => (
-        <React.Fragment key={i}>
-          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg' style={{ width: '72px', height: '72px', objectFit: 'contain', maxWidth: '72px', flexShrink: 0 }} />
-          {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
-        </React.Fragment>
-      ))}
-    </div>
-
-    <div className="guess-input-container" style={{ display: 'flex', justifyContent: 'center' }}>
-      <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
-        {!guesses[idx] ? (
-          <input
-            ref={(el) => (inputRefs.current[idx] = el)}
-            type="text"
-            placeholder="Guess Player"
-            onFocus={() => setFocusedInput(idx)}
-            onChange={(e) => handleInputChange(idx, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, idx)}
-            style={{ width: '90%', maxWidth: '200px', padding: '3px 5px', fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
-            className="guess-input-mobile font-mobile"
-          />
-        ) : (
-          <div
-            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '6px',
-              fontWeight: 'bold',
-              animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
-              color: '#fff',
-              backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-            }}
-          >
-            {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
+        <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }}>
+          <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
+            {path.path.map((team, i) => (
+              <React.Fragment key={i}>
+                <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg' style={{ width: '72px', height: '72px', objectFit: 'contain', maxWidth: '72px', flexShrink: 0 }} />
+                {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
+              </React.Fragment>
+            ))}
           </div>
-        )}
 
-        {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
-          <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.2s ease-out' }}>
-            {filteredSuggestions[idx].slice(0, 20).map((name, i) => {
-              const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
-              return (
+          <div className="guess-input-container" style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
+              {!guesses[idx] ? (
+                <input
+                  ref={(el) => (inputRefs.current[idx] = el)}
+                  type="text"
+                  placeholder="Guess Player"
+                  onFocus={() => setFocusedInput(idx)}
+                  onChange={(e) => handleInputChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, idx)}
+                  style={{ width: '90%', maxWidth: '200px', padding: '3px 5px', fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                  className="guess-input-mobile font-mobile"
+                />
+              ) : (
                 <div
-                  key={i}
-                  className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`} style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif' }}
-                  onMouseDown={() => handleGuess(idx, name)}
+                  className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
+                    color: '#fff',
+                    backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
+                  }}
                 >
-                  {match >= 0 ? (
-                    <>
-                      {name.slice(0, match)}
-                      <strong>{name.slice(match, match + (inputRefs.current[idx]?.value.length || 0))}</strong>
-                      {name.slice(match + (inputRefs.current[idx]?.value.length || 0))}
-                    </>
-                  ) : name}
+                  {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
                 </div>
-              );
-            })}
+              )}
+
+              {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
+                <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.2s ease-out' }}>
+                  {filteredSuggestions[idx].slice(0, 20).map((name, i) => {
+                    const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
+                    return (
+                      <div
+                        key={i}
+                        className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`} style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif' }}
+                        onMouseDown={() => handleGuess(idx, name)}
+                      >
+                        {match >= 0 ? (
+                          <>
+                            {name.slice(0, match)}
+                            <strong>{name.slice(match, match + (inputRefs.current[idx]?.value.length || 0))}</strong>
+                            {name.slice(match + (inputRefs.current[idx]?.value.length || 0))}
+                          </>
+                        ) : name}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-))}
-
-<button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
-
-{showHistory && (
-  <div className="popup-modal">
-    <div className="popup-content">
-      <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-      <h3>📆 Game History</h3>
-      <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left' }}>
-        {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date, data]) => (
-          <li key={date} style={{ marginBottom: '10px' }}>
-  <details>
-    <summary><strong>{date}:</strong> {data.score}/5 – {Math.floor(data.timer / 60)}:{String(data.timer % 60).padStart(2, '0')}</summary>
-    <ul style={{ paddingLeft: '1em', marginTop: '5px' }}>
-      {data.guesses?.map((g, i) => (
-        <li key={i}>{g ? `${g.guess} – ${g.correct ? '✅' : '❌'}` : '—'}</li>
+        </div>
       ))}
-    </ul>
-  </details>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
-)}
+
+      <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
+
+      {showHistory && (
+        <div className="popup-modal">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+            <h3>📆 Game History</h3>
+            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left' }}>
+              {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date, data]) => (
+                <li key={date} style={{ marginBottom: '10px' }}>
+                  <details>
+                    <summary><strong>{date}:</strong> {data.score}/5 – {Math.floor(data.timer / 60)}:{String(data.timer % 60).padStart(2, '0')}</summary>
+                    <ul style={{ paddingLeft: '1em', marginTop: '5px' }}>
+                      {data.guesses?.map((g, i) => (
+                        <li key={i}>{g ? `${g.guess} – ${g.correct ? '✅' : '❌'}` : '—'}</li>
+                      ))}
+                    </ul>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
