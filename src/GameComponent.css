@@ -246,3 +246,18 @@
     height: 32px;
   }
 }
+@media (max-width: 480px) {
+  .helmet-img-mobile {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .helmet-arrow-mobile {
+    font-size: 0.75rem !important;
+    margin: 0 1px !important;
+  }
+
+  .bubble-container-mobile {
+    padding: 8px !important;
+  }
+}
