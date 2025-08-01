@@ -378,8 +378,6 @@ useEffect(() => {
   </div>
 ))}
 
-</> {/* Closing fragment for JSX */}
-
 <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
 
 {showHistory && (
@@ -403,7 +401,7 @@ useEffect(() => {
       </ul>
     </div>
   </div>
-))}
+)}
 
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
