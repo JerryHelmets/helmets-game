@@ -279,8 +279,8 @@ const [confettiFired, setConfettiFired] = useState(false);
       )}
       
 {dailyPaths.map((path, idx) => (
-  <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '16px', marginBottom: '16px', background: '#f9f9f9', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
-    <div className="helmet-sequence">
+  <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '16px', marginBottom: '16px', background: '#f9f9f9', boxShadow: '0 2px 6px rgba(0,0,0,0.05)', maxWidth: '500px', width: '90%', marginInline: 'auto', textAlign: 'center' }}>
+    <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
           <img
@@ -293,7 +293,7 @@ const [confettiFired, setConfettiFired] = useState(false);
       ))}
     </div>
 
-    <div className="guess-input-container">
+    <div className="guess-input-container" style={{ display: 'flex', justifyContent: 'center' }}>
       <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
         {!guesses[idx] ? (
           <input
@@ -346,6 +346,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
+
 
 
 
