@@ -448,8 +448,6 @@ useEffect(() => {
 
 
 
-
-
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
       <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', top: '12px', right: '100px', padding: '6px 10px', fontSize: '0.8rem' }}>💬 Feedback</button>
 
