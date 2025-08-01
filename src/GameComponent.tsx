@@ -342,16 +342,16 @@ useEffect(() => {
         backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
         borderRadius: '10px',
         padding: '2px 4px',
-        marginBottom: '2px',
+        marginBottom: '4px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '280px',
-        width: '92%',
-        margin: '4px auto',
+        maxWidth: '320px',
+        width: '95%',
+        margin: '2px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '0px', marginTop: '0px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '2px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
@@ -380,7 +380,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '95%', maxWidth: '150px', padding: '2px 3px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '100%', maxWidth: '210px', padding: '2px 4px', fontSize: '9px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -402,14 +402,14 @@ useEffect(() => {
           )}
 
           {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
-            <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.2s ease-out' }}>
-              {filteredSuggestions[idx].slice(0, 10).map((name, i) => {
+            <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.3s ease-out' }}>
+              {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
                 const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
                 return (
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.6rem' }}
+                    style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.7rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
@@ -464,7 +464,7 @@ useEffect(() => {
         <div className="popup-modal">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-            <h3>Thoughts? Takes?</h3>
+            <h3>Talk to Jerry...</h3>
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '1em' }}>
               <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
               <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
