@@ -278,7 +278,7 @@ const [confettiFired, setConfettiFired] = useState(false);
         </div>
       )}
       
-     {dailyPaths.map((path, idx) => (
+    {dailyPaths.map((path, idx) => (
   <div key={idx} className="path-block">
     <div className="helmet-sequence">
       {path.path.map((team, i) => (
@@ -306,12 +306,12 @@ const [confettiFired, setConfettiFired] = useState(false);
           />
         ) : (
           <div
-            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect'}`}
+            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'}`}
             style={{
               padding: '8px 12px',
               borderRadius: '6px',
               fontWeight: 'bold',
-              animation: 'fadeIn 0.3s ease-in-out',
+              animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
               color: '#fff',
               backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
             }}
@@ -346,6 +346,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
+
 
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
