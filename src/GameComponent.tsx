@@ -278,7 +278,7 @@ const [confettiFired, setConfettiFired] = useState(false);
         </div>
       )}
       
-      {dailyPaths.map((path, idx) => (
+     {dailyPaths.map((path, idx) => (
   <div key={idx} className="path-block">
     <div className="helmet-sequence">
       {path.path.map((team, i) => (
@@ -295,16 +295,22 @@ const [confettiFired, setConfettiFired] = useState(false);
 
     <div className="guess-input-container">
       <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
-        <input
-          ref={(el) => (inputRefs.current[idx] = el)}
-          type="text"
-          placeholder="Guess Player"
-          disabled={!!guesses[idx]}
-          onFocus={() => setFocusedInput(idx)}
-          onChange={(e) => handleInputChange(idx, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(e, idx)}
-          value={guesses[idx]?.correct ? path.name : undefined}
-        />
+        {!guesses[idx] ? (
+          <input
+            ref={(el) => (inputRefs.current[idx] = el)}
+            type="text"
+            placeholder="Guess Player"
+            onFocus={() => setFocusedInput(idx)}
+            onChange={(e) => handleInputChange(idx, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, idx)}
+          />
+        ) : (
+          <div className="locked-answer">
+            <strong>
+              {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
+            </strong>
+          </div>
+        )}
 
         {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
           <div className="suggestion-box">
@@ -328,16 +334,11 @@ const [confettiFired, setConfettiFired] = useState(false);
             })}
           </div>
         )}
-
-        {guesses[idx] && guesses[idx].correct && (
-          <p className="correct">
-            ✅ Correct ({path.name})
-          </p>
-        )}
       </div>
     </div>
   </div>
 ))}
+
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <button onClick={handleGiveUp} style={{ padding: '8px 16px', fontSize: '16px' }}>Give Up</button>
