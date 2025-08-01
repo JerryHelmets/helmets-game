@@ -380,7 +380,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '16px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '92%', maxWidth: '130px', padding: '2px 3px', fontSize: '14px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -409,7 +409,7 @@ useEffect(() => {
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '2px 3px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.45rem' }}
+                    style={{ padding: '3px 5px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.55rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
@@ -429,6 +429,7 @@ useEffect(() => {
     </div>
   );
 })}
+
 
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
