@@ -454,17 +454,29 @@ useEffect(() => {
             <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
             <p>{getEmojiSummary()}</p>
             <div style={{ marginTop: '1em', textAlign: 'center' }}>
-              <button onClick={() => setShowShareOptions((prev) => !prev)} style={{ padding: '8px 14px', fontSize: '0.9rem' }}>Share Score!</button>
+               <button 
+                onClick={() => setShowShareOptions((prev) => !prev)} 
+                style={{ padding: '8px 14px', fontSize: '0.9rem' }}>
+                Share Score!
+              </button>
               {showShareOptions && (
                 <div style={{ marginTop: '1em', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <button onClick={() => {
-                    copyToClipboard();
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }}>📋 Copy</button>
-                  <button onClick={() => window.open(`sms:?&body=I scored ${score}/5 on Helmets 🏈 in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`, '_blank')}>📱 Text</button>
+                  <button 
+                    onClick={() => {
+                      copyToClipboard();
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    }}>
+                    📋 Copy
+                  </button>
+                  <button 
+                    onClick={() => window.open(`sms:?&body=I scored ${score}/5 on Helmets 🏈 in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`, '_blank')}>
+                    📱 Text
+                  </button>
                   <button onClick={shareOnTwitter}>🐦 Twitter</button>
-                  {copied && <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
+                  {copied && (
+                    <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>
+                  )}
         </div>
       )}
     </div>
