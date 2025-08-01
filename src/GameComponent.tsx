@@ -332,6 +332,9 @@ useEffect(() => {
       
 <div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px' }}>
 <style>{`
+  input, textarea, select {
+    font-size: 16px !important;
+  }
   @media screen and (orientation: landscape) {
     body {
       transform: rotate(90deg);
@@ -388,14 +391,11 @@ useEffect(() => {
               type="text"
               placeholder="Guess Player"
               inputMode="text"
-              onFocus={(e) => {
-                setFocusedInput(idx);
-                e.target.style.fontSize = '16px';
-              }}
+              onFocus={() => setFocusedInput(idx)}
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '96%', maxWidth: '340px', padding: '2px 6px', fontSize: '5px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '96%', maxWidth: '360px', padding: '2px 6px', fontSize: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -445,7 +445,6 @@ useEffect(() => {
   );
 })}
 </div>
-
 
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
