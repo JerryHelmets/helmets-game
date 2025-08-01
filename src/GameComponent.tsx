@@ -341,17 +341,17 @@ useEffect(() => {
         borderColor: guesses[idx] ? (guesses[idx].correct ? '#28a745' : '#dc3545') : '#ccc',
         backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
         borderRadius: '12px',
-        padding: '4px',
-        marginBottom: '6px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        maxWidth: '320px',
-        width: '94%',
-        margin: '36px auto 12px auto',
+        padding: '2px 6px',
+        marginBottom: '4px',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        maxWidth: '300px',
+        width: '90%',
+        margin: '20px auto 8px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '2px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
@@ -375,7 +375,7 @@ useEffect(() => {
               onFocus={() => setFocusedInput(idx)}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '84%', maxWidth: '140px', padding: '2px 4px', fontSize: '0.55rem', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '84%', maxWidth: '120px', padding: '2px 4px', fontSize: '0.55rem', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
