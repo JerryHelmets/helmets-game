@@ -382,6 +382,17 @@ useEffect(() => {
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
 
       {showHistory && (
+        <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
+          {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
+            <button
+              key={date}
+              style={{ padding: '6px', fontSize: '0.7rem', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: '#f2f2f2' }}
+              onClick={() => window.location.href = `/?date=${date}`}
+            >
+              {date.slice(5)}
+            </button>
+          ))}
+        </div>
         <div className="popup-modal">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
