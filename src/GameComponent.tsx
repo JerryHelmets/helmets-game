@@ -484,6 +484,7 @@ useEffect(() => {
           </div>
         </div>
       )}
+      </div>
   );
 };
 
