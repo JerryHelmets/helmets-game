@@ -29,17 +29,9 @@ const GameComponent: React.FC = () => {
   const [focusedInput, setFocusedInput] = useState<number | null>(null);
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
-  const [timer, setTimer] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimer((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const localGuesses = localStorage.getItem('helmets-guesses');
