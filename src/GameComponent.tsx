@@ -170,7 +170,7 @@ useEffect(() => {
           spread: 80,
           origin: {
             x: (rect.left + rect.right) / 2 / window.innerWidth,
-            y: rect.top / window.innerHeight,
+            y: rect.bottom / window.innerHeight,
           },
         });
       }
@@ -270,10 +270,11 @@ const [confettiFired, setConfettiFired] = useState(false);
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
             <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', marginTop: '5px' }}>
-              <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets path (multiple players may share the same path).</li>
+              <li>🏈 Match a player to the helmet path on each level.</li>
               <li>🏈 Only one guess per level.</li>
-              <li>🏈 Active or retired players qualify, but they must have been drafted in 2000 or later.</li>
-              <li>🏈 Paths start with draft college, then list NFL teams in order.</li>
+              <li>🏈 Multiple players may share the same path.</li>
+              <li>🏈 Player an be any active or retired NFL player drafted in 2000 or later.</li>
+              <li>🏈 Paths start with draft college, then list NFL teams in order of career path.</li>
               <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
               <li>🏈 Correct answers score 100–500 pts by level; incorrect = 0 pts.</li>
               <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
@@ -283,6 +284,31 @@ const [confettiFired, setConfettiFired] = useState(false);
         </div>
       )}
 
+useEffect(() => {
+  const today = new Date().toISOString().split('T')[0];
+  const history = JSON.parse(localStorage.getItem('helmets-history') || '{}');
+  const saved = localStorage.getItem('helmets-guesses');
+  const parsed = saved ? JSON.parse(saved) : {};
+
+  if (parsed.date === today && parsed.guesses?.length === dailyPaths.length) {
+    setGuesses(parsed.guesses);
+    setScore(parsed.score || 0);
+    setTimer(parsed.timer || 0);
+  } else {
+    setGuesses(Array(dailyPaths.length).fill(null));
+    localStorage.setItem('helmets-guesses', JSON.stringify({ date: today, guesses: Array(dailyPaths.length).fill(null) }));
+  }
+}, [dailyPaths]);
+
+useEffect(() => {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('helmets-guesses', JSON.stringify({ date: today, guesses, score, timer }));
+
+  const fullHistory = JSON.parse(localStorage.getItem('helmets-history') || '{}');
+  fullHistory[today] = { guesses, score, timer };
+  localStorage.setItem('helmets-history', JSON.stringify(fullHistory));
+}, [guesses]);
+      
       
 {dailyPaths.map((path, idx) => (
   <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }} className="bubble-container-mobile">
@@ -351,6 +377,23 @@ const [confettiFired, setConfettiFired] = useState(false);
   </div>
 ))}
 
+<button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
+
+{showHistory && (
+  <div className="popup-modal">
+    <div className="popup-content">
+      <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+      <h3>📆 Game History</h3>
+      <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left' }}>
+        {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date, data]) => (
+          <li key={date} style={{ marginBottom: '10px' }}>
+            <strong>{date}:</strong> {data.score}/5 – {Math.floor(data.timer / 60)}:{String(data.timer % 60).padStart(2, '0')}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+))}
 
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
