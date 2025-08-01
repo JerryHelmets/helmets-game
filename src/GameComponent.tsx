@@ -296,24 +296,6 @@ useEffect(() => {
 
 
   return (
-<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px' }}>
-  <style>{`
-  input, textarea, select {
-    font-size: 16px !important;
-  }
-  @media screen and (orientation: landscape) {
-    body {
-      transform: rotate(90deg);
-      transform-origin: left top;
-      width: 100vh;
-      height: 100vw;
-      overflow-x: hidden;
-      position: absolute;
-      top: 100%;
-      left: 0;
-    }
-  }
-`}</style>
   <div>
       <header className="game-header">
         <h1 className="game-title">Helmets</h1>
@@ -526,6 +508,26 @@ useEffect(() => {
   </div>
 )}
 </div>
+  );
+  return (
+<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px' }}>
+  <style>{`
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  @media screen and (orientation: landscape) {
+    body {
+      transform: rotate(90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      overflow-x: hidden;
+      position: absolute;
+      top: 100%;
+      left: 0;
+    }
+  }
+`}</style>
   );
 };
 
