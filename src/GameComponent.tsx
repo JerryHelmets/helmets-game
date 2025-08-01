@@ -397,7 +397,11 @@ useEffect(() => {
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
 
       {showHistory && (
-        <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
+        <div className="popup-modal">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+            <h3>📆 Game History</h3>
+            <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
               {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
                 <button
                   key={date}
@@ -408,10 +412,6 @@ useEffect(() => {
                 </button>
               ))}
             </div>
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-            <h3>📆 Game History</h3>
             <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left' }}>
               {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date, data]) => (
                 <li key={date} style={{ marginBottom: '10px' }}>
