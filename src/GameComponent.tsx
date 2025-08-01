@@ -434,12 +434,16 @@ useEffect(() => {
               <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
               <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
             </div>
-            <button onClick={() => {
-              navigator.clipboard.writeText('jerry.helmetsgame@gmail.com');
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }} style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}>Copy Email</button>
-            {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Email copied!</p>}>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText('jerry.helmetsgame@gmail.com');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }} 
+              style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}>
+              Copy Email
+            </button>
+            {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Email copied!</p>}
           </div>
         </div>
       )}
@@ -480,7 +484,6 @@ useEffect(() => {
           </div>
         </div>
       )}
-    </>
   );
 };
 
