@@ -265,7 +265,7 @@ const [confettiFired, setConfettiFired] = useState(false);
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
             <ul style={{ textAlign: 'left' }}>
-              <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets (multiple players may share the same path).</li>
+              <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets path (multiple players may share the same path).</li>
               <li>🏈 Only one guess per level.</li>
               <li>🏈 Players active or retired qualify but must have been drafted in 2000 or later.</li>
               <li>🏈 Paths start with draft college, then list NFL teams in order.</li>
