@@ -250,6 +250,32 @@ const [confettiFired, setConfettiFired] = useState(false);
     localStorage.setItem('rulesShown', 'true');
   }, [showRules]);
 
+  useEffect(() => {
+  const today = new Date().toISOString().split('T')[0];
+  const history = JSON.parse(localStorage.getItem('helmets-history') || '{}');
+  const saved = localStorage.getItem('helmets-guesses');
+  const parsed = saved ? JSON.parse(saved) : {};
+
+  if (parsed.date === today && parsed.guesses?.length === dailyPaths.length) {
+    setGuesses(parsed.guesses);
+    setScore(parsed.score || 0);
+    setTimer(parsed.timer || 0);
+  } else {
+    setGuesses(Array(dailyPaths.length).fill(null));
+    localStorage.setItem('helmets-guesses', JSON.stringify({ date: today, guesses: Array(dailyPaths.length).fill(null) }));
+  }
+}, [dailyPaths]);
+
+useEffect(() => {
+  const today = new Date().toISOString().split('T')[0];
+  localStorage.setItem('helmets-guesses', JSON.stringify({ date: today, guesses, score, timer }));
+
+  const fullHistory = JSON.parse(localStorage.getItem('helmets-history') || '{}');
+  fullHistory[today] = { guesses, score, timer };
+  localStorage.setItem('helmets-history', JSON.stringify(fullHistory));
+}, [guesses]);
+
+
   return (
     <div>
       <header className="game-header">
@@ -283,31 +309,6 @@ const [confettiFired, setConfettiFired] = useState(false);
           </div>
         </div>
       )}
-
-useEffect(() => {
-  const today = new Date().toISOString().split('T')[0];
-  const history = JSON.parse(localStorage.getItem('helmets-history') || '{}');
-  const saved = localStorage.getItem('helmets-guesses');
-  const parsed = saved ? JSON.parse(saved) : {};
-
-  if (parsed.date === today && parsed.guesses?.length === dailyPaths.length) {
-    setGuesses(parsed.guesses);
-    setScore(parsed.score || 0);
-    setTimer(parsed.timer || 0);
-  } else {
-    setGuesses(Array(dailyPaths.length).fill(null));
-    localStorage.setItem('helmets-guesses', JSON.stringify({ date: today, guesses: Array(dailyPaths.length).fill(null) }));
-  }
-}, [dailyPaths]);
-
-useEffect(() => {
-  const today = new Date().toISOString().split('T')[0];
-  localStorage.setItem('helmets-guesses', JSON.stringify({ date: today, guesses, score, timer }));
-
-  const fullHistory = JSON.parse(localStorage.getItem('helmets-history') || '{}');
-  fullHistory[today] = { guesses, score, timer };
-  localStorage.setItem('helmets-history', JSON.stringify(fullHistory));
-}, [guesses]);
       
       
 {dailyPaths.map((path, idx) => (
