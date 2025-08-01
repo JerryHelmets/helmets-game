@@ -337,11 +337,12 @@ useEffect(() => {
       key={idx}
       className={`path-block ${blockClass}`}
       style={{
-        border: '2px solid #ccc',
+        border: '2px solid',
+        borderColor: guesses[idx] ? (guesses[idx].correct ? '#28a745' : '#dc3545') : '#ccc',
+        backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
         borderRadius: '12px',
         padding: '12px',
         marginBottom: '12px',
-        background: '#f9f9f9',
         boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         maxWidth: '440px',
         width: '95%',
