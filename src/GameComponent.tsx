@@ -284,7 +284,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
-          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile' style={{ width: '64px', height: '64px', objectFit: 'contain', maxWidth: '100%' }} />
+          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile' style={{ width: '72px', height: '72px', objectFit: 'contain', maxWidth: '72px', flexShrink: 0 }} />
           {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
         </React.Fragment>
       ))}
@@ -300,7 +300,7 @@ const [confettiFired, setConfettiFired] = useState(false);
             onFocus={() => setFocusedInput(idx)}
             onChange={(e) => handleInputChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
-            style={{ width: '85%', maxWidth: '220px', padding: '4px 6px', fontSize: '0.8rem', borderRadius: '6px', border: '1px solid #ccc' }}
+            style={{ width: '90%', maxWidth: '200px', padding: '3px 5px', fontSize: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
             className="guess-input-mobile font-mobile"
           />
         ) : (
@@ -345,7 +345,6 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
-
 
 
 
