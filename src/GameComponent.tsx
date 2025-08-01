@@ -164,7 +164,7 @@ useEffect(() => {
           particleCount: 60,
           spread: 80,
           origin: {
-            x: rect.left + rect.width / 2 / window.innerWidth,
+            x: (rect.left + rect.right / 2) / window.innerWidth,
             y: rect.top / window.innerHeight,
           },
         });
