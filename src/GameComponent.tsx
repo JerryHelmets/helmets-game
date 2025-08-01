@@ -264,10 +264,10 @@ const [confettiFired, setConfettiFired] = useState(false);
             <h2>WELCOME TO HELMETS!</h2>
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
-            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', lineHeight: '1.75' }}>
+            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', lineHeight: '2.0' }}>
               <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets path (multiple players may share the same path).</li>
               <li>🏈 Only one guess per level.</li>
-              <li>🏈 Players active or retired qualify but must have been drafted in 2000 or later.</li>
+              <li>🏈 Active or retired players qualify, but they must have been drafted in 2000 or later.</li>
               <li>🏈 Paths start with draft college, then list NFL teams in order.</li>
               <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
               <li>🏈 Correct answers score 100–500 pts by level; incorrect = 0 pts.</li>
@@ -279,12 +279,12 @@ const [confettiFired, setConfettiFired] = useState(false);
       )}
 
       
- {dailyPaths.map((path, idx) => (
+{dailyPaths.map((path, idx) => (
   <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }} className="bubble-container-mobile">
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
-          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile' style={{ width: '72px', height: '72px', objectFit: 'contain', maxWidth: '72px', flexShrink: 0 }} />
+          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg' style={{ width: '72px', height: '72px', objectFit: 'contain', maxWidth: '72px', flexShrink: 0 }} />
           {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
         </React.Fragment>
       ))}
