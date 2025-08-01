@@ -30,7 +30,22 @@ const GameComponent: React.FC = () => {
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const urlParams = new URLSearchParams(window.location.search);
+  const dateParam = urlParams.get('date');
+  const [customDate, setCustomDate] = useState(dateParam);
   const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    if (!customDate) return;
+    const history = JSON.parse(localStorage.getItem('helmets-history') || '{}');
+    const data = history[customDate];
+    if (data) {
+      setGuesses(data.guesses || []);
+      setScore(data.score || 0);
+      setTimer(data.timer || 0);
+      setShowPopup(true);
+    }
+  }, [customDate]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -383,16 +398,16 @@ useEffect(() => {
 
       {showHistory && (
         <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
-          {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
-            <button
-              key={date}
-              style={{ padding: '6px', fontSize: '0.7rem', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: '#f2f2f2' }}
-              onClick={() => window.location.href = `/?date=${date}`}
-            >
-              {date.slice(5)}
-            </button>
-          ))}
-        </div>
+              {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
+                <button
+                  key={date}
+                  style={{ padding: '6px', fontSize: '0.7rem', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: '#f2f2f2' }}
+                  onClick={() => window.location.href = `/?date=${date}`}
+                >
+                  {date.slice(5)}
+                </button>
+              ))}
+            </div>
         <div className="popup-modal">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
