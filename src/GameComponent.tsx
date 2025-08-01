@@ -325,7 +325,7 @@ const [confettiFired, setConfettiFired] = useState(false);
                 <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
                   {guesses[idx].correct
                     ? `✅ Correct (${path.name})`
-                    : (showPopup ? `❌ Incorrect (${guesses[idx].guess}) | Answer: ${path.name}` : `❌ Incorrect (${guesses[idx].guess})`)}
+                    : (showPopup ? `❌ Incorrect`)}
                 </p>
               )}
             </div>
