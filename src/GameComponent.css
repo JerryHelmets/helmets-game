@@ -211,3 +211,8 @@
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+@keyframes blinkRed {
+  0% { background-color: #dc3545; }
+  50% { background-color: #ff6b6b; }
+  100% { background-color: #dc3545; }
+}
