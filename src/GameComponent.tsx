@@ -344,8 +344,8 @@ useEffect(() => {
         padding: '2px 4px',
         marginBottom: '2px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '260px',
-        width: '90%',
+        maxWidth: '280px',
+        width: '92%',
         margin: '4px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
@@ -380,7 +380,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '92%', maxWidth: '130px', padding: '2px 3px', fontSize: '14px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '95%', maxWidth: '150px', padding: '2px 3px', fontSize: '12px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -403,13 +403,13 @@ useEffect(() => {
 
           {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
             <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.2s ease-out' }}>
-              {filteredSuggestions[idx].slice(0, 20).map((name, i) => {
+              {filteredSuggestions[idx].slice(0, 10).map((name, i) => {
                 const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
                 return (
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '3px 5px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.55rem' }}
+                    style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.6rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
