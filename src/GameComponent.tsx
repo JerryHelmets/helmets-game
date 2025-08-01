@@ -305,10 +305,18 @@ const [confettiFired, setConfettiFired] = useState(false);
             onKeyDown={(e) => handleKeyDown(e, idx)}
           />
         ) : (
-          <div className="locked-answer">
-            <strong>
-              {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
-            </strong>
+          <div
+            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect'}`}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              animation: 'fadeIn 0.3s ease-in-out',
+              color: '#fff',
+              backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
+            }}
+          >
+            {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
           </div>
         )}
 
