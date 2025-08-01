@@ -30,6 +30,7 @@ const GameComponent: React.FC = () => {
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
