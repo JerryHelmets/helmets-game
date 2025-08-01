@@ -444,7 +444,6 @@ useEffect(() => {
         </div>
       )}
       
-      {showPopup && (
         {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
