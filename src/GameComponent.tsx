@@ -390,7 +390,7 @@ useEffect(() => {
               inputMode="text"
               onFocus={(e) => {
                 setFocusedInput(idx);
-                e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 16px;`);
+                e.target.style.fontSize = '16px';
               }}
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
@@ -445,8 +445,6 @@ useEffect(() => {
   );
 })}
 </div>
-
-
 
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
