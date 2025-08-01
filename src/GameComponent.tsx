@@ -330,7 +330,7 @@ useEffect(() => {
       )}
       
       
-<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden' }}>
+<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '12px' }}>
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
   return (
@@ -343,16 +343,16 @@ useEffect(() => {
         backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
         borderRadius: '10px',
         padding: '2px 4px',
-        marginBottom: '4px',
+        marginBottom: '2px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '340px',
-        width: '95%',
+        maxWidth: '360px',
+        width: '92%',
         margin: '2px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '2px', marginTop: '0px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '1px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
@@ -381,7 +381,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '100%', maxWidth: '250px', padding: '2px 4px', fontSize: '7px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '100%', maxWidth: '270px', padding: '2px 4px', fontSize: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
