@@ -473,9 +473,7 @@ useEffect(() => {
                     📱 Text
                   </button>
                   <button onClick={shareOnTwitter}>🐦 Twitter</button>
-                  {copied && (
-                    <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>
-                )}
+                  {copied && <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
                 </div>
               )}
             </div>
