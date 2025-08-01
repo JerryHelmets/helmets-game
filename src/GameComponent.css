@@ -305,4 +305,7 @@
   background-color: #ffe6e6;
   border-color: #dc3545;
 }
+.path-block-incorrect img {
+  filter: grayscale(100%) brightness(85%);
+}
 
