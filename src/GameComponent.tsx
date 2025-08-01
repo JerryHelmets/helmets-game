@@ -32,6 +32,7 @@ const GameComponent: React.FC = () => {
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
   const [customDate, setCustomDate] = useState(dateParam);
@@ -444,6 +445,7 @@ useEffect(() => {
       )}
       
       {showPopup && (
+        {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
@@ -451,16 +453,18 @@ useEffect(() => {
             <p>You scored {score} pts</p>
             <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
             <p>{getEmojiSummary()}</p>
-            <div style={{ marginTop: '1em', textAlign: 'left' }}>
-            </div>
-            <button onClick={() => {
-              copyToClipboard();
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }}>Copy Score</button>
-            {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
-            <button onClick={shareOnTwitter}>Share on Twitter</button>
-          </div>
+            <div style={{ marginTop: '1em', textAlign: 'center' }}>
+              <button onClick={() => setShowShareOptions((prev) => !prev)} style={{ padding: '8px 14px', fontSize: '0.9rem' }}>Share Score!</button>
+              {showShareOptions && (
+                <div style={{ marginTop: '1em', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button onClick={() => {
+                    copyToClipboard();
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}>📋 Copy</button>
+                  <button onClick={() => window.open(`sms:?&body=I scored ${score}/5 on Helmets 🏈 in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`, '_blank')}>📱 Text</button>
+                  <button onClick={shareOnTwitter}>🐦 Twitter</button>
+                  {copied && <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
         </div>
       )}
     </div>
