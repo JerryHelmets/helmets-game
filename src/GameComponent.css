@@ -296,5 +296,13 @@
     height: 80px !important;
   }
 }
-.path-block.correct { background-color: #e6ffe6; border-color: #28a745; }
-.path-block.incorrect { background-color: #ffe6e6; border-color: #dc3545; }
+.path-block-correct {
+  background-color: #e6ffe6;
+  border-color: #28a745;
+}
+
+.path-block-incorrect {
+  background-color: #ffe6e6;
+  border-color: #dc3545;
+}
+
