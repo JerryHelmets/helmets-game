@@ -365,7 +365,7 @@ useEffect(() => {
         ))}
       </div>
 
-      <div className="guess-input-container" style={{ width: '80px', display: 'flex', justifyContent: 'center', marginTop: '0px' }}>
+      <div className="guess-input-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '0px' }}>
         <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
           {!guesses[idx] ? (
             <input
@@ -375,12 +375,12 @@ useEffect(() => {
               inputMode="text"
               onFocus={(e) => {
                 setFocusedInput(idx);
-                e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 10px;`);
+                e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 16px;`);
               }}
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '18px', borderRadius: '6px', border: '2px solid #ccc' }}
+              style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '16px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -429,9 +429,6 @@ useEffect(() => {
     </div>
   );
 })}
-
-
-
 
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
