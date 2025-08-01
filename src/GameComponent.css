@@ -235,3 +235,14 @@
     margin: 0 1px;
   }
 }
+.helmet-img-scale {
+  width: 40px;
+  height: 40px;
+}
+
+@media (max-width: 480px) {
+  .helmet-img-scale {
+    width: 32px;
+    height: 32px;
+  }
+}
