@@ -272,3 +272,10 @@
     padding: 4px 8px;
   }
 }
+@media (max-width: 480px) {
+  .font-mobile {
+    font-family: 'Arial', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+}
