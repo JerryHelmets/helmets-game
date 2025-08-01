@@ -331,7 +331,7 @@ useEffect(() => {
       
       
 {dailyPaths.map((path, idx) => {
-  const blockClass = guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : '';
+  const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
   return (
     <div
       key={idx}
@@ -346,7 +346,8 @@ useEffect(() => {
         maxWidth: '440px',
         width: '95%',
         marginInline: 'auto',
-        textAlign: 'center'
+        textAlign: 'center',
+        transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
       <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
