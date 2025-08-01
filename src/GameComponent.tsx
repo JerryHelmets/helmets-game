@@ -300,24 +300,23 @@ const [confettiFired, setConfettiFired] = useState(false);
             onChange={(e) => handleInputChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
             style={{ width: '80%', maxWidth: '300px', padding: '6px 10px', fontSize: '0.9rem', borderRadius: '6px', border: '1px solid #ccc' }}
+            className="guess-input-mobile"}
           /> setFocusedInput(idx)}
             onChange={(e) => handleInputChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
           />
         ) : (
           <div
-  className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile`}
-  style={{
-    padding: '8px 12px',
-    borderRadius: '6px',
-    fontWeight: 'bold',
-    animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
-    color: '#fff',
-    backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-    fontSize: '1rem'
-  }}
->
-
+            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile`}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
+              color: '#fff',
+              backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
+            }}
+          >
             {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
           </div>
         )}
@@ -348,7 +347,6 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
-
 
 
 
