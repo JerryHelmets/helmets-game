@@ -279,7 +279,7 @@ const [confettiFired, setConfettiFired] = useState(false);
       )}
 
       
-  {dailyPaths.map((path, idx) => (
+ {dailyPaths.map((path, idx) => (
   <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }} className="bubble-container-mobile">
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
@@ -320,13 +320,13 @@ const [confettiFired, setConfettiFired] = useState(false);
         )}
 
         {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
-          <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif' }}>
+          <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.2s ease-out' }}>
             {filteredSuggestions[idx].slice(0, 20).map((name, i) => {
               const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
               return (
                 <div
                   key={i}
-                  className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                  className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`} style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif' }}
                   onMouseDown={() => handleGuess(idx, name)}
                 >
                   {match >= 0 ? (
