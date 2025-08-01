@@ -30,6 +30,7 @@ const GameComponent: React.FC = () => {
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
   const [customDate, setCustomDate] = useState(dateParam);
@@ -395,6 +396,7 @@ useEffect(() => {
       ))}
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
+      <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', top: '12px', right: '100px', padding: '6px 10px', fontSize: '0.8rem' }}>💬 Feedback</button>
 
       {showHistory && (
         <div className="popup-modal">
@@ -420,7 +422,21 @@ useEffect(() => {
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <button onClick={handleGiveUp} style={{ padding: '8px 16px', fontSize: '16px' }}>Give Up</button>
       </div>
-
+      
+{showFeedback && (
+        <div className="popup-modal">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
+            <h3>Thoughts? Takes?</h3>
+            <div style={{ display: 'flex', alignItems: 'center', marginTop: '1em' }}>
+              <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
+              <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
+            </div>
+            <button onClick={() => navigator.clipboard.writeText('jerry.helmetsgame@gmail.com')} style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}>Copy Email</button>
+          </div>
+        </div>
+      )}
+      
       {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
