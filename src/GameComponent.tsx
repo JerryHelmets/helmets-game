@@ -351,7 +351,7 @@ useEffect(() => {
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '1px', marginTop: '1px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '0px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
@@ -377,6 +377,7 @@ useEffect(() => {
                 setFocusedInput(idx);
                 e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 16px;`);
               }}
+              onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
               style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '16px', borderRadius: '6px', border: '1px solid #ccc' }}
@@ -386,13 +387,13 @@ useEffect(() => {
             <div
               className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
               style={{
-                padding: '3px 5px',
+                padding: '2px 3px',
                 borderRadius: '6px',
                 fontWeight: 'bold',
                 animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
                 color: '#fff',
                 backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-                fontSize: '0.5rem',
+                fontSize: '0.45rem',
                 textAlign: 'center'
               }}
             >
@@ -408,7 +409,7 @@ useEffect(() => {
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '2px 3px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.5rem' }}
+                    style={{ padding: '2px 3px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.45rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
@@ -428,6 +429,7 @@ useEffect(() => {
     </div>
   );
 })}
+
 
 
 
