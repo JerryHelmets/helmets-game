@@ -330,7 +330,21 @@ useEffect(() => {
       )}
       
       
-<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '12px' }}>
+<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px' }}>
+<style>
+  @media screen and (orientation: landscape) {
+    body {
+      transform: rotate(90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      overflow-x: hidden;
+      position: absolute;
+      top: 100%;
+      left: 0;
+    }
+  }
+</style>
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
   return (
@@ -345,8 +359,8 @@ useEffect(() => {
         padding: '2px 4px',
         marginBottom: '2px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '360px',
-        width: '92%',
+        maxWidth: '380px',
+        width: '94%',
         margin: '2px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
@@ -381,7 +395,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '100%', maxWidth: '270px', padding: '2px 4px', fontSize: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '100%', maxWidth: '300px', padding: '2px 4px', fontSize: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -435,6 +449,7 @@ useEffect(() => {
 
 
 
+
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
       <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', top: '12px', right: '100px', padding: '6px 10px', fontSize: '0.8rem' }}>💬 Feedback</button>
 
@@ -467,7 +482,7 @@ useEffect(() => {
         <div className="popup-modal">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-            <h3>Talk to Jerry...</h3>
+            <h3>Thoughts for Jerry?</h3>
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '1em' }}>
               <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
               <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
