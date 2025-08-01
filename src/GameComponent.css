@@ -216,3 +216,9 @@
   50% { background-color: #ff6b6b; }
   100% { background-color: #dc3545; }
 }
+@media (max-width: 480px) {
+  .helmet-img-responsive {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
