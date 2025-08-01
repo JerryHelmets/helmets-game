@@ -362,8 +362,8 @@ useEffect(() => {
         padding: '2px 4px',
         marginBottom: '2px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '400px',
-        width: '96%',
+        maxWidth: '420px',
+        width: '98%',
         margin: '2px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
@@ -395,7 +395,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '96%', maxWidth: '360px', padding: '2px 6px', fontSize: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '98%', maxWidth: '380px', padding: '2px 6px', fontSize: '5px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -499,42 +499,32 @@ useEffect(() => {
       )}
       
         {showPopup && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
-            <h3>🎉 Game Complete!</h3>
-            <p>You scored {score} pts</p>
-            <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
-            <p>{getEmojiSummary()}</p>
-            <div style={{ marginTop: '1em', textAlign: 'center' }}>
-               <button 
-                onClick={() => setShowShareOptions((prev) => !prev)} 
-                style={{ padding: '8px 14px', fontSize: '0.9rem' }}>
-                Share Score!
-              </button>
-              {showShareOptions && (
-                <div style={{ marginTop: '1em', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <button 
-                    onClick={() => {
-                      copyToClipboard();
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 1500);
-                    }}>
-                    📋 Copy
-                  </button>
-                  <button 
-                    onClick={() => window.open(`sms:?&body=I scored ${score}/5 on Helmets 🏈 in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`, '_blank')}>
-                    📱 Text
-                  </button>
-                  <button onClick={shareOnTwitter}>🐦 Twitter</button>
-                  {copied && <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      </div>
+  <div className="popup-modal fade-in">
+    <div className="popup-content">
+      <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
+      <h3>🎉 Game Complete!</h3>
+      <p>You scored {score} pts</p>
+      <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
+      <p>{getEmojiSummary()}</p>
+      <button onClick={() => {
+        const today = new Date().toISOString().split('T')[0];
+        const correctCount = guesses.filter(g => g && g.correct).length;
+        const shareMsg = `🏈 Helmets Game – ${today}\nScore: ${score} pts\n${correctCount}/5 correct\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}`;
+        if (navigator.share) {
+          navigator.share({
+            title: 'Helmets Game',
+            text: shareMsg,
+            url: window.location.href,
+          }).catch(() => navigator.clipboard.writeText(shareMsg));
+        } else {
+          navigator.clipboard.writeText(shareMsg);
+          alert('Score copied!');
+        }
+      }}>Share Score!</button>
+    </div>
+  </div>
+)}
+</div>
   );
 };
 
