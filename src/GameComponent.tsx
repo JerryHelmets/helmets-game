@@ -351,7 +351,7 @@ useEffect(() => {
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '2px', marginTop: '2px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '1px', marginTop: '1px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
@@ -372,13 +372,14 @@ useEffect(() => {
               ref={(el) => (inputRefs.current[idx] = el)}
               type="text"
               placeholder="Guess Player"
+              inputMode="text"
               onFocus={(e) => {
                 setFocusedInput(idx);
-                e.target.style.fontSize = '16px';
+                e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 16px;`);
               }}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '85%', maxWidth: '100px', padding: '2px 3px', fontSize: '16px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -427,6 +428,7 @@ useEffect(() => {
     </div>
   );
 })}
+
 
 
 
