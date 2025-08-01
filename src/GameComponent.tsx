@@ -283,11 +283,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
-          <img
-            src={`/images/${sanitizeImageName(team)}.png`}
-            alt={team}
-            className="helmet-img"
-          />
+          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className="helmet-img" style={{ width: '32px', height: '32px', objectFit: 'contain' }} className='helmet-img-responsive' />
           {i < path.path.length - 1 && <span className="arrow" style={{ fontSize: '1rem', fontWeight: '700', margin: '0 2px', lineHeight: '1' }}>→</span>}
         </React.Fragment>
       ))}
@@ -346,6 +342,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
+
 
 
 
