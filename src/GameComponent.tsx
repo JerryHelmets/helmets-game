@@ -283,8 +283,8 @@ const [confettiFired, setConfettiFired] = useState(false);
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
-          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className="helmet-img" style={{ width: '40px', height: '40px', objectFit: 'contain' }} className='helmet-img-responsive helmet-img-scale helmet-img-mobile' className='helmet-img-responsive helmet-img-scale' />
-          {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile">→</span>}
+          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className="helmet-img" style={{ width: '40px', height: '40px', objectFit: 'contain' }} className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile' className='helmet-img-responsive helmet-img-scale' />
+          {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
         </React.Fragment>
       ))}
     </div>
@@ -300,14 +300,14 @@ const [confettiFired, setConfettiFired] = useState(false);
             onChange={(e) => handleInputChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
             style={{ width: '80%', maxWidth: '300px', padding: '6px 10px', fontSize: '0.9rem', borderRadius: '6px', border: '1px solid #ccc' }}
-            className="guess-input-mobile"}
+            className="guess-input-mobile font-mobile"}
           /> setFocusedInput(idx)}
             onChange={(e) => handleInputChange(idx, e.target.value)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
           />
         ) : (
           <div
-            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile`}
+            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
             style={{
               padding: '8px 12px',
               borderRadius: '6px',
