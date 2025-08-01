@@ -208,7 +208,39 @@ const [confettiFired, setConfettiFired] = useState(false);
   const [showRules, setShowRules] = useState(() => {
     return localStorage.getItem('rulesShown') !== 'true';
   });
+  const [timer, setTimer] = useState(() => {
+    const stored = localStorage.getItem('helmets-timer');
+    return stored ? parseInt(stored, 10) : 0;
+  });
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    const today = new Date().toLocaleDateString();
+    const lastPlayed = localStorage.getItem('lastPlayedDate');
+    if (lastPlayed !== today) {
+      localStorage.setItem('lastPlayedDate', today);
+      localStorage.removeItem('helmets-guesses');
+      localStorage.removeItem('helmets-timer');
+    }
+  }, []);
 
+  useEffect(() => {
+    if (!showPopup) {
+      timerRef.current = setInterval(() => {
+        setTimer((prev) => {
+          const updated = prev + 1;
+          localStorage.setItem('helmets-timer', updated.toString());
+          return updated;
+        });
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [showPopup]);
+  
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 250, spread: 200, origin: { y: 0.6 } });
@@ -241,7 +273,7 @@ const [confettiFired, setConfettiFired] = useState(false);
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
             <ul style={{ textAlign: 'left' }}>
-              <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets (multiple players may fit one path).</li>
+              <li>🏈 For each level, match one player whose draft college & NFL carerer path matches the helmets (multiple players may share the same path).</li>
               <li>🏈 Only one guess per level.</li>
               <li>🏈 Players active or retired qualify but must have been drafted in 2000 or later.</li>
               <li>🏈 Paths start with draft college, then list NFL teams in order.</li>
