@@ -377,7 +377,6 @@ useEffect(() => {
                 setFocusedInput(idx);
                 e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 16px;`);
               }}
-              onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
               style={{ width: '100%', maxWidth: '210px', padding: '2px 4px', fontSize: '9px', borderRadius: '6px', border: '1px solid #ccc' }}
