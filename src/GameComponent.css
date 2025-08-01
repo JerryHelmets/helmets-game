@@ -261,3 +261,14 @@
     padding: 8px !important;
   }
 }
+@media (max-width: 480px) {
+  .guess-input-mobile {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  .locked-answer-mobile {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+}
