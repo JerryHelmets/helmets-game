@@ -279,12 +279,12 @@ const [confettiFired, setConfettiFired] = useState(false);
       )}
       
 {dailyPaths.map((path, idx) => (
-  <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }}>
+  <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }} className="bubble-container-mobile">
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
-          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className="helmet-img" style={{ width: '32px', height: '32px', objectFit: 'contain' }} className='helmet-img-responsive' />
-          {i < path.path.length - 1 && <span className="arrow helmet-arrow">→</span>}
+          <img src={`/images/${sanitizeImageName(team)}.png`} alt={team} className="helmet-img" style={{ width: '40px', height: '40px', objectFit: 'contain' }} className='helmet-img-responsive helmet-img-scale helmet-img-mobile' className='helmet-img-responsive helmet-img-scale' />
+          {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile">→</span>}
         </React.Fragment>
       ))}
     </div>
@@ -306,16 +306,18 @@ const [confettiFired, setConfettiFired] = useState(false);
           />
         ) : (
           <div
-            className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'}`}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '6px',
-              fontWeight: 'bold',
-              animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
-              color: '#fff',
-              backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-            }}
-          >
+  className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile`}
+  style={{
+    padding: '8px 12px',
+    borderRadius: '6px',
+    fontWeight: 'bold',
+    animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
+    color: '#fff',
+    backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
+    fontSize: '1rem'
+  }}
+>
+
             {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
           </div>
         )}
@@ -346,6 +348,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
+
 
 
 
