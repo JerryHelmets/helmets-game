@@ -279,3 +279,20 @@
     font-weight: 500;
   }
 }
+.helmet-img-fixed {
+  width: 72px;
+  height: 72px;
+}
+
+@media (max-width: 480px) {
+  .helmet-img-fixed {
+    width: 56px;
+    height: 56px;
+  }
+}
+@media (max-width: 480px) {
+  .helmet-img-mobile-lg {
+    width: 80px !important;
+    height: 80px !important;
+  }
+}
