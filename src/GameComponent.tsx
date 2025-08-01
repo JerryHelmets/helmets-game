@@ -401,7 +401,7 @@ useEffect(() => {
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History</h3>
-            <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
+           <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
               {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
                 <button
                   key={date}
@@ -412,20 +412,6 @@ useEffect(() => {
                 </button>
               ))}
             </div>
-            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left' }}>
-              {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date, data]) => (
-                <li key={date} style={{ marginBottom: '10px' }}>
-                  <details>
-                    <summary><strong>{date}:</strong> {data.score}/5 – {Math.floor(data.timer / 60)}:{String(data.timer % 60).padStart(2, '0')}</summary>
-                    <ul style={{ paddingLeft: '1em', marginTop: '5px' }}>
-                      {data.guesses?.map((g, i) => (
-                        <li key={i}>{g ? `${g.guess} – ${g.correct ? '✅' : '❌'}` : '—'}</li>
-                      ))}
-                    </ul>
-                  </details>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       )}
