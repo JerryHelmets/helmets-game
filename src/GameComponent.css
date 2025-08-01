@@ -98,8 +98,10 @@
   display: inline-block;
 }
 .arrow {
-  font-size: 14px;
-  margin: 0 2px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 4px;
+  line-height: 1;
   vertical-align: middle;
 }
 .title-container {
