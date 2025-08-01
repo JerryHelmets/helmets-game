@@ -341,17 +341,17 @@ useEffect(() => {
         borderColor: guesses[idx] ? (guesses[idx].correct ? '#28a745' : '#dc3545') : '#ccc',
         backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
         borderRadius: '12px',
-        padding: '2px 6px 6px 6px',
-        marginBottom: '2px',
+        padding: '4px 6px',
+        marginBottom: '4px',
         boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
         maxWidth: '280px',
         width: '92%',
-        margin: '10px auto 2px auto',
+        margin: '6px auto',
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '2px', marginTop: '4px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '4px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
