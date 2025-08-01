@@ -509,12 +509,13 @@ useEffect(() => {
       <button onClick={() => {
         const today = new Date().toISOString().split('T')[0];
         const correctCount = guesses.filter(g => g && g.correct).length;
-        const shareMsg = `🏈 Helmets Game – ${today}\nScore: ${score} pts\n${correctCount}/5 correct\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}`;
+        const shareMsg = `🏈 Helmets Game – ${today}\nScore: ${score} pts\n${correctCount}/5 correct\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}\nPlay here: https://www.helmets-game.com`;
+
         if (navigator.share) {
           navigator.share({
             title: 'Helmets Game',
-            text: shareMsg,
-            url: window.location.href,
+            text: `${shareMsg}\n\nPlay <here!>: https://www.helmets-game.com`,
+            url: 'https://www.helmets-game.com'
           }).catch(() => navigator.clipboard.writeText(shareMsg));
         } else {
           navigator.clipboard.writeText(shareMsg);
