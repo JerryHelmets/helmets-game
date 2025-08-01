@@ -278,8 +278,8 @@ const [confettiFired, setConfettiFired] = useState(false);
         </div>
       )}
       
-    {dailyPaths.map((path, idx) => (
-  <div key={idx} className="path-block">
+{dailyPaths.map((path, idx) => (
+  <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '16px', marginBottom: '16px', background: '#f9f9f9', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
     <div className="helmet-sequence">
       {path.path.map((team, i) => (
         <React.Fragment key={i}>
@@ -288,7 +288,7 @@ const [confettiFired, setConfettiFired] = useState(false);
             alt={team}
             className="helmet-img"
           />
-          {i < path.path.length - 1 && <span className="arrow" style={{ fontSize: '1rem', fontWeight: '800', margin: '0 2px', lineHeight: '1' }}>→</span>}
+          {i < path.path.length - 1 && <span className="arrow" style={{ fontSize: '1rem', fontWeight: '700', margin: '0 2px', lineHeight: '1' }}>→</span>}
         </React.Fragment>
       ))}
     </div>
@@ -346,6 +346,7 @@ const [confettiFired, setConfettiFired] = useState(false);
     </div>
   </div>
 ))}
+
 
 
 
