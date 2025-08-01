@@ -41,6 +41,11 @@ const GameComponent: React.FC = () => {
   }, []);
 
   useEffect(() => {
+  // Reset guesses when a new game starts
+  setGuesses(Array(dailyPaths.length).fill(null));
+}, [dailyPaths]);
+
+  useEffect(() => {
     fetch('/data/players.csv')
       .then((response) => response.text())
       .then((csvText) => {
