@@ -279,7 +279,7 @@ const [confettiFired, setConfettiFired] = useState(false);
       )}
 
       
-     {dailyPaths.map((path, idx) => (
+    {dailyPaths.map((path, idx) => (
   <div key={idx} className="path-block" style={{ border: '2px solid #ccc', borderRadius: '12px', padding: '12px', marginBottom: '12px', background: '#f9f9f9', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', maxWidth: '440px', width: '95%', marginInline: 'auto', textAlign: 'center' }} className="bubble-container-mobile">
     <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '4px', marginBottom: '12px' }}>
       {path.path.map((team, i) => (
@@ -302,10 +302,6 @@ const [confettiFired, setConfettiFired] = useState(false);
             onKeyDown={(e) => handleKeyDown(e, idx)}
             style={{ width: '80%', maxWidth: '300px', padding: '6px 10px', fontSize: '0.9rem', borderRadius: '6px', border: '1px solid #ccc' }}
             className="guess-input-mobile font-mobile"
-          />
-          /> setFocusedInput(idx)}
-            onChange={(e) => handleInputChange(idx, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(e, idx)}
           />
         ) : (
           <div
