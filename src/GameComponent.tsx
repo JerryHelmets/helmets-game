@@ -504,21 +504,6 @@ useEffect(() => {
                   {copied && <p style={{ color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
                 </div>
               )}
-              <style jsx>{`
-        .path-block.correct {
-          background-color: #d4edda;
-          border-color: #28a745;
-          transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-        .path-block.incorrect {
-          background-color: #f8d7da;
-          border-color: #dc3545;
-          transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-        .path-block {
-          transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-      `}</style>
             </div>
           </div>
         </div>
