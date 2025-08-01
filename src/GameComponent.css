@@ -274,7 +274,7 @@
 }
 @media (max-width: 480px) {
   .font-mobile {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Fira Sans', sans-serif;
     font-size: 0.8rem;
     font-weight: 500;
   }
