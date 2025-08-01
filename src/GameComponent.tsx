@@ -331,7 +331,7 @@ useEffect(() => {
       
       
 <div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px' }}>
-<style>
+<style>{`
   @media screen and (orientation: landscape) {
     body {
       transform: rotate(90deg);
@@ -344,7 +344,7 @@ useEffect(() => {
       left: 0;
     }
   }
-</style>
+`}</style>
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
   return (
@@ -445,6 +445,7 @@ useEffect(() => {
   );
 })}
 </div>
+
 
 
 
