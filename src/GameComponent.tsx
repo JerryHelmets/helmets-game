@@ -330,6 +330,7 @@ useEffect(() => {
       )}
       
       
+<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden' }}>
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
   return (
@@ -344,7 +345,7 @@ useEffect(() => {
         padding: '2px 4px',
         marginBottom: '4px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '320px',
+        maxWidth: '340px',
         width: '95%',
         margin: '2px auto',
         textAlign: 'center',
@@ -377,9 +378,10 @@ useEffect(() => {
                 setFocusedInput(idx);
                 e.target.setAttribute('style', `${e.target.getAttribute('style')}; font-size: 16px;`);
               }}
+              onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '100%', maxWidth: '210px', padding: '2px 4px', fontSize: '9px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '100%', maxWidth: '250px', padding: '2px 4px', fontSize: '7px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -408,7 +410,7 @@ useEffect(() => {
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.7rem' }}
+                    style={{ padding: '4px 6px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.75rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
@@ -428,6 +430,8 @@ useEffect(() => {
     </div>
   );
 })}
+</div>
+
 
 
 
