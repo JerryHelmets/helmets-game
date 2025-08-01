@@ -30,6 +30,7 @@ const GameComponent: React.FC = () => {
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [copied, setCopied] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
@@ -432,7 +433,12 @@ useEffect(() => {
               <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
               <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
             </div>
-            <button onClick={() => navigator.clipboard.writeText('jerry.helmetsgame@gmail.com')} style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}>Copy Email</button>
+            <button onClick={() => {
+              navigator.clipboard.writeText('jerry.helmetsgame@gmail.com');
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }} style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}>Copy Email</button>
+            {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Email copied!</p>}>
           </div>
         </div>
       )}
@@ -447,7 +453,12 @@ useEffect(() => {
             <p>{getEmojiSummary()}</p>
             <div style={{ marginTop: '1em', textAlign: 'left' }}>
             </div>
-            <button onClick={copyToClipboard}>Copy Score</button>
+            <button onClick={() => {
+              copyToClipboard();
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}>Copy Score</button>
+            {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Score copied!</p>}
             <button onClick={shareOnTwitter}>Share on Twitter</button>
           </div>
         </div>
