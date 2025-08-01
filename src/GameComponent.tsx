@@ -279,59 +279,65 @@ const [confettiFired, setConfettiFired] = useState(false);
       )}
       
       {dailyPaths.map((path, idx) => (
-        <div key={idx} className="path-block">
-          <div className="helmet-sequence">
-            {path.path.map((team, i) => (
-              <React.Fragment key={i}>
-                <img
-                  src={`/images/${sanitizeImageName(team)}.png`}
-                  alt={team}
-                  className="helmet-img"
-                />
-                {i < path.path.length - 1 && <span className="arrow">→</span>}
-              </React.Fragment>
-            ))}
-          </div>
-          <div className={`guess-input-container`}>
-            <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
-              <input
-                ref={(el) => (inputRefs.current[idx] = el)}
-                type="text"
-                placeholder="Guess Player"
-                disabled={!!guesses[idx]}
-                onFocus={() => setFocusedInput(idx)}
-                onChange={(e) => handleInputChange(idx, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, idx)}
-              />
-              {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
-                <div className="suggestion-box">
-                  {filteredSuggestions[idx].slice(0, 20).map((name, i) => (
-                    <div
-                      key={i}
-                      className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                      onMouseDown={() => handleGuess(idx, name)}>
-                      {(() => {
-                        const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
-                        if (match >= 0) {
-                          return <>{name.slice(0, match)}<strong>{name.slice(match, match + (inputRefs.current[idx]?.value.length || 0))}</strong>{name.slice(match + (inputRefs.current[idx]?.value.length || 0))}</>;
-                        }
-                        return name;
-                      })()}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {guesses[idx] && (
-                <p className={guesses[idx].correct ? 'correct' : 'incorrect'}>
-                  {guesses[idx].correct
-                    ? `✅ Correct (${path.name})`
-                    : (showPopup ? `❌ Incorrect`)}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+  <div key={idx} className="path-block">
+    <div className="helmet-sequence">
+      {path.path.map((team, i) => (
+        <React.Fragment key={i}>
+          <img
+            src={`/images/${sanitizeImageName(team)}.png`}
+            alt={team}
+            className="helmet-img"
+          />
+          {i < path.path.length - 1 && <span className="arrow">→</span>}
+        </React.Fragment>
       ))}
+    </div>
+
+    <div className="guess-input-container">
+      <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
+        <input
+          ref={(el) => (inputRefs.current[idx] = el)}
+          type="text"
+          placeholder="Guess Player"
+          disabled={!!guesses[idx]}
+          onFocus={() => setFocusedInput(idx)}
+          onChange={(e) => handleInputChange(idx, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e, idx)}
+          value={guesses[idx]?.correct ? path.name : undefined}
+        />
+
+        {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
+          <div className="suggestion-box">
+            {filteredSuggestions[idx].slice(0, 20).map((name, i) => {
+              const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
+              return (
+                <div
+                  key={i}
+                  className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                  onMouseDown={() => handleGuess(idx, name)}
+                >
+                  {match >= 0 ? (
+                    <>
+                      {name.slice(0, match)}
+                      <strong>{name.slice(match, match + (inputRefs.current[idx]?.value.length || 0))}</strong>
+                      {name.slice(match + (inputRefs.current[idx]?.value.length || 0))}
+                    </>
+                  ) : name}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {guesses[idx] && guesses[idx].correct && (
+          <p className="correct">
+            ✅ Correct ({path.name})
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+))}
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <button onClick={handleGiveUp} style={{ padding: '8px 16px', fontSize: '16px' }}>Give Up</button>
