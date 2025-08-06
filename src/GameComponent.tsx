@@ -296,30 +296,10 @@ useEffect(() => {
   localStorage.setItem('helmets-history', JSON.stringify(fullHistory));
 }, [guesses]);
 
-<div style={{ backgroundColor: '#232687', transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
 
-<style>{`
-  input, textarea, select {
-    font-size: 16px !important;
-  }  @media (max-width: 480px) {
-    .path-block {
-      max-width: 95vw !important;
-      margin: 4px auto !important;
-      padding: 6px 6px !important;
-    }
-    .helmet-sequence {
-      gap: 2px !important;
-    }
-    .locked-answer {
-      font-size: 0.65rem !important;
-    }
-    .guess-input input {
-      font-size: 16px !important;
-    }
-  }
-  `}</style>
 
   return (
+  <div className="app-container">
    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
     <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
         <h1 className="game-title">Helmets</h1>
