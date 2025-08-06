@@ -329,16 +329,29 @@ useEffect(() => {
         </div>
       )}
       
-  <div
-  style={{
-    transform: window.innerWidth < 768 ? 'scale(0.92)' : 'none',
-    transformOrigin: 'top center',
-    width: '100vw',
-    overflowX: 'hidden',
-    paddingTop: '24px',
-  }}
->
+<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
 
+<style>{`
+  input, textarea, select {
+    font-size: 16px !important;
+  }  @media (max-width: 480px) {
+    .path-block {
+      max-width: 95vw !important;
+      margin: 4px auto !important;
+      padding: 6px 6px !important;
+    }
+    .helmet-sequence {
+      gap: 2px !important;
+    }
+    .locked-answer {
+      font-size: 0.65rem !important;
+    }
+    .guess-input input {
+      font-size: 16px !important;
+    }
+  }
+  `}</style>
+  
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
   return (
@@ -350,8 +363,8 @@ useEffect(() => {
         borderColor: guesses[idx] ? (guesses[idx].correct ? '#28a745' : '#dc3545') : '#ccc',
         backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
         borderRadius: '10px',
-        padding: '2px 4px',
-        marginBottom: '2px',
+        padding: '6px 6px',
+        marginBottom: '6px',
         boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
         maxWidth: '420px',
         width: '98%',
@@ -360,7 +373,7 @@ useEffect(() => {
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
     >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '1px', marginTop: '0px' }}>
+      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
           <React.Fragment key={i}>
             <img
@@ -386,7 +399,7 @@ useEffect(() => {
               onBlur={() => document.activeElement.blur()}
               onChange={(e) => handleInputChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '98%', maxWidth: '380px', padding: '2px 6px', fontSize: '5px', borderRadius: '6px', border: '1px solid #ccc' }}
+              style={{ width: '98%', maxWidth: '360px', padding: '4px 6px', fontSize: '14px', borderRadius: '6px', border: '1px solid #ccc' }}
               className="guess-input-mobile font-mobile"
             />
           ) : (
@@ -399,7 +412,7 @@ useEffect(() => {
                 animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
                 color: '#fff',
                 backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-                fontSize: '0.45rem',
+                fontSize: '0.65rem',
                 textAlign: 'center'
               }}
             >
@@ -415,7 +428,7 @@ useEffect(() => {
                   <div
                     key={i}
                     className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '6px 10px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.8rem' }}
+                    style={{ padding: '6px 10px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.9rem' }}
                     onMouseDown={() => handleGuess(idx, name)}
                   >
                     {match >= 0 ? (
@@ -498,12 +511,11 @@ useEffect(() => {
       <button onClick={() => {
         const today = new Date().toISOString().split('T')[0];
         const correctCount = guesses.filter(g => g && g.correct).length;
-        const shareMsg = `🏈 Helmets Game – ${today}\nScore: ${score} pts\n${correctCount}/5 correct\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\n${getEmojiSummary()}\nPlay here: https://www.helmets-game.com`;
+        const shareMsg = `🏈 Helmets Game – ${today}\nScore: ${score} pts\n${correctCount}/5\n${getEmojiSummary()}\nPlay here! : https://www.helmets-game.com`;
 
         if (navigator.share) {
           navigator.share({
             title: 'Helmets Game',
-            text: `${shareMsg}\n\nPlay <here!>: https://www.helmets-game.com`,
             url: 'https://www.helmets-game.com'
           }).catch(() => navigator.clipboard.writeText(shareMsg));
         } else {
