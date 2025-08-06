@@ -511,7 +511,7 @@ useEffect(() => {
       <button onClick={() => {
         const today = new Date().toISOString().split('T')[0];
         const correctCount = guesses.filter(g => g && g.correct).length;
-        const shareMsg = `🏈 Helmets Game – ${today}\nScore: ${score} pts\n${correctCount}/5\n${getEmojiSummary()}\nPlay here! : https://www.helmets-game.com`;
+        const shareMsg = `🏈 Helmets Game – ${today}\n${correctCount}/5\nScore: ${score} pts\n\n${getEmojiSummary()}\n\nPlay here! www.helmets-game.com`;
 
         if (navigator.share) {
           navigator.share({
