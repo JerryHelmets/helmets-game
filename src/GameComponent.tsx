@@ -453,7 +453,7 @@ useEffect(() => {
 </div>
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
-      <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', bottom: '12px', left: '0', right: '0', margin: 'auto', width: '120px', padding: '6px 10px', fontSize: '0.8rem' }}>💬 Feedback</button>
+      <button onClick={() => setShowFeedback(true)} style={{ position: 'fixed', bottom: '12px', left: '50%',transform: 'translateX(-50%)',padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>💬 Feedback</button>
 
       {showHistory && (
         <div className="popup-modal">
