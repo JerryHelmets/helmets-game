@@ -299,7 +299,7 @@ useEffect(() => {
 
   return (
   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-    <header style={{ marginBottom: '0.5em' }} className="game-header">
+    <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
         <h1 className="game-title">Helmets</h1>
         <div className="game-subtitle">
           <span>{new Date().toLocaleDateString()}</span>
@@ -331,7 +331,7 @@ useEffect(() => {
         </div>
       )}
       
-<div style={{ transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
+<div style={{ backgroundColor: '#45197D', transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
 
 <style>{`
   input, textarea, select {
