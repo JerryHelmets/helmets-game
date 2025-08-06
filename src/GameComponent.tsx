@@ -351,7 +351,7 @@ useEffect(() => {
             <p><strong>Good Luck!</strong></p>
           </div>
         </div>
-      ))}
+      )}
       
   
 {dailyPaths.map((path, idx) => {
