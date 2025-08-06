@@ -308,4 +308,10 @@
 .path-block-incorrect img {
   filter: grayscale(100%) brightness(85%);
 }
+@media (min-width: 768px) {
+  .game-wrapper {
+    max-width: 700px;
+    font-size: 16px;
+  }
+}
 
