@@ -296,6 +296,28 @@ useEffect(() => {
   localStorage.setItem('helmets-history', JSON.stringify(fullHistory));
 }, [guesses]);
 
+<div style={{ backgroundColor: '#232687', transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
+
+<style>{`
+  input, textarea, select {
+    font-size: 16px !important;
+  }  @media (max-width: 480px) {
+    .path-block {
+      max-width: 95vw !important;
+      margin: 4px auto !important;
+      padding: 6px 6px !important;
+    }
+    .helmet-sequence {
+      gap: 2px !important;
+    }
+    .locked-answer {
+      font-size: 0.65rem !important;
+    }
+    .guess-input input {
+      font-size: 16px !important;
+    }
+  }
+  `}</style>
 
   return (
   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -329,30 +351,8 @@ useEffect(() => {
             <p><strong>Good Luck!</strong></p>
           </div>
         </div>
-      )}
+      ))}
       
-<div style={{ backgroundColor: '#232687', transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
-
-<style>{`
-  input, textarea, select {
-    font-size: 16px !important;
-  }  @media (max-width: 480px) {
-    .path-block {
-      max-width: 95vw !important;
-      margin: 4px auto !important;
-      padding: 6px 6px !important;
-    }
-    .helmet-sequence {
-      gap: 2px !important;
-    }
-    .locked-answer {
-      font-size: 0.65rem !important;
-    }
-    .guess-input input {
-      font-size: 16px !important;
-    }
-  }
-  `}</style>
   
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
@@ -453,7 +453,7 @@ useEffect(() => {
 </div>
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
-      <button onClick={() => setShowFeedback(true)} style={{ position: 'fixed', bottom: '12px', left: '50%',transform: 'translateX(-50%)',padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>💬 Feedback</button>
+      <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', bottom: '2px', left: '50%',transform: 'translateX(-50%)',padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>💬 Feedback</button>
 
       {showHistory && (
         <div className="popup-modal">
