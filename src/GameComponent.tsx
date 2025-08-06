@@ -114,7 +114,7 @@ const GameComponent: React.FC = () => {
 
         setDailyPaths(selected);
         setFilteredSuggestions(Array(selected.length).fill([]));
-        if (!localStorage.getItem('helmets-guesses')) {
+        if (!localStorage.getItem('-guesses')) {
           setGuesses(Array(selected.length).fill(undefined));
         }
       })
@@ -131,7 +131,7 @@ const GameComponent: React.FC = () => {
   }, [score]);
 
   useEffect(() => {
-    localStorage.setItem('helmets-guesses', JSON.stringify(guesses));
+    localStorage.setItem('-guesses', JSON.stringify(guesses));
   }, [guesses]);
 useEffect(() => {
   const hasAnyGuess = guesses.some((g) => g);
@@ -208,7 +208,7 @@ useEffect(() => {
   };
 
   const copyToClipboard = () => {
-    const scoreText = `Helmets Score: ${score}/5\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`;
+    const scoreText = ` Score: ${score}/5\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`;
     navigator.clipboard.writeText(scoreText);
   };
 
@@ -302,7 +302,7 @@ useEffect(() => {
   <div className="app-container">
    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
     <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
-        <h1 className="game-title">Helmets</h1>
+        <h1 className="game-title">HELMETS</h1>
         <div className="game-subtitle">
           <span>{new Date().toLocaleDateString()}</span>
           <span className="score-value"> | Score: {score}</span>
