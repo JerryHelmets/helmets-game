@@ -508,6 +508,6 @@ useEffect(() => {
   </div>
 )}
 </div>
-};
+)};
 
 export default GameComponent;
