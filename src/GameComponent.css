@@ -314,4 +314,12 @@
     font-size: 16px;
   }
 }
-
+.app-container {
+  background-color: #232687;
+  transform: scale(0.92);
+  transform-origin: top center;
+  width: 100vw;
+  overflow-x: hidden;
+  padding-top: 24px;
+  padding-left: 4px;
+  padding-right: 4px;
