@@ -331,7 +331,7 @@ useEffect(() => {
         </div>
       )}
       
-<div style={{ backgroundColor: '#45197D', transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
+<div style={{ backgroundColor: '#232687', transform: 'scale(0.92)', transformOrigin: 'top center', width: '100vw', overflowX: 'hidden', paddingTop: '24px', paddingLeft: '4px', paddingRight: '4px' }}>
 
 <style>{`
   input, textarea, select {
