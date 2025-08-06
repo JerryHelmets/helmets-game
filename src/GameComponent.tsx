@@ -28,6 +28,8 @@ const GameComponent: React.FC = () => {
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([]);
   const [focusedInput, setFocusedInput] = useState<number | null>(null);
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
+  const today = new Date();
+  const formattedDate = `${today.getMonth() + 1}/${today.getDate()}/${String(today.getFullYear()).slice(-2)}`;
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
@@ -297,7 +299,7 @@ useEffect(() => {
 
   return (
   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-    <header className="game-header">
+    <header style={{ marginBottom: '0.5em' }}> className="game-header">
         <h1 className="game-title">Helmets</h1>
         <div className="game-subtitle">
           <span>{new Date().toLocaleDateString()}</span>
@@ -511,7 +513,7 @@ useEffect(() => {
       <button onClick={() => {
         const today = new Date().toISOString().split('T')[0];
         const correctCount = guesses.filter(g => g && g.correct).length;
-        const shareMsg = `🏈 Helmets Game – ${today}\n${correctCount}/5\nScore: ${score} pts\n\n${getEmojiSummary()}\n\nPlay here! www.helmets-game.com`;
+        const shareMsg = `🏈 Helmets Game – ${formattedDate}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nPlay Now! www.helmets-game.com`;
 
         if (navigator.share) {
           navigator.share({
