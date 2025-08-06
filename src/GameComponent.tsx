@@ -318,7 +318,19 @@ useEffect(() => {
     }
   }
   `}</style>
-      
+
+  return (
+   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
+        <h1 className="game-title">Helmets</h1>
+        <div className="game-subtitle">
+          <span>{new Date().toLocaleDateString()}</span>
+          <span className="score-value"> | Score: {score}</span>
+          <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
+        </div>
+        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
+      </header>
+     );
   
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
@@ -415,7 +427,7 @@ useEffect(() => {
       </div>
     </div>
   );
-})}
+})};
 </div>
 
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
@@ -467,17 +479,6 @@ useEffect(() => {
           </div>
         </div>
       )}
-
- <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-    <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
-        <h1 className="game-title">Helmets</h1>
-        <div className="game-subtitle">
-          <span>{new Date().toLocaleDateString()}</span>
-          <span className="score-value"> | Score: {score}</span>
-          <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
-        </div>
-        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
-      </header>
 
       {showRules && (
         <div className="popup-modal fade-in">
