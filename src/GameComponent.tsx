@@ -318,40 +318,6 @@ useEffect(() => {
     }
   }
   `}</style>
-
-  return (
-  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-    <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
-        <h1 className="game-title">Helmets</h1>
-        <div className="game-subtitle">
-          <span>{new Date().toLocaleDateString()}</span>
-          <span className="score-value"> | Score: {score}</span>
-          <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
-        </div>
-        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
-      </header>
-
-      {showRules && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
-            <h2>WELCOME TO HELMETS!</h2>
-            <p><em>Match each helmet path to an NFL player</em></p>
-            <h3>HOW TO PLAY</h3>
-            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', marginTop: '5px' }}>
-              <li>🏈 Match a player to the helmet path on each level.</li>
-              <li>🏈 Only one guess per level.</li>
-              <li>🏈 Multiple players may share the same path.</li>
-              <li>🏈 Player an be any active or retired NFL player drafted in 2000 or later.</li>
-              <li>🏈 Paths start with draft college, then list NFL teams in order of career path.</li>
-              <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
-              <li>🏈 Correct answers score 100–500 pts by level; incorrect = 0 pts.</li>
-              <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
-            </ul>
-            <p><strong>Good Luck!</strong></p>
-          </div>
-        </div>
-      )}
       
   
 {dailyPaths.map((path, idx) => {
@@ -501,7 +467,39 @@ useEffect(() => {
           </div>
         </div>
       )}
-      
+
+ <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
+        <h1 className="game-title">Helmets</h1>
+        <div className="game-subtitle">
+          <span>{new Date().toLocaleDateString()}</span>
+          <span className="score-value"> | Score: {score}</span>
+          <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
+        </div>
+        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
+      </header>
+
+      {showRules && (
+        <div className="popup-modal fade-in">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
+            <h2>WELCOME TO HELMETS!</h2>
+            <p><em>Match each helmet path to an NFL player</em></p>
+            <h3>HOW TO PLAY</h3>
+            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', marginTop: '5px' }}>
+              <li>🏈 Match a player to the helmet path on each level.</li>
+              <li>🏈 Only one guess per level.</li>
+              <li>🏈 Multiple players may share the same path.</li>
+              <li>🏈 Player an be any active or retired NFL player drafted in 2000 or later.</li>
+              <li>🏈 Paths start with draft college, then list NFL teams in order of career path.</li>
+              <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
+              <li>🏈 Correct answers score 100–500 pts by level; incorrect = 0 pts.</li>
+              <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
+            </ul>
+            <p><strong>Good Luck!</strong></p>
+          </div>
+        </div>
+      )}
         {showPopup && (
   <div className="popup-modal fade-in">
     <div className="popup-content">
@@ -529,7 +527,6 @@ useEffect(() => {
   </div>
 )}
 </div>
-  );
 };
 
 export default GameComponent;
