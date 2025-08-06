@@ -296,8 +296,8 @@ useEffect(() => {
 
 
   return (
-  <div>
-      <header className="game-header">
+  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+    <header className="game-header">
         <h1 className="game-title">Helmets</h1>
         <div className="game-subtitle">
           <span>{new Date().toLocaleDateString()}</span>
@@ -406,13 +406,13 @@ useEffect(() => {
             <div
               className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
               style={{
-                padding: '2px 3px',
+                padding: '4px 6px',
                 borderRadius: '6px',
                 fontWeight: 'bold',
                 animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
                 color: '#fff',
                 backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-                fontSize: '0.65rem',
+                fontSize: '0.75rem',
                 textAlign: 'center'
               }}
             >
@@ -516,7 +516,7 @@ useEffect(() => {
         if (navigator.share) {
           navigator.share({
             title: 'Helmets Game',
-            url: 'https://www.helmets-game.com'
+            text: `${shareMsg}`,
           }).catch(() => navigator.clipboard.writeText(shareMsg));
         } else {
           navigator.clipboard.writeText(shareMsg);
