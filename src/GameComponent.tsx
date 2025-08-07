@@ -351,13 +351,7 @@ useEffect(() => {
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
-      onClick={() => {
-        if (showPopup) {
-          const updated = [...revealedAnswers];
-          updated[idx] = !updated[idx];
-          setRevealedAnswers(updated);
-        }
-      }}
+      
     >
       <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
@@ -405,25 +399,6 @@ useEffect(() => {
               {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
             </div>
           )}
-
-onClick={() => {
-  if (gameOver) {
-    const updated = [...revealedAnswers];
-    updated[idx] = !updated[idx];
-    setRevealedAnswers(updated);
-  }
-}}
-          
-{gameOver && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
-  <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
-    <strong>Possible Answers:</strong>
-    <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
-      {answerLists[idx].map((name, i) => (
-        <li key={i}>👤 {name}</li>
-      ))}
-    </ul>
-  </div>
-)}
           
           {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
             <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.3s ease-out' }}>
@@ -455,6 +430,25 @@ onClick={() => {
 })};
 </div>
 
+    
+    onClick={() => {
+  if (gameOver) {
+    const updated = [...revealedAnswers];
+    updated[idx] = !updated[idx];
+    setRevealedAnswers(updated);
+  }
+}}
+          
+{gameOver && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
+  <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
+    <strong>Possible Answers:</strong>
+    <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
+      {answerLists[idx].map((name, i) => (
+        <li key={i}>👤 {name}</li>
+      ))}
+    </ul>
+  </div>
+)}
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
       <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', bottom: '2px', left: '50%',transform: 'translateX(-50%)',padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>💬 Feedback</button>
 
