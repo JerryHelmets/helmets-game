@@ -507,7 +507,6 @@ useEffect(() => {
           setShowPopup(false);
           setShowHistory(true);
         }}
-        className="text-blue-600 underline mt-4"
       >
         Play previous day's games!
       </button>
