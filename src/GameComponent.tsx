@@ -9,6 +9,16 @@ interface PlayerPath {
   path_level: number;
 }
 
+interface RawPlayerRow {
+  name: string;
+  college: string;
+  position: string;
+  teams: string;
+  difficulty: string;
+  path: string;
+  path_level: string;
+}
+
 interface Guess {
   guess: string;
   correct: boolean;
@@ -87,24 +97,35 @@ const GameComponent: React.FC = () => {
   
   useEffect(() => {
     fetch('/data/players.csv')
-      .then((response) => response.text())
-      .then((csvText) => {
-        const parsed = Papa.parse(csvText, { header: true });
-        const rows = parsed.data as any[];
-        const validRows = rows.filter(row => row.name && row.path && row.path_level);
+  .then((response) => response.text())
+  .then((csvText) => {
+    const parsed = Papa.parse(csvText, { header: true });
+    const rows = parsed.data as RawPlayerRow[];
+    
+    const playerData: PlayerPath[] = [];
 
-        const invalidRows = rows.filter(row => !row.path_level || isNaN(parseInt(row.path_level)));
-        if (invalidRows.length > 0) {
-          console.warn(`⚠️ CSV Validation: ${invalidRows.length} rows missing or invalid 'path_level'. They were ignored.`);
-        }
+    rows.forEach((row, i) => {
+      const name = row.name?.trim();
+      const pathStr = row.path?.trim();
+      const levelStr = row.path_level?.trim();
 
-        const playerData: PlayerPath[] = validRows.map((row) => ({
-          name: row.name.trim(),
-          path: row.path.split(',').map((x: string) => x.trim()),
-          path_level: parseInt(row.path_level, 10),
-        }));
+      if (!name || !pathStr || !levelStr) {
+        console.warn(`⚠️ Row ${i} is missing required fields:`, row);
+        return;
+      }
 
-        setPlayers(playerData);
+      const level = parseInt(levelStr, 10);
+      if (isNaN(level)) {
+        console.warn(`⚠️ Row ${i} has invalid 'path level': "${levelStr}"`);
+        return;
+      }
+
+      const path = pathStr.split(',').map(x => x.trim());
+      playerData.push({ name, path, path_level: level });
+    });
+
+    setPlayers(playerData);
+    })
 
         const todayKey = new Date().toISOString().slice(0, 10);
         const hashSeed = todayKey.split('-').join('');
