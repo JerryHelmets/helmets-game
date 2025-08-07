@@ -158,8 +158,7 @@ const GameComponent: React.FC = () => {
           setGuesses(Array(selected.length).fill(undefined));
         }
       })
-      .catch((error) => console.error('Error loading CSV:', error));
-  }, []);
+  .catch((error) => console.error('❌ Error loading CSV:', error));
 
   useEffect(() => {
     const scoreEl = document.querySelector('.score-value');
