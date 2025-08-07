@@ -530,10 +530,10 @@ useEffect(() => {
               <li>🏈 Match a player to the helmet path on each level.</li>
               <li>🏈 Only one guess per level.</li>
               <li>🏈 Multiple players may share the same path.</li>
-              <li>🏈 Player an be any active or retired NFL player drafted in 2000 or later.</li>
+              <li>🏈 Any active or retired NFL player drafted in 2000 or later qualifies.</li>
               <li>🏈 Paths start with draft college, then list NFL teams in order of career path.</li>
               <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
-              <li>🏈 Correct answers score 100–500 pts by level; incorrect = 0 pts.</li>
+              <li>🏈 Each level is worth 100 pts x level multiplier (1-5).</li>
               <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
             </ul>
             <p><strong>Good Luck!</strong></p>
