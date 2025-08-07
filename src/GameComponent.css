@@ -118,7 +118,7 @@
 .game-title {
   display: inline;
   font-size: 32px;
-  font-family: 'Rubik One', sans-serif;
+  font-family: 'Open Sans', sans-serif;
   margin: 0;
   font-weight: bold;
 }
@@ -177,7 +177,7 @@
 
 .game-subtitle {
   font-size: 1rem;
-  color: #000;
+  color: #fff;
   margin-top: 4px;
 }
 .pulse {
