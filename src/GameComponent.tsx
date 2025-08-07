@@ -258,7 +258,7 @@ const [confettiFired, setConfettiFired] = useState(false);
   
   useEffect(() => {
     if (showPopup && !confettiFired) {
-      confetti({ particleCount: 1000, spread: 145, origin: { y: 0.5 } });
+      confetti({ particleCount: 875, spread: 145, origin: { y: 0.5 } });
       setConfettiFired(true);
     }
   }, [showPopup, confettiFired]);
