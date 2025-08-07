@@ -95,70 +95,75 @@ const GameComponent: React.FC = () => {
   setAnswerLists(allAnswers);
 }, [dailyPaths, players]);
   
-  useEffect(() => {
-    fetch('/data/players.csv')
-  .then((response) => response.text())
-  .then((csvText) => {
-    const parsed = Papa.parse(csvText, { header: true });
-    const rows = parsed.data as RawPlayerRow[];
-    
-    const playerData: PlayerPath[] = [];
+ useEffect(() => {
+  fetch('/data/players.csv')
+    .then((response) => response.text())
+    .then((csvText) => {
+      const parsed = Papa.parse(csvText, { header: true });
+      const rows = parsed.data as RawPlayerRow[];
 
-    rows.forEach((row, i) => {
-      const name = row.name?.trim();
-      const pathStr = row.path?.trim();
-      const levelStr = row.path_level?.trim();
+      const playerData: PlayerPath[] = [];
 
-      if (!name || !pathStr || !levelStr) {
-        console.warn(`⚠️ Row ${i} is missing required fields:`, row);
-        return;
+      rows.forEach((row, i) => {
+        const name = row.name?.trim();
+        const pathStr = row.path?.trim();
+        const levelStr = row.path_level?.trim();
+
+        if (!name || !pathStr || !levelStr) {
+          console.warn(`⚠️ Row ${i} is missing required fields:`, row);
+          return;
+        }
+
+        const level = parseInt(levelStr, 10);
+        if (isNaN(level)) {
+          console.warn(`⚠️ Row ${i} has invalid 'path_level': "${levelStr}"`);
+          return;
+        }
+
+        const path = pathStr.split(',').map((x) => x.trim());
+        playerData.push({ name, path, path_level: level });
+      });
+
+      setPlayers(playerData);
+
+      // ✅ All logic below now INSIDE .then(), where playerData is in scope
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const hashSeed = todayKey.split('-').join('');
+      const seed = parseInt(hashSeed, 10);
+      const rng = seededRandom(seed);
+
+      const uniquePathsByLevel: { [level: number]: Map<string, PlayerPath> } = {};
+      for (let i = 1; i <= 5; i++) uniquePathsByLevel[i] = new Map();
+
+      playerData.forEach((p) => {
+        const key = p.path.join('>');
+        if (
+          p.path_level >= 1 &&
+          p.path_level <= 5 &&
+          !uniquePathsByLevel[p.path_level].has(key)
+        ) {
+          uniquePathsByLevel[p.path_level].set(key, p);
+        }
+      });
+
+      const selected: PlayerPath[] = [];
+      for (let level = 1; level <= 5; level++) {
+        const uniqueMap = uniquePathsByLevel[level];
+        const values = Array.from(uniqueMap.values());
+        if (values.length > 0) {
+          const index = Math.floor(rng() * values.length);
+          selected.push(values[index]);
+        }
       }
 
-      const level = parseInt(levelStr, 10);
-      if (isNaN(level)) {
-        console.warn(`⚠️ Row ${i} has invalid 'path level': "${levelStr}"`);
-        return;
+      setDailyPaths(selected);
+      setFilteredSuggestions(Array(selected.length).fill([]));
+      if (!localStorage.getItem('-guesses')) {
+        setGuesses(Array(selected.length).fill(undefined));
       }
-
-      const path = pathStr.split(',').map(x => x.trim());
-      playerData.push({ name, path, path_level: level });
-    });
-
-    setPlayers(playerData);
     })
-
-        const todayKey = new Date().toISOString().slice(0, 10);
-        const hashSeed = todayKey.split('-').join('');
-        const seed = parseInt(hashSeed, 10);
-        const rng = seededRandom(seed);
-
-        const uniquePathsByLevel: { [level: number]: Map<string, PlayerPath> } = {};
-        for (let i = 1; i <= 5; i++) uniquePathsByLevel[i] = new Map();
-
-        playerData.forEach((p) => {
-          const key = p.path.join('>');
-          if (p.path_level >= 1 && p.path_level <= 5 && !uniquePathsByLevel[p.path_level].has(key)) {
-            uniquePathsByLevel[p.path_level].set(key, p);
-          }
-        });
-
-        const selected: PlayerPath[] = [];
-        for (let level = 1; level <= 5; level++) {
-          const uniqueMap = uniquePathsByLevel[level];
-          const values = Array.from(uniqueMap.values());
-          if (values.length > 0) {
-            const index = Math.floor(rng() * values.length);
-            selected.push(values[index]);
-          }
-        }
-
-        setDailyPaths(selected);
-        setFilteredSuggestions(Array(selected.length).fill([]));
-        if (!localStorage.getItem('-guesses')) {
-          setGuesses(Array(selected.length).fill(undefined));
-        }
-      })
-  .catch((error) => console.error('❌ Error loading CSV:', error));
+    .catch((error) => console.error('❌ Error loading CSV:', error));
+}, []);
 
   useEffect(() => {
     const scoreEl = document.querySelector('.score-value');
