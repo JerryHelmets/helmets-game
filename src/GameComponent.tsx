@@ -351,7 +351,13 @@ useEffect(() => {
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
-      
+      onClick={() => {
+  if (gameOver) {
+    const updated = [...revealedAnswers];
+    updated[idx] = !updated[idx];
+    setRevealedAnswers(updated);
+  }
+}}
     >
       <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
@@ -430,14 +436,6 @@ useEffect(() => {
 })};
 </div>
 
-    
-    onClick={() => {
-  if (gameOver) {
-    const updated = [...revealedAnswers];
-    updated[idx] = !updated[idx];
-    setRevealedAnswers(updated);
-  }
-}}
           
 {gameOver && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
   <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
