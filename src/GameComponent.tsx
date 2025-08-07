@@ -511,7 +511,7 @@ useEffect(() => {
         }}
         className="previous-day-games"
       >
-        Play previous day's games!
+        Play previous day's games
       </button>
     </div>
     </div>
