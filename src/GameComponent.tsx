@@ -182,7 +182,9 @@ useEffect(() => {
     };
     setGuesses(updatedGuesses);
     if (matched) {
-      setScore((prev) => prev + 1);
+  const level = dailyPaths[index].path_level;
+  const points = 100 * level * level;
+  setScore((prev) => prev + points);
      const inputBox = inputRefs.current[index];
       if (inputBox) {
         const rect = inputBox.getBoundingClientRect();
