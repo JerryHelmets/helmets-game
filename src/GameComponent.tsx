@@ -183,7 +183,7 @@ useEffect(() => {
     setGuesses(updatedGuesses);
     if (matched) {
   const level = dailyPaths[index].path_level;
-  const points = 100 * level * level;
+  const points = 100 * level;
   setScore((prev) => prev + points);
      const inputBox = inputRefs.current[index];
       if (inputBox) {
