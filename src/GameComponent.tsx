@@ -229,11 +229,7 @@ useEffect(() => {
     const updated = guesses.map((g, i) => g ?? { guess: '', correct: false });
     setGuesses(updated);
     setShowPopup(true);
-  };
-
-  const copyToClipboard = () => {
-    const scoreText = ` Score: ${score}/5\nTime: ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}`;
-    navigator.clipboard.writeText(scoreText);
+    setGameOver(true);
   };
 
   const getEmojiSummary = () => {
