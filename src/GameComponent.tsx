@@ -214,11 +214,6 @@ useEffect(() => {
     navigator.clipboard.writeText(scoreText);
   };
 
-  const shareOnTwitter = () => {
-    const text = encodeURIComponent(`I scored ${score}/5 on Helmets 🏈 in ${Math.floor(timer / 60)}:${String(timer % 60).padStart(2, '0')}\nPlay now!`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-  };
-
   const getEmojiSummary = () => {
     return guesses
       .map((g) => (g?.correct ? '🟩' : '🟥'))
@@ -494,7 +489,7 @@ useEffect(() => {
       <button onClick={() => {
         const today = new Date().toISOString().split('T')[0];
         const correctCount = guesses.filter(g => g && g.correct).length;
-        const shareMsg = `🏈 Helmets Game – ${formattedDate}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nPlay Now! www.helmets-game.com`;
+        const shareMsg = `🏈 Helmets Game – ${formattedDate}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nwww.helmets-game.com`;
 
         if (navigator.share) {
           navigator.share({
