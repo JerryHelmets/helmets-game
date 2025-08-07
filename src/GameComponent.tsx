@@ -41,6 +41,7 @@ const GameComponent: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [revealedAnswers, setRevealedAnswers] = useState<boolean[]>([]);
   const [answerLists, setAnswerLists] = useState<string[][]>([]);
+  const [gameOver, setGameOver] = useState(false);
 
   useEffect(() => {
     if (!customDate) return;
@@ -154,7 +155,10 @@ const GameComponent: React.FC = () => {
 useEffect(() => {
   const hasAnyGuess = guesses.some((g) => g);
   const allAnswered = guesses.length === dailyPaths.length && guesses.every((g) => g);
-  if (hasAnyGuess && allAnswered) setShowPopup(true);
+  if (hasAnyGuess && allAnswered) {
+    setShowPopup(true);
+    setGameOver(true);
+  }
 }, [guesses, dailyPaths.length]);
 
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
@@ -401,17 +405,25 @@ useEffect(() => {
               {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
             </div>
           )}
+
+onClick={() => {
+  if (gameOver) {
+    const updated = [...revealedAnswers];
+    updated[idx] = !updated[idx];
+    setRevealedAnswers(updated);
+  }
+}}
           
-{showPopup && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
-        <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
-          <strong>Possible Answers:</strong>
-          <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
-            {answerLists[idx].map((name, i) => (
-              <li key={i}>👤 {name}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+{gameOver && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
+  <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
+    <strong>Possible Answers:</strong>
+    <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
+      {answerLists[idx].map((name, i) => (
+        <li key={i}>👤 {name}</li>
+      ))}
+    </ul>
+  </div>
+)}
           
           {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
             <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.3s ease-out' }}>
@@ -446,6 +458,7 @@ useEffect(() => {
       <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
       <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', bottom: '2px', left: '50%',transform: 'translateX(-50%)',padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>💬 Feedback</button>
 
+    
       {showHistory && (
         <div className="popup-modal">
           <div className="popup-content">
@@ -514,6 +527,22 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+    {gameOver && (
+  <div style={{
+    textAlign: 'center',
+    padding: '10px',
+    marginBottom: '12px',
+    backgroundColor: '#d1e7dd',
+    color: '#0f5132',
+    border: '1px solid #badbcc',
+    borderRadius: '6px'
+  }}>
+    <h3 style={{ margin: 0 }}>🎯 Game Complete</h3>
+    <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>Click each box to view possible answers</p>
+  </div>
+)}
+    
         {showPopup && (
   <div className="popup-modal fade-in">
     <div className="popup-content">
