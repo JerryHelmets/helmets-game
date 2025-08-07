@@ -315,7 +315,6 @@
   }
 }
 .app-container {
-  background-color:#252252;
   transform: scale(0.92);
   transform-origin: top center;
   width: 100vw;
