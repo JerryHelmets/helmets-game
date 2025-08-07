@@ -219,8 +219,8 @@
 }
 @media (max-width: 480px) {
   .helmet-img-responsive {
-    width: 24px !important;
-    height: 24px !important;
+    width: 24px;
+    height: 24px;
   }
 }
 .helmet-arrow {
@@ -249,17 +249,17 @@
 }
 @media (max-width: 480px) {
   .helmet-img-mobile {
-    width: 32px !important;
-    height: 32px !important;
+    width: 32px;
+    height: 32px;
   }
 
   .helmet-arrow-mobile {
-    font-size: 0.75rem !important;
-    margin: 0 1px !important;
+    font-size: 0.75rem;
+    margin: 0 1px;
   }
 
   .bubble-container-mobile {
-    padding: 8px !important;
+    padding: 6px;
   }
 }
 @media (max-width: 480px) {
@@ -293,8 +293,8 @@
 }
 @media (max-width: 480px) {
   .helmet-img-mobile-lg {
-    width: 80px !important;
-    height: 80px !important;
+    width: 80px;
+    height: 80px;
   }
 }
 .path-block-correct {
