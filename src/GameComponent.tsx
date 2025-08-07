@@ -39,6 +39,8 @@ const GameComponent: React.FC = () => {
   const dateParam = urlParams.get('date');
   const [customDate, setCustomDate] = useState(dateParam);
   const [showHistory, setShowHistory] = useState(false);
+  const [revealedAnswers, setRevealedAnswers] = useState<boolean[]>([]);
+  const [answerLists, setAnswerLists] = useState<string[][]>([]);
 
   useEffect(() => {
     if (!customDate) return;
@@ -66,6 +68,22 @@ const GameComponent: React.FC = () => {
   setGuesses(Array(dailyPaths.length).fill(null));
 }, [dailyPaths]);
 
+  // In useEffect when dailyPaths is set, also reset revealedAnswers and prepare possible answers
+  useEffect(() => {
+  setGuesses(Array(dailyPaths.length).fill(null));
+  setRevealedAnswers(Array(dailyPaths.length).fill(false));
+
+  const allAnswers = dailyPaths.map((targetPath) => {
+    const match = players
+      .filter((p) => p.path.join('>') === targetPath.path.join('>'))
+      .map((p) => p.name)
+      .sort();
+    return match;
+  });
+
+  setAnswerLists(allAnswers);
+}, [dailyPaths, players]);
+  
   useEffect(() => {
     fetch('/data/players.csv')
       .then((response) => response.text())
@@ -329,6 +347,13 @@ useEffect(() => {
         textAlign: 'center',
         transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}
+      onClick={() => {
+        if (showPopup) {
+          const updated = [...revealedAnswers];
+          updated[idx] = !updated[idx];
+          setRevealedAnswers(updated);
+        }
+      }}
     >
       <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '0px' }}>
         {path.path.map((team, i) => (
@@ -376,7 +401,18 @@ useEffect(() => {
               {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
             </div>
           )}
-
+          
+{showPopup && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
+        <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
+          <strong>Possible Answers:</strong>
+          <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
+            {answerLists[idx].map((name, i) => (
+              <li key={i}>👤 {name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+          
           {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
             <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.3s ease-out' }}>
               {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
