@@ -500,13 +500,16 @@ useEffect(() => {
           navigator.clipboard.writeText(shareMsg);
           alert('Score copied!');
         }
-      }}>Share Score!</button>
+      }}
+        className="share-score-button"
+        >Share Score!</button>
       <div className="popup-footer">
       <button
         onClick={() => {
           setShowPopup(false);
           setShowHistory(true);
         }}
+        className="previous-day-games"
       >
         Play previous day's games!
       </button>
