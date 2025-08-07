@@ -189,8 +189,8 @@ useEffect(() => {
       if (inputBox) {
         const rect = inputBox.getBoundingClientRect();
         confetti({
-          particleCount: 60,
-          spread: 80,
+          particleCount: 80,
+          spread: 100,
           origin: {
             x: (rect.left + rect.right) / 2 / window.innerWidth,
             y: rect.bottom / window.innerHeight,
@@ -258,7 +258,7 @@ const [confettiFired, setConfettiFired] = useState(false);
   
   useEffect(() => {
     if (showPopup && !confettiFired) {
-      confetti({ particleCount: 500, spread: 200, origin: { y: 0.6 } });
+      confetti({ particleCount: 1000, spread: 350, origin: { y: 0.6 } });
       setConfettiFired(true);
     }
   }, [showPopup, confettiFired]);
