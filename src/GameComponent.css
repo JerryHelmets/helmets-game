@@ -14,7 +14,7 @@
 /* Helmet row */
 .helmet-sequence {
   display: flex; align-items: center; justify-content: center;
-  flex-wrap: wrap; gap: 6px; margin: 0 0 8px 0;
+  flex-wrap: wrap; gap: 8px; margin: 0 0 10px 0;
 }
 
 /* Popups */
@@ -29,7 +29,9 @@
 
 .popup-content {
   background: white; padding: 2rem; border-radius: 12px; text-align: center;
-  max-width: 420px; box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
+  max-width: 440px; max-height: calc(100dvh - 120px);
+  overflow: auto;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
 .popup-content button { margin: 8px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
@@ -40,42 +42,51 @@
 .guess-input p.incorrect { color: white; background-color: #dc3545; padding: 4px 8px; border-radius: 6px; display: inline-block; }
 
 /* Smaller arrows */
-.arrow { font-size: 0.95rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
-@media (max-width: 480px) { .arrow { font-size: 0.85rem; } }
+.arrow { font-size: 0.9rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
+@media (max-width: 480px) { .arrow { font-size: 0.8rem; } }
 
-/* Header — always visible above backdrop */
-.title-row { display: flex; align-items: center; justify-content: center; gap: 0.5em; margin-bottom: 0.25rem; flex-wrap: nowrap; }
-.game-logo { height: 1.2em; width: auto; display: block; }
-.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.5rem, 3.6vw, 2.4rem); }
+/* Header — bigger logo/title, always above backdrop */
+.title-row { display: flex; align-items: center; justify-content: center; gap: 0.6em; margin-bottom: 0.35rem; flex-wrap: nowrap; }
+.game-logo { height: 1.8em; width: auto; display: block; }            /* bigger */
+.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.8rem, 5vw, 3rem); } /* bigger */
 .game-header { position: relative; z-index: 1001; text-align: center; margin: 16px 0; color: #fff; }
 .game-subtitle { font-size: 1rem; color: #fff; margin-top: 6px; }
 
-@media (max-width: 768px) { .game-title { font-size: clamp(1.3rem, 4vw, 2rem); } }
-@media (max-width: 520px) { .game-title { font-size: clamp(1.15rem, 5.5vw, 1.7rem); } }
-@media (max-width: 360px) { .game-title { font-size: clamp(1.05rem, 6vw, 1.4rem); } }
+@media (max-width: 768px) { .game-title { font-size: clamp(1.6rem, 5.4vw, 2.5rem); } }
+@media (max-width: 520px) { .game-title { font-size: clamp(1.4rem, 6.2vw, 2.2rem); } }
+@media (max-width: 360px) { .game-title { font-size: clamp(1.25rem, 6.6vw, 1.9rem); } }
 
 /* Layout and common */
 .path-block {
-  border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
+  border: 2px solid; border-radius: 16px; padding: 12px; margin-bottom: 12px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-  max-width: 520px; width: 98%;
+  max-width: 560px; width: min(98%, 560px);
   margin-left: auto; margin-right: auto; text-align: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   background: #f9f9f9;
 }
-.path-block-default { border-color: #ccc; }
+.path-block-default { border-color: #d0d0d0; }
 .path-block-correct { background-color: #e6ffe6; border-color: #28a745; }
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
+/* Overall page fits screen; we add small scale on very narrow phones */
 .app-container {
-  /* Removed old transform scale for better mobile fit */
   width: 100%;
-  max-width: 720px;
+  max-width: 820px;                /* allow bigger active card */
   margin: 0 auto;
   padding: 24px 8px 40px;
   overflow-x: hidden;
+  min-height: 100dvh;              /* lock to viewport height */
+  display: block;
 }
+@media (max-width: 390px) {
+  .app-container { transform: scale(0.94); transform-origin: top center; }
+}
+@media (max-width: 350px) {
+  .app-container { transform: scale(0.9); transform-origin: top center; }
+}
+
 .share-score-button { background-color: #417ff0; color: #ffff; }
 .previous-day-games { font-size: 11px; }
 
@@ -91,7 +102,7 @@
 /* Input — visually smaller, still >=16px to avoid iOS zoom */
 .guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
 .guess-input-field {
-  width: 98%; max-width: 360px; padding: 6px 8px; font-size: 16px; /* keep 16px */
+  width: 98%; max-width: 360px; padding: 4px 6px; font-size: 16px; /* keep 16px */
   border-radius: 8px; border: 1px solid #ccc;
   -webkit-text-size-adjust: 100%;
 }
@@ -119,7 +130,7 @@
 
 /* ---- One-by-one flow ---- */
 
-/* Backdrop below header */
+/* Backdrop below header (header z-index is 1001) */
 .level-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.38);
   backdrop-filter: blur(1.2px); z-index: 1000; pointer-events: none;
@@ -132,18 +143,21 @@
   overflow: hidden;
 }
 
-/* Active card — bigger but mobile-safe & centered */
+/* Active card — bigger, centered, SOLID light canvas, mobile-safe */
 .level-card--active {
   position: fixed;
   left: 50%; top: 50%;
-  transform: translate(-50%, -50%);      /* center perfectly */
-  width: min(96vw, 640px);               /* bigger, but fits mobile */
-  max-height: calc(100vh - 140px);       /* keep within screen */
+  transform: translate(-50%, -50%);
+  width: min(96vw, 700px);              /* larger but safe */
+  max-height: calc(100dvh - 140px);     /* keep within screen */
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+  background: #ffffff;                   /* <-- solid light canvas */
+  border: 2px solid #e5e7eb;            /* subtle border */
+  border-radius: 18px;
+  padding: 14px;                         /* inner breathing room */
   animation: card-enter 560ms cubic-bezier(.2,.8,.2,1) 220ms both;
-  background: inherit; /* match underlying block bg */
 }
 
 /* Locked / done */
@@ -172,8 +186,8 @@
   position: absolute; top: 8px; left: 8px;
   z-index: 2;
   background: rgba(0,0,0,0.65);
-  color: #fff; font-weight: 700; font-size: 0.9rem;
-  padding: 4px 8px; border-radius: 8px;
+  color: #fff; font-weight: 700; font-size: 0.95rem;
+  padding: 6px 10px; border-radius: 10px;
   line-height: 1;
 }
 .level-badge.won { background: #28a745; }
@@ -183,7 +197,7 @@
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; }
 
-/* Helmet spin/appear (bigger helmets) */
+/* Helmet spin/appear (BIGGER HELMETS) */
 @keyframes spin-fade-in {
   0%   { opacity: 0; transform: rotate(-210deg) scale(0.86); }
   100% { opacity: 1; transform: rotate(0deg)    scale(1.00); }
@@ -196,6 +210,8 @@
   animation-delay: calc(var(--i, 0ms) + 220ms);
   animation-fill-mode: both;
 }
+
+/* Arrows fade a bit later */
 @keyframes arrow-fade-in {
   from { opacity: 0; transform: translateY(2px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -211,7 +227,7 @@
   to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
-/* Skip button (blue, slightly smaller) */
+/* Skip button (blue, compact) */
 .skip-button {
   margin-top: 10px;
   padding: 5px 9px;
@@ -224,14 +240,14 @@
 }
 .skip-button:hover { filter: brightness(1.06); }
 
-/* Bigger helmets */
+/* BIGGER helmets */
 .helmet-icon {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
 }
 @media (max-width: 480px) {
-  .helmet-icon { width: 44px; height: 44px; }
+  .helmet-icon { width: 52px; height: 52px; }
 }
 
 /* Reduce motion */
