@@ -8,7 +8,6 @@ interface PlayerPath {
   path: string[];
   path_level: number;
 }
-
 interface RawPlayerRow {
   name: string;
   college: string;
@@ -18,12 +17,10 @@ interface RawPlayerRow {
   path: string;
   path_level: string;
 }
-
 interface Guess {
   guess: string;
   correct: boolean;
 }
-
 type StoredGuesses = {
   date: string;
   guesses: (Guess | null)[];
@@ -34,7 +31,7 @@ type StoredGuesses = {
 const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_TIMER = 'helmets-timer';
-const LS_LAST_PLAYED = 'lastPlayedDateET'; // ET YYYY-MM-DD
+const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
 /* ---------- Eastern Time helpers ---------- */
@@ -118,7 +115,7 @@ const GameComponent: React.FC = () => {
   const params = new URLSearchParams(window.location.search);
   const dateParam = params.get('date'); // YYYY-MM-DD
   const todayET = todayETISO();
-  const gameDate = dateParam || todayET; // use ET for seeding + storage
+  const gameDate = dateParam || todayET;
   const shareDateMMDDYY = todayET_MMDDYY();
 
   /* State */
@@ -144,6 +141,26 @@ const GameComponent: React.FC = () => {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
+
+  /* --------- MOBILE VIEWPORT LOCK (prevents jumping when keyboard opens) --------- */
+  useEffect(() => {
+    // Lock a fixed app height at mount/orientationchange; do NOT update on keyboard resize.
+    const setInitialHeight = () => {
+      const h = window.innerHeight; // initial visual height
+      document.documentElement.style.setProperty('--app-height', `${h}px`);
+    };
+    setInitialHeight();
+
+    const onOrientation = () => {
+      // Reset height shortly after rotation to new stable height
+      setTimeout(setInitialHeight, 250);
+    };
+    window.addEventListener('orientationchange', onOrientation);
+
+    return () => {
+      window.removeEventListener('orientationchange', onOrientation);
+    };
+  }, []);
 
   /* Lock/unlock page scroll while a level is active */
   useEffect(() => {
@@ -205,7 +222,7 @@ const GameComponent: React.FC = () => {
     let s = 0; let t = 0;
 
     if (dateParam) {
-      // Viewing a past day (still playable)
+      // Viewing/playing a past day
       const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
       const data = history[gameDate];
       if (data) { g = data.guesses || g; s = data.score || 0; t = data.timer || 0; }
@@ -336,7 +353,6 @@ const GameComponent: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     if (!filteredSuggestions[idx]) return;
     const max = filteredSuggestions[idx].length; if (!max) return;
-
     if (e.key === 'ArrowDown') { setHighlightIndex((prev) => (prev + 1) % max); e.preventDefault(); }
     else if (e.key === 'ArrowUp') { setHighlightIndex((prev) => (prev - 1 + max) % max); e.preventDefault(); }
     else if (e.key === 'Enter' && highlightIndex >= 0) { handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
@@ -350,7 +366,6 @@ const GameComponent: React.FC = () => {
 
   const handleGuess = (index: number, value: string) => {
     if (guesses[index]) return; // locked
-
     const correctPath = dailyPaths[index]?.path.join('>');
     const matched = players.find(
       (p) => p.name.toLowerCase() === value.toLowerCase() && p.path.join('>') === correctPath
@@ -361,7 +376,7 @@ const GameComponent: React.FC = () => {
     setGuesses(updatedGuesses);
 
     if (matched) {
-      const level = index + 1; // 1..5
+      const level = index + 1;
       const points = 100 * level;
       setScore((prev) => prev + points);
 
@@ -387,11 +402,9 @@ const GameComponent: React.FC = () => {
     const updated = [...guesses];
     updated[index] = { guess: 'Skipped', correct: false };
     setGuesses(updated);
-
     const sugg = [...filteredSuggestions];
     sugg[index] = [];
     setFilteredSuggestions(sugg);
-
     advanceToNext(index);
   };
 
@@ -408,9 +421,10 @@ const GameComponent: React.FC = () => {
   /* History list (last 30 days ET) */
   const last30Dates = useMemo(() => getLastNDatesET(30), []);
 
-  /* Render */
+  const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
+
   return (
-    <div className={`app-container ${gameOver ? 'is-complete' : ''}`}>
+    <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''}`}>
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
@@ -426,7 +440,7 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
-      {/* Backdrop sits BELOW header to keep header visible */}
+      {/* Stronger dim backdrop (doesn't cover header) */}
       {started && !gameOver && !showPopup && (
         <div className="level-backdrop" aria-hidden="true" />
       )}
@@ -464,15 +478,12 @@ const GameComponent: React.FC = () => {
               }
             }}
           >
-            {/* Level multiplier / points badge */}
             <div className={badgeClass} aria-hidden="true">{badgeText}</div>
 
-            {/* Cover for hidden levels */}
             <div className="level-cover" aria-hidden={!isCovered}>
               <span className="level-cover-label">Level {idx + 1}</span>
             </div>
 
-            {/* Content (shows when active or done) */}
             <div className="helmet-sequence">
               {path.path.map((team, i) => (
                 <React.Fragment key={i}>
@@ -482,9 +493,7 @@ const GameComponent: React.FC = () => {
                     className="helmet-icon"
                     style={{ ['--i' as any]: `${i * 180}ms` }}
                   />
-                  {i < path.path.length - 1 && (
-                    <span className="arrow">→</span>
-                  )}
+                  {i < path.path.length - 1 && <span className="arrow">→</span>}
                 </React.Fragment>
               ))}
             </div>
@@ -504,7 +513,6 @@ const GameComponent: React.FC = () => {
                       disabled={!inputEnabled}
                     />
 
-                    {/* suggestions */}
                     {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                       <div className="suggestion-box fade-in-fast">
                         {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
@@ -522,30 +530,21 @@ const GameComponent: React.FC = () => {
                                   <strong>{name.slice(match, match + typed.length)}</strong>
                                   {name.slice(match + typed.length)}
                                 </>
-                              ) : (
-                                name
-                              )}
+                              ) : name}
                             </div>
                           );
                         })}
                       </div>
                     )}
 
-                    {/* Skip below suggestions */}
                     {inputEnabled && (
-                      <button
-                        className="skip-button"
-                        type="button"
-                        onClick={() => handleSkip(idx)}
-                      >
+                      <button className="skip-button" type="button" onClick={() => handleSkip(idx)}>
                         Skip (0 points)
                       </button>
                     )}
                   </>
                 ) : (
-                  <div
-                    className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
-                  >
+                  <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
                     {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
                   </div>
                 )}
@@ -556,9 +555,7 @@ const GameComponent: React.FC = () => {
               <div className="possible-answers">
                 <strong>Possible Answers:</strong>
                 <ul className="possible-answers-list">
-                  {answerLists[idx].map((name, i) => (
-                    <li key={i}>👤 {name}</li>
-                  ))}
+                  {answerLists[idx].map((name, i) => (<li key={i}>👤 {name}</li>))}
                 </ul>
               </div>
             )}
@@ -570,7 +567,7 @@ const GameComponent: React.FC = () => {
       <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       <button onClick={() => setShowFeedback(true)} className="fab-button fab-feedback">💬 Feedback</button>
 
-      {/* History modal — last 30 ET days */}
+      {/* History modal */}
       {showHistory && (
         <div className="popup-modal">
           <div className="popup-content">
