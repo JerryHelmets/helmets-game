@@ -361,7 +361,7 @@ const GameComponent: React.FC = () => {
     <div className="app-container">
     <header className="game-header">
   <div className="title-row">
-    <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
+    <img className="game-logo" src="/Helmets Game Logov44.png" alt="Game Logo" />
     <h1 className="game-title">HELMETS</h1>
   </div>
 
