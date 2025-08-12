@@ -145,6 +145,24 @@ const GameComponent: React.FC = () => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
 
+  /* Lock/unlock page scroll while a level is active */
+  useEffect(() => {
+    const shouldLock = started && !gameOver && !showPopup;
+    const origHtml = document.documentElement.style.overflow;
+    const origBody = document.body.style.overflow;
+    if (shouldLock) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.documentElement.style.overflow = origHtml;
+      document.body.style.overflow = origBody;
+    };
+  }, [started, gameOver, showPopup]);
+
   /* Load players once */
   useEffect(() => {
     let cancelled = false;
@@ -192,10 +210,9 @@ const GameComponent: React.FC = () => {
       const data = history[gameDate];
       if (data) { g = data.guesses || g; s = data.score || 0; t = data.timer || 0; }
       setGuesses(g); setScore(s); setTimer(t);
-      // Don’t auto-complete; let users play old days if they hadn’t.
       const firstNull = g.findIndex(x => !x);
       setActiveLevel(firstNull === -1 ? dailyPaths.length - 1 : firstNull);
-      setStarted(getStartedFor(gameDate) || g.some(Boolean)); // allow resume
+      setStarted(getStartedFor(gameDate) || g.some(Boolean));
       setGameOver(isComplete(g, dailyPaths.length));
       setShowPopup(isComplete(g, dailyPaths.length));
     } else {
@@ -220,7 +237,7 @@ const GameComponent: React.FC = () => {
 
       const complete = isComplete(g, dailyPaths.length);
       setGameOver(complete);
-      setShowPopup(complete);                 // show on refresh if completed
+      setShowPopup(complete);
       setShowRules(!startedFlag && !complete);
     }
 
@@ -230,7 +247,7 @@ const GameComponent: React.FC = () => {
 
   /* Per-day (ET) timer reset for today only */
   useEffect(() => {
-    if (dateParam) return; // viewing history - don't mutate timer baseline
+    if (dateParam) return;
     const lastET = localStorage.getItem(LS_LAST_PLAYED);
     if (lastET !== todayET) {
       localStorage.setItem(LS_LAST_PLAYED, todayET);
@@ -238,16 +255,13 @@ const GameComponent: React.FC = () => {
     }
   }, [todayET, dateParam]);
 
-  /* Persist (don’t overwrite when viewing history) */
+  /* Persist archive for any viewed day; quick payload for today */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
-
-    // Always archive progress for the current gameDate (even past days)
     history[gameDate] = { guesses, score, timer };
     localStorage.setItem(LS_HISTORY, JSON.stringify(history));
 
-    // For today, also keep a quick access payload
     if (!dateParam) {
       const payload: StoredGuesses = { date: gameDate, guesses, score, timer };
       localStorage.setItem(LS_GUESSES, JSON.stringify(payload));
@@ -280,7 +294,7 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion during play (today only) */
+  /* Completion detection */
   useEffect(() => {
     if (!dailyPaths.length) return;
     if (isComplete(guesses, dailyPaths.length)) {
@@ -391,7 +405,7 @@ const GameComponent: React.FC = () => {
 
   const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
 
-  /* Last 30 days (ET) for History grid */
+  /* History list (last 30 days ET) */
   const last30Dates = useMemo(() => getLastNDatesET(30), []);
 
   /* Render */
@@ -556,7 +570,7 @@ const GameComponent: React.FC = () => {
       <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       <button onClick={() => setShowFeedback(true)} className="fab-button fab-feedback">💬 Feedback</button>
 
-      {/* History modal — last 30 ET days, always playable */}
+      {/* History modal — last 30 ET days */}
       {showHistory && (
         <div className="popup-modal">
           <div className="popup-content">
@@ -605,7 +619,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Rules modal — shown if not started & not completed (today view) */}
+      {/* Rules modal — today only */}
       {showRules && !dateParam && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
