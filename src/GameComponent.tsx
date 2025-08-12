@@ -340,6 +340,11 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
+      /* Dim the background while focusing a level */
+{started && !gameOver && !showPopup && (
+  <div className="level-backdrop" aria-hidden="true" />
+)}
+
       {dailyPaths.map((path, idx) => {
         const blockClass =
           guesses[idx] ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
