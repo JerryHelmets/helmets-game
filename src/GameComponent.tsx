@@ -8,6 +8,7 @@ interface PlayerPath {
   path: string[];
   path_level: number;
 }
+
 interface RawPlayerRow {
   name: string;
   college: string;
@@ -17,10 +18,12 @@ interface RawPlayerRow {
   path: string;
   path_level: string;
 }
+
 interface Guess {
   guess: string;
   correct: boolean;
 }
+
 type StoredGuesses = {
   date: string;
   guesses: (Guess | null)[];
@@ -31,8 +34,9 @@ type StoredGuesses = {
 const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_TIMER = 'helmets-timer';
+const LS_RULES = 'rulesShown';
 const LS_LAST_PLAYED = 'lastPlayedDate';
-const LS_STARTED = 'helmets-started'; // per-day start flag map
+const LS_STARTED = 'helmets-started'; // per-day start map
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 
@@ -46,25 +50,39 @@ function seededRandom(seed: number) {
 function pickDailyPaths(players: PlayerPath[], date: string): PlayerPath[] {
   const seed = parseInt(date.split('-').join(''), 10);
   const rng = seededRandom(seed);
-  const buckets: Record<number, Map<string, PlayerPath>> = { 1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map() };
-  players.forEach(p => {
+
+  const buckets: Record<number, Map<string, PlayerPath>> = {
+    1: new Map(),
+    2: new Map(),
+    3: new Map(),
+    4: new Map(),
+    5: new Map(),
+  };
+
+  players.forEach((p) => {
     if (p.path_level >= 1 && p.path_level <= 5) {
       const key = p.path.join('>');
       if (!buckets[p.path_level].has(key)) buckets[p.path_level].set(key, p);
     }
   });
+
   const selected: PlayerPath[] = [];
-  for (let lvl=1; lvl<=5; lvl++) {
+  for (let lvl = 1; lvl <= 5; lvl++) {
     const arr = Array.from(buckets[lvl].values());
-    if (arr.length) selected.push(arr[Math.floor(rng()*arr.length)]);
+    if (arr.length) selected.push(arr[Math.floor(rng() * arr.length)]);
   }
   return selected;
 }
+
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
-  return targets.map(t =>
-    players.filter(p => p.path.join('>') === t.path.join('>')).map(p => p.name).sort()
+  return targets.map((t) =>
+    players
+      .filter((p) => p.path.join('>') === t.path.join('>'))
+      .map((p) => p.name)
+      .sort()
   );
 }
+
 const isComplete = (guesses: (Guess | null)[], total: number) =>
   guesses.length === total && guesses.every(Boolean);
 
@@ -99,20 +117,22 @@ const GameComponent: React.FC = () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
-  const [customDate] = useState(dateParam); // history mode if set
+  const [customDate] = useState(dateParam); // history mode if present
 
   const today = todayISO();
-  const formattedDate = `${new Date().getMonth()+1}/${new Date().getDate()}/${String(new Date().getFullYear()).slice(-2)}`;
+  const formattedDate = `${new Date().getMonth() + 1}/${new Date().getDate()}/${String(
+    new Date().getFullYear()
+  ).slice(-2)}`;
 
   // one-by-one flow
   const [started, setStarted] = useState<boolean>(() => getStartedFor(today));
   const [activeLevel, setActiveLevel] = useState<number>(0);
-  const [showRules, setShowRules] = useState<boolean>(false); // shown if not started today
+  const [showRules, setShowRules] = useState<boolean>(false); // auto shown if not started
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  // load players once
+  // --- load players once ---
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -130,20 +150,25 @@ const GameComponent: React.FC = () => {
           if (!name || !pathStr || !levelStr) return;
           const level = parseInt(levelStr, 10);
           if (Number.isNaN(level)) return;
-          const path = pathStr.split(',').map(s => s.trim());
+          const path = pathStr.split(',').map((s) => s.trim());
           loaded.push({ name, path, path_level: level });
         });
+
         if (!cancelled) setPlayers(loaded);
-      } catch (e) { console.error('❌ Error loading CSV:', e); }
+      } catch (e) {
+        console.error('❌ Error loading CSV:', e);
+      }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // derived
+  // --- derived: dailyPaths & answerLists ---
   const dailyPaths = useMemo(() => pickDailyPaths(players, today), [players, today]);
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
 
-  // hydrate/init (and decide onboarding & popup)
+  // --- init / hydrate ---
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -172,21 +197,21 @@ const GameComponent: React.FC = () => {
       const any = g.some(Boolean);
       const startedFlag = any || getStartedFor(today);
       setStarted(startedFlag);
-      // first null for active, else last
+
       const firstNull = g.findIndex(x => !x);
       setActiveLevel(firstNull === -1 ? dailyPaths.length - 1 : firstNull);
 
       const complete = isComplete(g, dailyPaths.length);
       setGameOver(complete);
-      setShowPopup(complete);           // show on refresh if completed
-      setShowRules(!startedFlag && !complete); // show rules if not started and not complete
+      setShowPopup(complete);                 // show on refresh if completed
+      setShowRules(!startedFlag && !complete); // auto-show rules if new
     }
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
   }, [dailyPaths, today, customDate]);
 
-  // per-day reset
+  // --- per-day reset marker (timer only) ---
   useEffect(() => {
     const todayHuman = new Date().toLocaleDateString();
     const last = localStorage.getItem(LS_LAST_PLAYED);
@@ -196,7 +221,7 @@ const GameComponent: React.FC = () => {
     }
   }, []);
 
-  // persist
+  // --- persist guesses/score/timer & history ---
   useEffect(() => {
     if (!dailyPaths.length || customDate) return;
     const payload: StoredGuesses = { date: today, guesses, score, timer };
@@ -206,30 +231,36 @@ const GameComponent: React.FC = () => {
     localStorage.setItem(LS_HISTORY, JSON.stringify(history));
   }, [guesses, score, timer, today, dailyPaths.length, customDate]);
 
-  // score pulse
+  // --- score pulse micro-effect ---
   useEffect(() => {
-    const el = document.querySelector('.score-value'); if (!el) return;
-    el.classList.add('pulse'); const t = window.setTimeout(() => el.classList.remove('pulse'), 300);
+    const el = document.querySelector('.score-value');
+    if (!el) return;
+    el.classList.add('pulse');
+    const t = window.setTimeout(() => el.classList.remove('pulse'), 300);
     return () => window.clearTimeout(t);
   }, [score]);
 
-  // timer
+  // --- timer start/stop ---
   useEffect(() => {
     if (!showPopup && !customDate) {
       timerRef.current = window.setInterval(() => {
-        setTimer(prev => {
+        setTimer((prev) => {
           const next = prev + 1;
           localStorage.setItem(LS_TIMER, String(next));
           return next;
         });
       }, 1000);
     } else if (timerRef.current) {
-      window.clearInterval(timerRef.current); timerRef.current = null;
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-    return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
   }, [showPopup, customDate]);
 
-  // completion during play
+  // --- completion during play ---
   useEffect(() => {
     if (!dailyPaths.length || customDate) return;
     if (isComplete(guesses, dailyPaths.length)) {
@@ -238,14 +269,22 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, dailyPaths.length, customDate]);
 
-  // focus active input when switching
+  // --- focus active level input ---
   useEffect(() => {
     if (!started || gameOver || customDate) return;
     const el = inputRefs.current[activeLevel];
     if (el) el.focus();
   }, [activeLevel, started, gameOver, customDate]);
 
-  // confetti
+  // --- scroll active to center ---
+  useEffect(() => {
+    if (!started || gameOver || customDate) return;
+    const cards = document.querySelectorAll<HTMLElement>('.level-card');
+    const card = cards[activeLevel];
+    card?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [activeLevel, started, gameOver, customDate]);
+
+  // --- confetti once per popup display ---
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 875, spread: 145, origin: { y: 0.5 } });
@@ -253,7 +292,7 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  // handlers
+  // --- handlers ---
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
   const handleInputChange = (index: number, value: string) => {
@@ -271,15 +310,19 @@ const GameComponent: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     if (!filteredSuggestions[idx]) return;
     const max = filteredSuggestions[idx].length; if (!max) return;
-    if (e.key === 'ArrowDown') { setHighlightIndex(prev => (prev + 1) % max); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { setHighlightIndex(prev => (prev - 1 + max) % max); e.preventDefault(); }
+
+    if (e.key === 'ArrowDown') { setHighlightIndex((prev) => (prev + 1) % max); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { setHighlightIndex((prev) => (prev - 1 + max) % max); e.preventDefault(); }
     else if (e.key === 'Enter' && highlightIndex >= 0) { handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
   };
 
   const handleGuess = (index: number, value: string) => {
     if (guesses[index]) return; // locked
+
     const correctPath = dailyPaths[index]?.path.join('>');
-    const matched = players.find(p => p.name.toLowerCase() === value.toLowerCase() && p.path.join('>') === correctPath);
+    const matched = players.find(
+      (p) => p.name.toLowerCase() === value.toLowerCase() && p.path.join('>') === correctPath
+    );
 
     const updatedGuesses = [...guesses];
     updatedGuesses[index] = { guess: value, correct: !!matched };
@@ -288,25 +331,30 @@ const GameComponent: React.FC = () => {
     if (matched) {
       const level = dailyPaths[index].path_level;
       const points = 100 * level;
-      setScore(prev => prev + points);
+      setScore((prev) => prev + points);
+
       const inputBox = inputRefs.current[index];
       if (inputBox) {
         const rect = inputBox.getBoundingClientRect();
         confetti({
-          particleCount: 80, spread: 100,
-          origin: { x: (rect.left + rect.right) / 2 / window.innerWidth, y: rect.bottom / window.innerHeight }
+          particleCount: 80,
+          spread: 100,
+          origin: {
+            x: (rect.left + rect.right) / 2 / window.innerWidth,
+            y: rect.bottom / window.innerHeight,
+          },
         });
       }
     }
 
-    // move to next level after short beat
+    // advance to next level quickly
     if (index < dailyPaths.length - 1) {
-      setTimeout(() => setActiveLevel(index + 1), 250);
+      setTimeout(() => setActiveLevel(index + 1), 180);
     }
   };
 
   const handleGiveUp = () => {
-    const updated = guesses.map(g => g ?? ({ guess: '', correct: false }));
+    const updated = guesses.map((g) => g ?? { guess: '', correct: false });
     setGuesses(updated);
     setShowPopup(true);
     setGameOver(true);
@@ -317,17 +365,21 @@ const GameComponent: React.FC = () => {
     setStartedFor(today, true);
     setShowRules(false);
     setActiveLevel(0);
-    setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    setTimeout(() => inputRefs.current[0]?.focus(), 80);
   };
 
-  const getEmojiSummary = () => guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('');
+  const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
 
   // --- render ---
   return (
     <div className="app-container">
       <header className="game-header">
         <div className="title-row">
-          <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
+          <img
+            className="game-logo"
+            src="/android-chrome-outline-large-512x512.png"
+            alt="Game Logo"
+          />
           <h1 className="game-title">HELMETS</h1>
         </div>
 
@@ -337,31 +389,38 @@ const GameComponent: React.FC = () => {
           <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
         </div>
 
-        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
+        <button className="rules-button" onClick={() => setShowRules(true)}>
+          Rules
+        </button>
       </header>
 
-      /* Dim the background while focusing a level */
-{started && !gameOver && !showPopup && (
-  <div className="level-backdrop" aria-hidden="true" />
-)}
+      {/* Dim the background while focusing a level */}
+      {started && !gameOver && !showPopup && (
+        <div className="level-backdrop" aria-hidden="true" />
+      )}
 
       {dailyPaths.map((path, idx) => {
-        const blockClass =
-          guesses[idx] ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
+        const blockClass = guesses[idx]
+          ? guesses[idx]!.correct
+            ? 'path-block-correct'
+            : 'path-block-incorrect'
+          : 'path-block-default';
 
-        // card state for one-by-one flow
+        const isDone = !!guesses[idx];
+        const isActive = started && !gameOver && idx === activeLevel && !isDone;
+        const isCovered = !isDone && !isActive;
+
         let stateClass = 'level-card--locked';
-        if (guesses[idx]) stateClass = 'level-card--done';
-        else if (started && !gameOver && idx === activeLevel) stateClass = 'level-card--active';
+        if (isDone) stateClass = 'level-card--done';
+        else if (isActive) stateClass = 'level-card--active';
 
-        const inputEnabled = started && !gameOver && idx === activeLevel && !guesses[idx];
+        const inputEnabled = isActive;
 
         return (
           <div
             key={idx}
-            className={`path-block level-card ${blockClass} ${stateClass}`}
+            className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
             onClick={() => {
-              // during completed mode, allow toggling possible answers
               if (gameOver) {
                 const updated = [...revealedAnswers];
                 updated[idx] = !updated[idx];
@@ -369,6 +428,12 @@ const GameComponent: React.FC = () => {
               }
             }}
           >
+            {/* Cover for hidden (not active, not guessed) levels */}
+            <div className="level-cover" aria-hidden={!isCovered}>
+              <span className="level-cover-label">Level {idx + 1}</span>
+            </div>
+
+            {/* Content (visible when active or done) */}
             <div className="helmet-sequence">
               {path.path.map((team, i) => (
                 <React.Fragment key={i}>
@@ -376,6 +441,7 @@ const GameComponent: React.FC = () => {
                     src={`/images/${sanitizeImageName(team)}.png`}
                     alt={team}
                     className="helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg"
+                    style={{ ['--i' as any]: `${i * 90}ms` }}  // faster stagger
                   />
                   {i < path.path.length - 1 && (
                     <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>
@@ -399,7 +465,9 @@ const GameComponent: React.FC = () => {
                   />
                 ) : (
                   <div
-                    className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
+                    className={`locked-answer ${
+                      guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'
+                    } locked-answer-mobile font-mobile`}
                   >
                     {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess}`}
                   </div>
@@ -422,7 +490,9 @@ const GameComponent: React.FC = () => {
                               <strong>{name.slice(match, match + typed.length)}</strong>
                               {name.slice(match + typed.length)}
                             </>
-                          ) : name}
+                          ) : (
+                            name
+                          )}
                         </div>
                       );
                     })}
@@ -499,7 +569,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Rules modal — shown if not started & not completed */}
+      {/* Rules modal */}
       {showRules && !customDate && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
@@ -513,9 +583,11 @@ const GameComponent: React.FC = () => {
               <li>🏈 One guess per level. Multiple players may share a path.</li>
               <li>🏈 Points are 100 × level (1–5).</li>
             </ul>
-            <button onClick={handleStartGame} className="share-score-button" style={{ marginTop: 12 }}>
-              Start Game!
-            </button>
+            {!started && !gameOver && (
+              <button onClick={handleStartGame} className="share-score-button" style={{ marginTop: 12 }}>
+                Start Game!
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -532,7 +604,12 @@ const GameComponent: React.FC = () => {
       {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
-            <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
+            <button
+              className="close-button"
+              onClick={() => setShowPopup(false)} // close; remain in completed mode
+            >
+              ✖
+            </button>
             <h3>🎉 Game Complete!</h3>
             <p>You scored {score} pts</p>
             <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
@@ -542,7 +619,8 @@ const GameComponent: React.FC = () => {
                 const correctCount = guesses.filter((g) => g && g.correct).length;
                 const shareMsg = `🏈 Helmets Game – ${formattedDate}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nwww.helmets-game.com`;
                 if (navigator.share) {
-                  navigator.share({ title: 'Helmets Game', text: `${shareMsg}` })
+                  navigator
+                    .share({ title: 'Helmets Game', text: `${shareMsg}` })
                     .catch(() => navigator.clipboard.writeText(shareMsg));
                 } else {
                   navigator.clipboard.writeText(shareMsg);
@@ -555,7 +633,10 @@ const GameComponent: React.FC = () => {
             </button>
             <div className="popup-footer">
               <button
-                onClick={() => { setShowPopup(false); setShowHistory(true); }}
+                onClick={() => {
+                  setShowPopup(false);
+                  setShowHistory(true);
+                }}
                 className="previous-day-games"
               >
                 Play previous day's games
