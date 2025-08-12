@@ -34,10 +34,11 @@ type StoredGuesses = {
 const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_TIMER = 'helmets-timer';
-const LS_LAST_PLAYED = 'lastPlayedDateET'; // store ET YYYY-MM-DD
+const LS_LAST_PLAYED = 'lastPlayedDateET'; // ET YYYY-MM-DD
 const LS_STARTED = 'helmets-started';
 
-function getETDateParts(date = new Date()) {
+/* ---------- Eastern Time helpers ---------- */
+function getETDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
     year: 'numeric',
@@ -49,22 +50,33 @@ function getETDateParts(date = new Date()) {
   const d = parts.find(p => p.type === 'day')!.value;
   return { y, m, d };
 }
-function todayETISO() {
-  const { y, m, d } = getETDateParts();
+function toETISO(date: Date) {
+  const { y, m, d } = getETDateParts(date);
   return `${y}-${m}-${d}`;
 }
+function todayETISO() { return toETISO(new Date()); }
 function todayET_MMDDYY() {
   const { y, m, d } = getETDateParts();
   return `${m}/${d}/${y.slice(-2)}`;
 }
+function getLastNDatesET(n: number): string[] {
+  const base = new Date();
+  const arr: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() - i);
+    arr.push(toETISO(d));
+  }
+  return arr;
+}
 
+/* ---------- Daily selection ---------- */
 function seededRandom(seed: number) {
   return function () {
     const x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
   };
 }
-
 function pickDailyPaths(players: PlayerPath[], dateISO: string): PlayerPath[] {
   const seed = parseInt(dateISO.replace(/-/g, ''), 10);
   const rng = seededRandom(seed);
@@ -84,35 +96,32 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string): PlayerPath[] {
   }
   return selected;
 }
-
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
   return targets.map((t) =>
     players.filter((p) => p.path.join('>') === t.path.join('>')).map((p) => p.name).sort()
   );
 }
-
 const isComplete = (guesses: (Guess | null)[], total: number) =>
   guesses.length === total && guesses.every(Boolean);
 
+/* ---------- started flags per day ---------- */
 function getStartedMap() {
   try { return JSON.parse(localStorage.getItem(LS_STARTED) || '{}'); } catch { return {}; }
 }
 function setStartedFor(date: string, v: boolean) {
   const m = getStartedMap(); m[date] = v; localStorage.setItem(LS_STARTED, JSON.stringify(m));
 }
-function getStartedFor(date: string) {
-  const m = getStartedMap(); return !!m[date];
-}
+function getStartedFor(date: string) { const m = getStartedMap(); return !!m[date]; }
 
 const GameComponent: React.FC = () => {
-  // ----- Date setup (ET) -----
-  const urlParams = new URLSearchParams(window.location.search);
-  const dateParam = urlParams.get('date'); // expected YYYY-MM-DD
+  /* Date setup (ET) */
+  const params = new URLSearchParams(window.location.search);
+  const dateParam = params.get('date'); // YYYY-MM-DD
   const todayET = todayETISO();
-  const gameDate = dateParam || todayET; // seed & storage key for this screen
-  const formattedETForShare = todayET_MMDDYY();
+  const gameDate = dateParam || todayET; // use ET for seeding + storage
+  const shareDateMMDDYY = todayET_MMDDYY();
 
-  // ----- state -----
+  /* State */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
   const [guesses, setGuesses] = useState<(Guess | null)[]>([]);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([]);
@@ -136,7 +145,7 @@ const GameComponent: React.FC = () => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  // ----- load players once -----
+  /* Load players once */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -166,11 +175,11 @@ const GameComponent: React.FC = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // ----- derived -----
+  /* Derived */
   const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
 
-  // ----- hydrate/init for the chosen gameDate -----
+  /* Init (hydrate for the chosen gameDate) */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -178,13 +187,17 @@ const GameComponent: React.FC = () => {
     let s = 0; let t = 0;
 
     if (dateParam) {
-      // Viewing a past day
+      // Viewing a past day (still playable)
       const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
       const data = history[gameDate];
       if (data) { g = data.guesses || g; s = data.score || 0; t = data.timer || 0; }
       setGuesses(g); setScore(s); setTimer(t);
-      setShowPopup(true); setGameOver(true);
-      setStarted(true); setActiveLevel(dailyPaths.length - 1);
+      // Don’t auto-complete; let users play old days if they hadn’t.
+      const firstNull = g.findIndex(x => !x);
+      setActiveLevel(firstNull === -1 ? dailyPaths.length - 1 : firstNull);
+      setStarted(getStartedFor(gameDate) || g.some(Boolean)); // allow resume
+      setGameOver(isComplete(g, dailyPaths.length));
+      setShowPopup(isComplete(g, dailyPaths.length));
     } else {
       // Today (ET)
       const raw = localStorage.getItem(LS_GUESSES);
@@ -208,16 +221,16 @@ const GameComponent: React.FC = () => {
       const complete = isComplete(g, dailyPaths.length);
       setGameOver(complete);
       setShowPopup(complete);                 // show on refresh if completed
-      setShowRules(!startedFlag && !complete); // show rules on first visit
+      setShowRules(!startedFlag && !complete);
     }
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
   }, [dailyPaths, gameDate, dateParam]);
 
-  // ----- per-day (ET) timer reset only -----
+  /* Per-day (ET) timer reset for today only */
   useEffect(() => {
-    if (dateParam) return; // viewing history - don't mutate
+    if (dateParam) return; // viewing history - don't mutate timer baseline
     const lastET = localStorage.getItem(LS_LAST_PLAYED);
     if (lastET !== todayET) {
       localStorage.setItem(LS_LAST_PLAYED, todayET);
@@ -225,26 +238,32 @@ const GameComponent: React.FC = () => {
     }
   }, [todayET, dateParam]);
 
-  // ----- persist current day (don’t overwrite when viewing history) -----
+  /* Persist (don’t overwrite when viewing history) */
   useEffect(() => {
-    if (!dailyPaths.length || dateParam) return;
-    const payload: StoredGuesses = { date: gameDate, guesses, score, timer };
-    localStorage.setItem(LS_GUESSES, JSON.stringify(payload));
+    if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
+
+    // Always archive progress for the current gameDate (even past days)
     history[gameDate] = { guesses, score, timer };
     localStorage.setItem(LS_HISTORY, JSON.stringify(history));
+
+    // For today, also keep a quick access payload
+    if (!dateParam) {
+      const payload: StoredGuesses = { date: gameDate, guesses, score, timer };
+      localStorage.setItem(LS_GUESSES, JSON.stringify(payload));
+    }
   }, [guesses, score, timer, gameDate, dailyPaths.length, dateParam]);
 
-  // ----- score flash effect (yellow) -----
+  /* Score flash (only the number) */
   useEffect(() => {
-    const el = document.querySelector('.score-value');
+    const el = document.querySelector('.score-number');
     if (!el) return;
     el.classList.add('score-flash');
     const t = window.setTimeout(() => el.classList.remove('score-flash'), 600);
     return () => window.clearTimeout(t);
   }, [score]);
 
-  // ----- timer -----
+  /* Timer */
   useEffect(() => {
     if (!showPopup && !dateParam) {
       timerRef.current = window.setInterval(() => {
@@ -261,23 +280,23 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  // ----- completion during play -----
+  /* Completion during play (today only) */
   useEffect(() => {
-    if (!dailyPaths.length || dateParam) return;
+    if (!dailyPaths.length) return;
     if (isComplete(guesses, dailyPaths.length)) {
       setGameOver(true);
       setShowPopup(true);
     }
-  }, [guesses, dailyPaths.length, dateParam]);
+  }, [guesses, dailyPaths.length]);
 
-  // ----- focus active input -----
+  /* Focus on active input */
   useEffect(() => {
-    if (!started || gameOver || dateParam) return;
+    if (!started || gameOver) return;
     const el = inputRefs.current[activeLevel];
     if (el) el.focus();
-  }, [activeLevel, started, gameOver, dateParam]);
+  }, [activeLevel, started, gameOver]);
 
-  // ----- confetti per popup show -----
+  /* Confetti when final popup appears */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 875, spread: 145, origin: { y: 0.5 } });
@@ -285,7 +304,7 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  // ----- handlers -----
+  /* Handlers */
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
   const handleInputChange = (index: number, value: string) => {
@@ -372,7 +391,10 @@ const GameComponent: React.FC = () => {
 
   const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
 
-  // ----- render -----
+  /* Last 30 days (ET) for History grid */
+  const last30Dates = useMemo(() => getLastNDatesET(30), []);
+
+  /* Render */
   return (
     <div className={`app-container ${gameOver ? 'is-complete' : ''}`}>
       <header className="game-header">
@@ -383,14 +405,14 @@ const GameComponent: React.FC = () => {
 
         <div className="game-subtitle">
           <span>{new Date().toLocaleDateString()}</span>
-          <span className="score-value"> | Score: {score}</span>
+          <span> | Score: <span className="score-number">{score}</span></span>
           <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
         </div>
 
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
-      {/* Backdrop sits BELOW the header to avoid dimming it */}
+      {/* Backdrop sits BELOW header to keep header visible */}
       {started && !gameOver && !showPopup && (
         <div className="level-backdrop" aria-hidden="true" />
       )}
@@ -447,7 +469,7 @@ const GameComponent: React.FC = () => {
                     style={{ ['--i' as any]: `${i * 180}ms` }}
                   />
                   {i < path.path.length - 1 && (
-                    <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>
+                    <span className="arrow">→</span>
                   )}
                 </React.Fragment>
               ))}
@@ -534,22 +556,25 @@ const GameComponent: React.FC = () => {
       <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       <button onClick={() => setShowFeedback(true)} className="fab-button fab-feedback">💬 Feedback</button>
 
-      {/* History modal */}
+      {/* History modal — last 30 ET days, always playable */}
       {showHistory && (
         <div className="popup-modal">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-            <h3>📆 Game History</h3>
+            <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
-              {Object.entries(JSON.parse(localStorage.getItem(LS_HISTORY) || '{}')).map(([date]) => (
-                <button
-                  key={date}
-                  className="calendar-grid-button"
-                  onClick={() => (window.location.href = `/?date=${date}`)}
-                >
-                  {String(date).slice(5)}
-                </button>
-              ))}
+              {last30Dates.map((date) => {
+                const isToday = date === todayET;
+                return (
+                  <button
+                    key={date}
+                    className={`calendar-grid-button${isToday ? ' today' : ''}`}
+                    onClick={() => (window.location.href = `/?date=${date}`)}
+                  >
+                    {date.slice(5)}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -580,7 +605,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Rules modal — shown if not started & not completed */}
+      {/* Rules modal — shown if not started & not completed (today view) */}
       {showRules && !dateParam && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
@@ -604,7 +629,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Game complete banner */}
+      {/* Complete banner */}
       {gameOver && (
         <div className="complete-banner">
           <h3>🎯 Game Complete</h3>
@@ -612,7 +637,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Final popup — always appears when complete (incl. refresh) */}
+      {/* Final popup */}
       {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
@@ -624,7 +649,7 @@ const GameComponent: React.FC = () => {
             <button
               onClick={() => {
                 const correctCount = guesses.filter((g) => g && g.correct).length;
-                const shareMsg = `🏈 Helmets Game – ${formattedETForShare}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nwww.helmets-game.com`;
+                const shareMsg = `🏈 Helmets Game – ${shareDateMMDDYY}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nwww.helmets-game.com`;
                 if (navigator.share) {
                   navigator.share({ title: 'Helmets Game', text: `${shareMsg}` })
                     .catch(() => navigator.clipboard.writeText(shareMsg));
