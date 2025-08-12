@@ -34,7 +34,6 @@ type StoredGuesses = {
 const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_TIMER = 'helmets-timer';
-const LS_RULES = 'rulesShown';
 const LS_LAST_PLAYED = 'lastPlayedDate';
 const LS_STARTED = 'helmets-started';
 
@@ -50,18 +49,15 @@ function seededRandom(seed: number) {
 function pickDailyPaths(players: PlayerPath[], date: string): PlayerPath[] {
   const seed = parseInt(date.split('-').join(''), 10);
   const rng = seededRandom(seed);
-
   const buckets: Record<number, Map<string, PlayerPath>> = {
     1: new Map(), 2: new Map(), 3: new Map(), 4: new Map(), 5: new Map(),
   };
-
   players.forEach((p) => {
     if (p.path_level >= 1 && p.path_level <= 5) {
       const key = p.path.join('>');
       if (!buckets[p.path_level].has(key)) buckets[p.path_level].set(key, p);
     }
   });
-
   const selected: PlayerPath[] = [];
   for (let lvl = 1; lvl <= 5; lvl++) {
     const arr = Array.from(buckets[lvl].values());
@@ -296,7 +292,7 @@ const GameComponent: React.FC = () => {
 
   const advanceToNext = (index: number) => {
     if (index < dailyPaths.length - 1) {
-      setTimeout(() => setActiveLevel(index + 1), 260);
+      setTimeout(() => setActiveLevel(index + 1), 280); // a bit more delay
     }
   };
 
@@ -313,7 +309,7 @@ const GameComponent: React.FC = () => {
     setGuesses(updatedGuesses);
 
     if (matched) {
-      const level = dailyPaths[index].path_level;
+      const level = index + 1;
       const points = 100 * level;
       setScore((prev) => prev + points);
 
@@ -338,7 +334,7 @@ const GameComponent: React.FC = () => {
   const handleSkip = (index: number) => {
     if (guesses[index]) return;
     const updated = [...guesses];
-    updated[index] = { guess: 'Skipped', correct: false }; // <-- show as Skipped
+    updated[index] = { guess: 'Skipped', correct: false }; // show as Skipped
     setGuesses(updated);
 
     const sugg = [...filteredSuggestions];
@@ -376,7 +372,7 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
-      {/* Dim backdrop while focusing a level (hidden during popup/completed) */}
+      {/* Dim backdrop while focusing a level (header stays above) */}
       {started && !gameOver && !showPopup && (
         <div className="level-backdrop" aria-hidden="true" />
       )}
@@ -396,6 +392,12 @@ const GameComponent: React.FC = () => {
 
         const inputEnabled = isActive;
 
+        const multiplier = idx + 1;
+        const wonPoints = isDone && guesses[idx]!.correct ? 100 * multiplier : 0;
+        const badgeText = isDone ? `+${wonPoints}` : `${multiplier}x Points`;
+        const badgeClass =
+          isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge none') : 'level-badge';
+
         return (
           <div
             key={idx}
@@ -408,8 +410,8 @@ const GameComponent: React.FC = () => {
               }
             }}
           >
-            {/* Level multiplier badge */}
-            <div className="level-badge" aria-hidden="true">{idx + 1}x</div>
+            {/* Level multiplier / points badge */}
+            <div className={badgeClass} aria-hidden="true">{badgeText}</div>
 
             {/* Cover for hidden levels */}
             <div className="level-cover" aria-hidden={!isCovered}>
@@ -424,7 +426,7 @@ const GameComponent: React.FC = () => {
                     src={`/images/${sanitizeImageName(team)}.png`}
                     alt={team}
                     className="helmet-icon"
-                    style={{ ['--i' as any]: `${i * 180}ms` }}  // slower/wider stagger
+                    style={{ ['--i' as any]: `${i * 180}ms` }}  // wider/slower stagger
                   />
                   {i < path.path.length - 1 && (
                     <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>
