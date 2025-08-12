@@ -366,6 +366,7 @@ return (
   </div>
 );
 
+
   
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
