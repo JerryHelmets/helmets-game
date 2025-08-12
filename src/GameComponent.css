@@ -1,3 +1,8 @@
+/* Prevent scroll chaining & rubber banding a bit */
+html, body {
+  overscroll-behavior: none;
+}
+
 /* === Score flash (only number) === */
 @keyframes scoreFlash {
   0%   { background: transparent; color: #fff; }
@@ -11,11 +16,49 @@
   padding: 0 4px;
 }
 
-/* Helmet row */
+/* Header — bigger logo/title, always above backdrop */
+.title-row { display: flex; align-items: center; justify-content: center; gap: 0.7em; margin-bottom: 0.4rem; flex-wrap: nowrap; }
+.game-logo { height: 2.0em; width: auto; display: block; } /* bigger */
+.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(2rem, 6vw, 3.2rem); } /* bigger */
+.game-header { position: relative; z-index: 1200; text-align: center; margin: 16px 0; color: #fff; }
+.game-subtitle { font-size: 1rem; color: #fff; margin-top: 6px; }
+
+/* App shell */
+.app-container {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 8px 40px;
+  overflow-x: hidden;
+  min-height: var(--app-height, 100svh); /* locked height to prevent jump */
+}
+
+/* When a level is active, pin the whole app so the page won't move */
+.app-container.app-fixed {
+  position: fixed;
+  inset: 0;
+  height: var(--app-height, 100svh);
+}
+
+/* Mobile fit tweaks */
+@media (max-width: 430px) {
+  .app-container { transform: scale(0.96); transform-origin: top center; }
+}
+@media (max-width: 380px) {
+  .app-container { transform: scale(0.92); transform-origin: top center; }
+}
+
+/* Helmet row & bigger helmets */
 .helmet-sequence {
   display: flex; align-items: center; justify-content: center;
   flex-wrap: wrap; gap: 8px; margin: 0 0 10px 0;
 }
+.helmet-icon { width: 68px; height: 68px; object-fit: contain; } /* bigger */
+@media (max-width: 480px) { .helmet-icon { width: 56px; height: 56px; } }
+
+/* Smaller arrows */
+.arrow { font-size: 0.9rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
+@media (max-width: 480px) { .arrow { font-size: 0.8rem; } }
 
 /* Popups */
 .popup-modal {
@@ -29,38 +72,18 @@
 
 .popup-content {
   background: white; padding: 2rem; border-radius: 12px; text-align: center;
-  max-width: 440px; max-height: calc(100dvh - 120px);
+  max-width: 440px; max-height: calc(var(--app-height, 100svh) - 120px);
   overflow: auto;
   box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
 .popup-content button { margin: 8px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
-/* Guess feedback bubbles */
-.guess-input p { margin-top: 6px; font-weight: bold; }
-.guess-input p.correct { color: white; background-color: #28a745; padding: 4px 8px; border-radius: 6px; display: inline-block; }
-.guess-input p.incorrect { color: white; background-color: #dc3545; padding: 4px 8px; border-radius: 6px; display: inline-block; }
-
-/* Smaller arrows */
-.arrow { font-size: 0.9rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
-@media (max-width: 480px) { .arrow { font-size: 0.8rem; } }
-
-/* Header — bigger logo/title, always above backdrop */
-.title-row { display: flex; align-items: center; justify-content: center; gap: 0.6em; margin-bottom: 0.35rem; flex-wrap: nowrap; }
-.game-logo { height: 1.8em; width: auto; display: block; }            /* bigger */
-.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.8rem, 5vw, 3rem); } /* bigger */
-.game-header { position: relative; z-index: 1001; text-align: center; margin: 16px 0; color: #fff; }
-.game-subtitle { font-size: 1rem; color: #fff; margin-top: 6px; }
-
-@media (max-width: 768px) { .game-title { font-size: clamp(1.6rem, 5.4vw, 2.5rem); } }
-@media (max-width: 520px) { .game-title { font-size: clamp(1.4rem, 6.2vw, 2.2rem); } }
-@media (max-width: 360px) { .game-title { font-size: clamp(1.25rem, 6.6vw, 1.9rem); } }
-
-/* Layout and common */
+/* Path cards (default list view) — make a bit narrower so they fit every phone */
 .path-block {
   border: 2px solid; border-radius: 16px; padding: 12px; margin-bottom: 12px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-  max-width: 560px; width: min(98%, 560px);
+  width: min(94vw, 500px);              /* narrower on mobile, always centered */
   margin-left: auto; margin-right: auto; text-align: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   background: #f9f9f9;
@@ -70,93 +93,30 @@
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
-/* Overall page fits screen; we add small scale on very narrow phones */
-.app-container {
-  width: 100%;
-  max-width: 820px;                /* allow bigger active card */
-  margin: 0 auto;
-  padding: 24px 8px 40px;
-  overflow-x: hidden;
-  min-height: 100dvh;              /* lock to viewport height */
-  display: block;
-}
-@media (max-width: 390px) {
-  .app-container { transform: scale(0.94); transform-origin: top center; }
-}
-@media (max-width: 350px) {
-  .app-container { transform: scale(0.9); transform-origin: top center; }
-}
-
-.share-score-button { background-color: #417ff0; color: #ffff; }
-.previous-day-games { font-size: 11px; }
-
-/* Suggestions */
-.suggestion-box {
-  max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px;
-  margin-top: 6px; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-.suggestion-item { padding: 8px 10px; cursor: pointer; }
-.suggestion-item:hover, .suggestion-item.highlighted { background-color: #f0f0f0; }
-.fade-in-fast { animation: fadeIn 0.4s ease-out; }
-
-/* Input — visually smaller, still >=16px to avoid iOS zoom */
-.guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
-.guess-input-field {
-  width: 98%; max-width: 360px; padding: 4px 6px; font-size: 16px; /* keep 16px */
-  border-radius: 8px; border: 1px solid #ccc;
-  -webkit-text-size-adjust: 100%;
-}
-
-/* Locked answers */
-.locked-answer { padding: 6px 10px; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.85rem; text-align: center; }
-.answer-correct { background-color: #28a745; animation: fadeIn 0.35s ease-in-out; }
-.answer-incorrect { background-color: #dc3545; }
-
-/* Misc UI */
-.fab-button { position: fixed; padding: 6px 10px; font-size: 0.8rem; z-index: 1002; }
-.fab-history { top: 12px; right: 12px; }
-.fab-feedback { bottom: 8px; left: 50%; transform: translateX(-50%); }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
-.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2; }
-.calendar-grid-button.today { background: #e0ecff; border-color: #417ff0; }
-
-/* Complete banner */
-.complete-banner {
-  text-align: center; padding: 10px; margin-bottom: 12px;
-  background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; border-radius: 6px;
-}
-.complete-banner h3 { margin: 0; }
-.complete-banner p { margin: 4px 0 0 0; font-size: 0.9rem; }
-
-/* ---- One-by-one flow ---- */
-
-/* Backdrop below header (header z-index is 1001) */
+/* Stronger dim backdrop below header */
 .level-backdrop {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.38);
-  backdrop-filter: blur(1.2px); z-index: 1000; pointer-events: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.62);          /* darker dim */
+  backdrop-filter: blur(3px);
+  z-index: 1005;
+  pointer-events: none;
 }
 
-/* Base card */
-.level-card {
-  position: relative;
-  transition: transform 360ms cubic-bezier(.2,.8,.2,1), box-shadow 360ms cubic-bezier(.2,.8,.2,1), opacity 260ms ease;
-  overflow: hidden;
-}
-
-/* Active card — bigger, centered, SOLID light canvas, mobile-safe */
+/* Active card — centered, SOLID background, a bit taller */
 .level-card--active {
   position: fixed;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width: min(96vw, 700px);              /* larger but safe */
-  max-height: calc(100dvh - 140px);     /* keep within screen */
+  width: min(92vw, 540px);               /* a little smaller across */
+  max-height: calc(var(--app-height, 100svh) - 120px); /* taller viewport usage */
+  min-height: min(720px, calc(var(--app-height, 100svh) - 180px)); /* make it feel longer */
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 1105;
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
-  background: #ffffff;                   /* <-- solid light canvas */
-  border: 2px solid #e5e7eb;            /* subtle border */
+  background: #ffffff;                   /* solid canvas */
+  border: 2px solid #e5e7eb;
   border-radius: 18px;
-  padding: 14px;                         /* inner breathing room */
+  padding: 16px;
   animation: card-enter 560ms cubic-bezier(.2,.8,.2,1) 220ms both;
 }
 
@@ -185,7 +145,7 @@
 .level-badge {
   position: absolute; top: 8px; left: 8px;
   z-index: 2;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0,0,0,0.68);
   color: #fff; font-weight: 700; font-size: 0.95rem;
   padding: 6px 10px; border-radius: 10px;
   line-height: 1;
@@ -197,7 +157,7 @@
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; }
 
-/* Helmet spin/appear (BIGGER HELMETS) */
+/* Helmet spin/appear */
 @keyframes spin-fade-in {
   0%   { opacity: 0; transform: rotate(-210deg) scale(0.86); }
   100% { opacity: 1; transform: rotate(0deg)    scale(1.00); }
@@ -227,7 +187,47 @@
   to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
-/* Skip button (blue, compact) */
+/* Suggestions */
+.suggestion-box {
+  max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px;
+  margin-top: 6px; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.suggestion-item { padding: 8px 10px; cursor: pointer; }
+.suggestion-item:hover, .suggestion-item.highlighted { background-color: #f0f0f0; }
+.fade-in-fast { animation: fadeIn 0.4s ease-out; }
+
+/* Input — visually smaller, still >=16px to avoid iOS zoom */
+.guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
+.guess-input-field {
+  width: 98%; max-width: 360px; padding: 4px 6px; font-size: 16px;
+  border-radius: 8px; border: 1px solid #ccc;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Locked answers */
+.locked-answer { padding: 6px 10px; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.85rem; text-align: center; }
+.answer-correct { background-color: #28a745; animation: fadeIn 0.35s ease-in-out; }
+.answer-incorrect { background-color: #dc3545; }
+
+/* Floating action buttons */
+.fab-button { position: fixed; padding: 6px 10px; font-size: 0.8rem; z-index: 1201; }
+.fab-history { top: 12px; right: 12px; }
+.fab-feedback { bottom: 8px; left: 50%; transform: translateX(-50%); }
+
+/* History grid */
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
+.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2; }
+.calendar-grid-button.today { background: #e0ecff; border-color: #417ff0; }
+
+/* Complete banner */
+.complete-banner {
+  text-align: center; padding: 10px; margin-bottom: 12px;
+  background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; border-radius: 6px;
+}
+.complete-banner h3 { margin: 0; }
+.complete-banner p { margin: 4px 0 0 0; font-size: 0.9rem; }
+
+/* Skip button */
 .skip-button {
   margin-top: 10px;
   padding: 5px 9px;
@@ -239,16 +239,6 @@
   cursor: pointer;
 }
 .skip-button:hover { filter: brightness(1.06); }
-
-/* BIGGER helmets */
-.helmet-icon {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-@media (max-width: 480px) {
-  .helmet-icon { width: 52px; height: 52px; }
-}
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
