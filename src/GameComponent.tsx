@@ -461,10 +461,14 @@ const GameComponent: React.FC = () => {
         const inputEnabled = isActive;
 
         const multiplier = idx + 1;
-        const wonPoints = isDone && guesses[idx]!.correct ? 100 * multiplier : 0;
-        const badgeText = isDone ? `+${wonPoints}` : `${multiplier}x Points`;
-        const badgeClass =
-          isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge none') : 'level-badge';
+const wonPoints = isDone && guesses[idx]!.correct ? 100 * multiplier : 0;
+
+// During play: show "Nx Points". After gameOver: show "+points" on answered cards (including +0).
+const showPointsNow = gameOver;
+const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
+const badgeClass =
+  showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge none') : 'level-badge';
+
 
         return (
           <div
