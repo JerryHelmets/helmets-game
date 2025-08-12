@@ -396,24 +396,44 @@
 
 
 /* One-by-one flow visuals */
+
+/* Dim overlay behind the active level */
+.level-backdrop {
+  position: fixed;
+  inset: 0;                          /* cover the viewport */
+  background: rgba(0, 0, 0, 0.35);   /* subtle dim */
+  backdrop-filter: blur(1px);        /* faint blur (supported browsers) */
+  z-index: 900;                       /* below modals (1000) but above page */
+  pointer-events: none;               /* overlay is purely visual */
+}
+
+/* Make sure the active level floats above the dim overlay */
 .level-card {
-  transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
   position: relative;
+  transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
 }
 
 .level-card--active {
-  transform: scale(1.04);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-  z-index: 2;
+  transform: scale(1.06);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+  z-index: 901;                      /* above .level-backdrop */
 }
 
 .level-card--locked {
   opacity: 0.45;
   filter: grayscale(20%);
-  pointer-events: none; /* no clicks or input */
+  pointer-events: none;               /* not interactable while locked */
 }
 
 .level-card--done {
   opacity: 1;
   filter: none;
+}
+
+/* Optional: reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .level-card,
+  .level-card--active {
+    transition: none;
+  }
 }
