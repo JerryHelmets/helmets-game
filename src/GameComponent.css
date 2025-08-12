@@ -11,6 +11,7 @@
 .pulse-red {
   animation: pulse-red 1.2s ease-in-out 1 forwards;
 }
+
 .helmet-img {
   height: 80px;
   max-width: 100%;
@@ -31,6 +32,7 @@
     margin: 2px;
   }
 }
+
 .popup-modal {
   position: fixed;
   top: 0; left: 0;
@@ -40,18 +42,15 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  /* Fade-in animation for modals */
+}
+
 .fade-in {
   animation: fadeIn 0.4s ease-in-out forwards;
   opacity: 0;
 }
 
 @keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-
+  to { opacity: 1; }
 }
 
 .popup-content {
@@ -70,6 +69,7 @@
   border: none;
   cursor: pointer;
 }
+
 .close-button {
   position: absolute;
   top: 12px;
@@ -79,10 +79,12 @@
   border: none;
   cursor: pointer;
 }
+
 .guess-input p {
   margin-top: 6px;
   font-weight: bold;
 }
+
 .guess-input p.correct {
   color: white;
   background-color: #28a745;
@@ -90,6 +92,7 @@
   border-radius: 6px;
   display: inline-block;
 }
+
 .guess-input p.incorrect {
   color: white;
   background-color: #dc3545;
@@ -97,6 +100,7 @@
   border-radius: 6px;
   display: inline-block;
 }
+
 .arrow {
   font-size: 1.5rem;
   font-weight: bold;
@@ -104,6 +108,7 @@
   line-height: 1;
   vertical-align: middle;
 }
+
 .title-container {
   text-align: center;
   margin-top: 16px;
@@ -115,19 +120,12 @@
   vertical-align: middle;
 }
 
-.game-title {
-  display: inline;
-  font-size: 32px;
-  font-family: 'Roboto', sans-serif;
-  margin: 0;
-  font-weight: bold;
-}
-
 .game-meta {
   font-size: 16px;
   color: #555;
   margin-top: 4px;
 }
+
 .guess-input.correct input {
   border: 2px solid #28a745;
   background-color: #eaf8ef;
@@ -160,26 +158,13 @@
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 .guess-input-container {
   display: flex;
   justify-content: center;
   margin-top: 10px;
 }
-.game-header {
-  text-align: center;
-  margin: 16px 0;
-}
 
-.game-title {
-  font-size: 2rem;
-  margin: 0;
-}
-
-.game-subtitle {
-  font-size: 1rem;
-  color: #fff;
-  margin-top: 4px;
-}
 .pulse {
   animation: pulse-grow 0.3s ease-in-out;
 }
@@ -189,6 +174,7 @@
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
+
 .suggestion-box {
   max-height: 150px;
   overflow-y: auto;
@@ -208,21 +194,25 @@
 .suggestion-item.highlighted {
   background-color: #f0f0f0;
 }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
+
 @keyframes blinkRed {
   0% { background-color: #dc3545; }
   50% { background-color: #ff6b6b; }
   100% { background-color: #dc3545; }
 }
+
 @media (max-width: 480px) {
   .helmet-img-responsive {
     width: 24px;
     height: 24px;
   }
 }
+
 .helmet-arrow {
   font-size: 1rem;
   font-weight: 700;
@@ -236,6 +226,7 @@
     margin: 0 2px;
   }
 }
+
 .helmet-img-scale {
   width: 40px;
   height: 40px;
@@ -247,6 +238,7 @@
     height: 32px;
   }
 }
+
 @media (max-width: 480px) {
   .helmet-img-mobile {
     width: 32px;
@@ -262,6 +254,7 @@
     padding: 6px;
   }
 }
+
 @media (max-width: 480px) {
   .guess-input-mobile {
     font-size: 0.8rem;
@@ -273,6 +266,7 @@
     padding: 4px 8px;
   }
 }
+
 @media (max-width: 480px) {
   .font-mobile {
     font-family: 'Fira Sans', sans-serif;
@@ -280,6 +274,7 @@
     font-weight: 500;
   }
 }
+
 .helmet-img-fixed {
   width: 72px;
   height: 72px;
@@ -291,12 +286,14 @@
     height: 56px;
   }
 }
+
 @media (max-width: 480px) {
   .helmet-img-mobile-lg {
     width: 80px;
     height: 80px;
   }
 }
+
 .path-block-correct {
   background-color: #e6ffe6;
   border-color: #28a745;
@@ -306,15 +303,18 @@
   background-color: #ffe6e6;
   border-color: #dc3545;
 }
+
 .path-block-incorrect img {
   filter: grayscale(100%) brightness(85%);
 }
+
 @media (min-width: 768px) {
   .game-wrapper {
     max-width: 700px;
     font-size: 16px;
   }
 }
+
 .app-container {
   transform: scale(0.92);
   transform-origin: top center;
@@ -324,27 +324,31 @@
   padding-left: 4px;
   padding-right: 4px;
 }
-.share-score-button{
- background-color: #417ff0;
- color: #ffff
+
+.share-score-button {
+  background-color: #417ff0;
+  color: #ffff;
 }
-.previous-day-games{
-  font-size: 11px
+
+.previous-day-games {
+  font-size: 11px;
 }
+
+/* ===== NEW LOGO + TITLE ALIGNMENT ===== */
 
 /* Row that holds logo + title, centered as a unit */
 .title-row {
   display: flex;
   align-items: center;
   justify-content: center; /* centers the row within the header */
-  gap: 0.5em; /* gap relative to font size */
+  gap: 0.5em; /* space between logo and title */
   margin-bottom: 0.25rem;
   flex-wrap: nowrap; /* keep them on the same line */
 }
 
 /* Logo sizing tied to title size */
 .game-logo {
-  height: 1.2em; /* slightly taller than text */
+  height: 1.2em; /* slightly taller than the text */
   width: auto;
   display: block;
 }
@@ -365,22 +369,18 @@
 }
 
 /* --- Responsiveness --- */
-
-/* Tablets / small laptops */
 @media (max-width: 768px) {
   .game-title {
     font-size: clamp(1.25rem, 4vw, 1.8rem);
   }
 }
 
-/* Phones */
 @media (max-width: 520px) {
   .game-title {
     font-size: clamp(1.1rem, 5.5vw, 1.5rem);
   }
 }
 
-/* Tiny phones */
 @media (max-width: 360px) {
   .game-title {
     font-size: clamp(1rem, 6vw, 1.3rem);
