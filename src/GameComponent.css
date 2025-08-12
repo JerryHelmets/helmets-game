@@ -332,31 +332,64 @@
   font-size: 11px
 }
 
-/* Center entire header */
+/* Row that holds logo + title, centered as a unit */
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centers the row within the header */
+  gap: 0.5em; /* gap relative to font size */
+  margin-bottom: 0.25rem;
+  flex-wrap: nowrap; /* keep them on the same line */
+}
+
+/* Logo sizing tied to title size */
+.game-logo {
+  height: 1.2em; /* slightly taller than text */
+  width: auto;
+  display: block;
+}
+
+/* Title sizing (responsive) */
+.game-title {
+  margin: 0;
+  font-weight: 800;
+  line-height: 1;
+  font-size: clamp(1.4rem, 3.6vw, 2.25rem);
+}
+
+/* Keep header centered overall */
 .game-header {
   text-align: center;
   margin: 16px 0;
   color: #fff;
 }
 
-/* Flex for logo + title in the same row */
-.title-row {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* centers the whole row */
-  gap: 10px;
-  margin-bottom: 0.25rem;
+/* --- Responsiveness --- */
+
+/* Tablets / small laptops */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: clamp(1.25rem, 4vw, 1.8rem);
+  }
 }
 
-.game-logo {
-  height: 40px;
-  width: auto;
-  display: block;
+/* Phones */
+@media (max-width: 520px) {
+  .game-title {
+    font-size: clamp(1.1rem, 5.5vw, 1.5rem);
+  }
 }
 
-.game-title {
-  margin: 0;
-  font-size: 2rem;
-  font-family: 'Roboto', sans-serif;
-  font-weight: bold;
+/* Tiny phones */
+@media (max-width: 360px) {
+  .game-title {
+    font-size: clamp(1rem, 6vw, 1.3rem);
+  }
+}
+
+/* Accessibility: if user prefers reduced motion, disable pulse animations */
+@media (prefers-reduced-motion: reduce) {
+  .pulse, .pulse-red {
+    animation: none !important;
+  }
 }
