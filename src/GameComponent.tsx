@@ -82,6 +82,9 @@ function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
   );
 }
 
+const isComplete = (guesses: (Guess | null)[], total: number) =>
+  guesses.length === total && guesses.every(Boolean);
+
 const GameComponent: React.FC = () => {
   // --- state ---
   const [players, setPlayers] = useState<PlayerPath[]>([]);
@@ -151,27 +154,30 @@ const GameComponent: React.FC = () => {
   const dailyPaths = useMemo(() => pickDailyPaths(players, today), [players, today]);
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
 
-  // --- init scaffolding & hydrate from storage when dailyPaths ready ---
+  // --- init scaffolding & hydrate (and show popup on completion, even after refresh) ---
   useEffect(() => {
     if (!dailyPaths.length) return;
 
-    // If viewing a custom date (history mode), hydrate from history and show popup
+    let g: (Guess | null)[] = Array(dailyPaths.length).fill(null);
+    let s = 0;
+    let t = 0;
+
     if (customDate) {
+      // Viewing a previous date: load history for that date, show popup, and stay in complete mode
       const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
       const data = history[customDate];
       if (data) {
-        setGuesses(data.guesses || []);
-        setScore(data.score || 0);
-        setTimer(data.timer || 0);
-        setShowPopup(true);
-      } else {
-        // no saved history for that date
-        setGuesses(Array(dailyPaths.length).fill(null));
-        setScore(0);
-        setTimer(0);
+        g = data.guesses || g;
+        s = data.score || 0;
+        t = data.timer || 0;
       }
+      setGuesses(g);
+      setScore(s);
+      setTimer(t);
+      setShowPopup(true);
+      setGameOver(true);
     } else {
-      // normal today mode
+      // Today mode
       const raw = localStorage.getItem(LS_GUESSES);
       if (raw) {
         try {
@@ -181,24 +187,22 @@ const GameComponent: React.FC = () => {
             Array.isArray(parsed.guesses) &&
             parsed.guesses.length === dailyPaths.length
           ) {
-            setGuesses(parsed.guesses);
-            setScore(parsed.score ?? 0);
-            setTimer(parsed.timer ?? 0);
-          } else {
-            setGuesses(Array(dailyPaths.length).fill(null));
-            setScore(0);
-            setTimer(0);
+            g = parsed.guesses as (Guess | null)[];
+            s = parsed.score ?? 0;
+            t = parsed.timer ?? 0;
           }
         } catch {
-          setGuesses(Array(dailyPaths.length).fill(null));
-          setScore(0);
-          setTimer(0);
+          // ignore parse errors; fall back to defaults
         }
-      } else {
-        setGuesses(Array(dailyPaths.length).fill(null));
-        setScore(0);
-        setTimer(0);
       }
+
+      setGuesses(g);
+      setScore(s);
+      setTimer(t);
+
+      const complete = isComplete(g, dailyPaths.length);
+      setGameOver(complete);
+      setShowPopup(complete); // <-- show the popup on refresh if completed
     }
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
@@ -255,14 +259,12 @@ const GameComponent: React.FC = () => {
     };
   }, [showPopup, customDate]);
 
-  // --- game over when all answered ---
+  // --- when all 5 answered during play, pop it open ---
   useEffect(() => {
     if (!dailyPaths.length || customDate) return;
-    const hasAny = guesses.some(Boolean);
-    const allAnswered = guesses.length === dailyPaths.length && guesses.every(Boolean);
-    if (hasAny && allAnswered) {
-      setShowPopup(true);
+    if (isComplete(guesses, dailyPaths.length)) {
       setGameOver(true);
+      setShowPopup(true); // open now; after closing, stays closed until refresh
     }
   }, [guesses, dailyPaths.length, customDate]);
 
@@ -297,6 +299,7 @@ const GameComponent: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     if (!filteredSuggestions[idx]) return;
     const max = filteredSuggestions[idx].length;
+    if (!max) return;
 
     if (e.key === 'ArrowDown') {
       setHighlightIndex((prev) => (prev + 1) % max);
@@ -348,7 +351,7 @@ const GameComponent: React.FC = () => {
   const handleGiveUp = () => {
     const updated = guesses.map((g) => g ?? { guess: '', correct: false });
     setGuesses(updated);
-    setShowPopup(true);
+    setShowPopup(true);  // show final popup even if user gives up
     setGameOver(true);
   };
 
@@ -570,11 +573,16 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Score/share modal */}
+      {/* Score/share modal — shows whenever game is complete, incl. after refresh */}
       {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
-            <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
+            <button
+              className="close-button"
+              onClick={() => setShowPopup(false)} // close; remain in completed mode
+            >
+              ✖
+            </button>
             <h3>🎉 Game Complete!</h3>
             <p>You scored {score} pts</p>
             <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
