@@ -331,3 +331,32 @@
 .previous-day-games{
   font-size: 11px
 }
+
+/* Center entire header */
+.game-header {
+  text-align: center;
+  margin: 16px 0;
+  color: #fff;
+}
+
+/* Flex for logo + title in the same row */
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centers the whole row */
+  gap: 10px;
+  margin-bottom: 0.25rem;
+}
+
+.game-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.game-title {
+  margin: 0;
+  font-size: 2rem;
+  font-family: 'Roboto', sans-serif;
+  font-weight: bold;
+}
