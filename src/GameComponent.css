@@ -1,7 +1,7 @@
-/* --- Score flash (yellow) --- */
+/* === Score flash (only number) === */
 @keyframes scoreFlash {
   0%   { background: transparent; color: #fff; }
-  25%  { background: rgba(255, 221, 0, 0.85); color: #000; }
+  25%  { background: rgba(255, 221, 0, 0.9); color: #000; }
   60%  { background: rgba(255, 221, 0, 0.75); color: #000; }
   100% { background: transparent; color: #fff; }
 }
@@ -11,19 +11,10 @@
   padding: 0 4px;
 }
 
-/* white → light red → white → light red → final dark red with glow (existing) */
-@keyframes pulse-red {
-  0%   { background-color: white; box-shadow: none; }
-  25%  { background-color: #fee2e2; box-shadow: 0 0 6px rgba(248,113,113,0.3); }
-  50%  { background-color: white; box-shadow: none; }
-  75%  { background-color: #fee2e2; box-shadow: 0 0 6px rgba(248,113,113,0.3); }
-  100% { background-color: #fca5a5; box-shadow: 0 0 4px rgba(248,113,113,0.2); }
-}
-
 /* Helmet row */
 .helmet-sequence {
   display: flex; align-items: center; justify-content: center;
-  flex-wrap: wrap; gap: 4px; margin: 0 0 6px 0;
+  flex-wrap: wrap; gap: 6px; margin: 0 0 8px 0;
 }
 
 /* Popups */
@@ -31,7 +22,7 @@
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.65);
   display: flex; align-items: center; justify-content: center;
-  z-index: 1000;
+  z-index: 1100;
 }
 .fade-in { animation: fadeIn 0.6s ease-in-out forwards; opacity: 0; }
 @keyframes fadeIn { to { opacity: 1; } }
@@ -48,14 +39,15 @@
 .guess-input p.correct { color: white; background-color: #28a745; padding: 4px 8px; border-radius: 6px; display: inline-block; }
 .guess-input p.incorrect { color: white; background-color: #dc3545; padding: 4px 8px; border-radius: 6px; display: inline-block; }
 
-.arrow { font-size: 1.5rem; font-weight: bold; margin: 0 4px; line-height: 1; vertical-align: middle; }
+/* Smaller arrows */
+.arrow { font-size: 0.95rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
+@media (max-width: 480px) { .arrow { font-size: 0.85rem; } }
 
-/* Header — always above backdrop */
+/* Header — always visible above backdrop */
 .title-row { display: flex; align-items: center; justify-content: center; gap: 0.5em; margin-bottom: 0.25rem; flex-wrap: nowrap; }
 .game-logo { height: 1.2em; width: auto; display: block; }
 .game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.5rem, 3.6vw, 2.4rem); }
-.game-header { position: relative; z-index: 980; text-align: center; margin: 16px 0; color: #fff; }
-
+.game-header { position: relative; z-index: 1001; text-align: center; margin: 16px 0; color: #fff; }
 .game-subtitle { font-size: 1rem; color: #fff; margin-top: 6px; }
 
 @media (max-width: 768px) { .game-title { font-size: clamp(1.3rem, 4vw, 2rem); } }
@@ -64,22 +56,25 @@
 
 /* Layout and common */
 .path-block {
-  border: 2px solid; border-radius: 12px; padding: 8px 8px; margin-bottom: 8px;
+  border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-  max-width: 460px; width: 98%;
+  max-width: 520px; width: 98%;
   margin-left: auto; margin-right: auto; text-align: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  background: #f9f9f9;
 }
-.path-block-default { border-color: #ccc; background-color: #f9f9f9; }
+.path-block-default { border-color: #ccc; }
 .path-block-correct { background-color: #e6ffe6; border-color: #28a745; }
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
 .app-container {
-  transform: scale(0.92);
-  transform-origin: top center;
-  width: 100vw; overflow-x: hidden;
-  padding-top: 24px; padding-left: 4px; padding-right: 4px;
+  /* Removed old transform scale for better mobile fit */
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 8px 40px;
+  overflow-x: hidden;
 }
 .share-score-button { background-color: #417ff0; color: #ffff; }
 .previous-day-games { font-size: 11px; }
@@ -93,10 +88,10 @@
 .suggestion-item:hover, .suggestion-item.highlighted { background-color: #f0f0f0; }
 .fade-in-fast { animation: fadeIn 0.4s ease-out; }
 
-/* Inputs — keep font-size >= 16px to avoid iOS zoom */
-.guess-input-container { display: flex; justify-content: center; margin-top: 10px; }
+/* Input — visually smaller, still >=16px to avoid iOS zoom */
+.guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
 .guess-input-field {
-  width: 98%; max-width: 380px; padding: 8px 10px; font-size: 16px; /* >=16px */
+  width: 98%; max-width: 360px; padding: 6px 8px; font-size: 16px; /* keep 16px */
   border-radius: 8px; border: 1px solid #ccc;
   -webkit-text-size-adjust: 100%;
 }
@@ -107,17 +102,14 @@
 .answer-incorrect { background-color: #dc3545; }
 
 /* Misc UI */
-.fab-button { position: absolute; padding: 6px 10px; font-size: 0.8rem; z-index: 1000; }
+.fab-button { position: fixed; padding: 6px 10px; font-size: 0.8rem; z-index: 1002; }
 .fab-history { top: 12px; right: 12px; }
-.fab-feedback { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.fab-feedback { bottom: 8px; left: 50%; transform: translateX(-50%); }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
-.calendar-grid-button { padding: 6px; font-size: 0.7rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2; }
-.email-row { display: flex; align-items: center; margin-top: 1em; }
-.email-emoji { font-size: 1.2rem; margin-right: 8px; }
-.email-text { font-family: 'Fira Sans', sans-serif; font-size: 0.95rem; }
-.copy-email-button { margin-top: 1em; padding: 6px 12px; font-size: 0.8rem; }
-.copied-msg { margin-top: 0.5em; color: green; font-size: 0.8rem; }
+.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2; }
+.calendar-grid-button.today { background: #e0ecff; border-color: #417ff0; }
 
+/* Complete banner */
 .complete-banner {
   text-align: center; padding: 10px; margin-bottom: 12px;
   background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; border-radius: 6px;
@@ -130,7 +122,7 @@
 /* Backdrop below header */
 .level-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,0.38);
-  backdrop-filter: blur(1.2px); z-index: 940; pointer-events: none;
+  backdrop-filter: blur(1.2px); z-index: 1000; pointer-events: none;
 }
 
 /* Base card */
@@ -140,15 +132,18 @@
   overflow: hidden;
 }
 
-/* Active card — bigger than before */
+/* Active card — bigger but mobile-safe & centered */
 .level-card--active {
   position: fixed;
   left: 50%; top: 50%;
-  transform: translate(-50%, -50%) scale(1.22); /* bigger */
-  width: min(98vw, 600px);                      /* wider */
-  z-index: 950;
-  box-shadow: 0 20px 56px rgba(0,0,0,0.4);
-  animation: card-enter 580ms cubic-bezier(.2,.8,.2,1) 220ms both;
+  transform: translate(-50%, -50%);      /* center perfectly */
+  width: min(96vw, 640px);               /* bigger, but fits mobile */
+  max-height: calc(100vh - 140px);       /* keep within screen */
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+  animation: card-enter 560ms cubic-bezier(.2,.8,.2,1) 220ms both;
+  background: inherit; /* match underlying block bg */
 }
 
 /* Locked / done */
@@ -188,7 +183,7 @@
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; }
 
-/* Helmet spin/appear */
+/* Helmet spin/appear (bigger helmets) */
 @keyframes spin-fade-in {
   0%   { opacity: 0; transform: rotate(-210deg) scale(0.86); }
   100% { opacity: 1; transform: rotate(0deg)    scale(1.00); }
@@ -212,8 +207,8 @@
 
 /* Active card entrance */
 @keyframes card-enter {
-  from { opacity: 0; transform: translate(-50%, -46%) scale(1.05); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1.22); }
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
 }
 
 /* Skip button (blue, slightly smaller) */
@@ -231,12 +226,12 @@
 
 /* Bigger helmets */
 .helmet-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
 }
 @media (max-width: 480px) {
-  .helmet-icon { width: 40px; height: 40px; }
+  .helmet-icon { width: 44px; height: 44px; }
 }
 
 /* Reduce motion */
