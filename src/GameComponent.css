@@ -5,7 +5,7 @@ html, body {
 
 /* Position of the active card relative to the page top */
 :root {
-  --active-top: 140px; /* tweak this to move the active card up/down */
+  --active-top: 130px; /* tweak this to move the active card up/down */
 }
 
 /* === Score flash (only number) === */
@@ -23,8 +23,8 @@ html, body {
 
 /* Header — bigger logo/title, always above backdrop */
 .title-row { display: flex; align-items: center; justify-content: center; gap: 0.7em; margin-bottom: 0.4rem; flex-wrap: nowrap; }
-.game-logo { height: 2.0em; width: auto; display: block; } /* bigger */
-.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(2rem, 6vw, 3.2rem); } /* bigger */
+.game-logo { height: 2.0em; width: auto; display: block; }
+.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(2rem, 6vw, 3.2rem); }
 .game-header { position: relative; z-index: 1200; text-align: center; margin: 16px 0; color: #fff; }
 .game-subtitle { font-size: 1rem; color: #fff; margin-top: 6px; }
 
@@ -46,20 +46,16 @@ html, body {
 }
 
 /* Mobile fit tweaks (light scale on very narrow phones) */
-@media (max-width: 430px) {
-  .app-container { transform: scale(0.96); transform-origin: top center; }
-}
-@media (max-width: 380px) {
-  .app-container { transform: scale(0.92); transform-origin: top center; }
-}
+@media (max-width: 430px) { .app-container { transform: scale(0.96); transform-origin: top center; } }
+@media (max-width: 380px) { .app-container { transform: scale(0.92); transform-origin: top center; } }
 
-/* Helmet row & bigger helmets */
+/* Helmet row & helmets */
 .helmet-sequence {
   display: flex; align-items: center; justify-content: center;
   flex-wrap: wrap; gap: 8px; margin: 0 0 10px 0;
   text-align: center;
 }
-.helmet-icon { width: 68px; height: 68px; object-fit: contain; } /* bigger */
+.helmet-icon { width: 68px; height: 68px; object-fit: contain; }
 @media (max-width: 480px) { .helmet-icon { width: 56px; height: 56px; } }
 
 /* Smaller arrows */
@@ -89,7 +85,7 @@ html, body {
 .path-block {
   border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-  width: min(92vw, 420px);              /* narrower across */
+  width: min(90vw, 380px);              /* narrower */
   margin-left: auto; margin-right: auto; text-align: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   background: #f9f9f9;
@@ -102,35 +98,36 @@ html, body {
 /* Stronger dim backdrop below header */
 .level-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.62);          /* darker dim */
+  background: rgba(0,0,0,0.68);          /* darker dim */
   backdrop-filter: blur(3px);
   z-index: 1005;
   pointer-events: none;
 }
 
-/* Active card — closer to top, shorter vertically, fully centered horizontally */
+/* Active card — closer to top, **much shorter vertically**, fully centered horizontally */
 .level-card--active {
   position: fixed;
   left: 50%;
-  top: var(--active-top, 140px);          /* << closer to top */
-  transform: translateX(-50%);            /* center horizontally only */
-  width: min(92vw, 500px);                /* a bit narrower across */
-  max-height: calc(var(--app-height, 100svh) - var(--active-top, 140px) - 70px);
-  min-height: 480px;                       /* not as tall */
+  top: var(--active-top, 130px);
+  transform: translateX(-50%);
+  width: min(90vw, 420px);                              /* a bit narrower */
+  max-height: min(520px, calc(var(--app-height, 100svh) - var(--active-top, 130px) - 80px));
+  min-height: 340px;                                    /* << shorter */
   overflow-y: auto;
   z-index: 1105;
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
-  background: #ffffff;                     /* solid canvas */
+  background: #ffffff;
   border: 2px solid #e5e7eb;
   border-radius: 18px;
   padding: 16px;
   animation: card-enter 560ms cubic-bezier(.2,.8,.2,1) 220ms both;
-  text-align: center;                      /* center inner content */
+  text-align: center;
 }
 
-/* On tiny screens, nudge a tad higher */
-@media (max-width: 400px) {
-  :root { --active-top: 120px; }
+/* Keep non-active/covered cards the same size as end-of-game */
+.level-card.is-covered {
+  position: static;           /* no fixed positioning */
+  width: min(90vw, 380px);    /* same as list card */
 }
 
 /* Locked / done */
@@ -154,7 +151,7 @@ html, body {
   padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
 }
 
-/* Level multiplier / points badge */
+/* Level multiplier / points badge (top-left) */
 .level-badge {
   position: absolute; top: 8px; left: 8px;
   z-index: 2;
@@ -204,7 +201,7 @@ html, body {
 .suggestion-box {
   max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px;
   margin: 6px auto 0; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: min(92%, 380px);
+  width: min(92%, 360px);
   text-align: left;
 }
 .suggestion-item { padding: 8px 10px; cursor: pointer; }
@@ -214,7 +211,7 @@ html, body {
 /* Input — still >=16px to avoid iOS zoom; centered on card */
 .guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
 .guess-input-field {
-  width: 98%; max-width: 360px; padding: 4px 6px; font-size: 16px;
+  width: 98%; max-width: 340px; padding: 4px 6px; font-size: 16px;
   border-radius: 8px; border: 1px solid #ccc;
   -webkit-text-size-adjust: 100%;
   margin-left: auto; margin-right: auto;
