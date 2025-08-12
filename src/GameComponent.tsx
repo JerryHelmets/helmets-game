@@ -338,19 +338,34 @@ useEffect(() => {
 
 
 
-  return (
+return (
   <div className="app-container">
-   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-    <header style={{color: '#fff', marginBottom: '0.5em' }} className="game-header">
+    <header className="game-header">
+      <div className="title-row">
+        <img
+          className="game-logo"
+          src="/android-chrome-outline-large-512x512.png"
+          alt="Game Logo"
+        />
         <h1 className="game-title">HELMETS</h1>
-        <div className="game-subtitle">
-          <span>{new Date().toLocaleDateString()}</span>
-          <span className="score-value"> | Score: {score}</span>
-          <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
-        </div>
-        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
-      </header>
-     );
+      </div>
+
+      <div className="game-subtitle">
+        <span>{new Date().toLocaleDateString()}</span>
+        <span className="score-value"> | Score: {score}</span>
+        <span>
+          {" "}
+          | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}
+        </span>
+      </div>
+
+      <button className="rules-button" onClick={() => setShowRules(true)}>
+        Rules
+      </button>
+    </header>
+  </div>
+);
+
   
 {dailyPaths.map((path, idx) => {
   const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
