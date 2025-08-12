@@ -6,24 +6,13 @@
   75%  { background-color: #fee2e2; box-shadow: 0 0 6px rgba(248,113,113,0.3); }
   100% { background-color: #fca5a5; box-shadow: 0 0 4px rgba(248,113,113,0.2); }
 }
-
-/* 1.2s total, ease-in-out, single run */
 .pulse-red { animation: pulse-red 1.2s ease-in-out 1 forwards; }
 
-.helmet-img {
-  height: 80px;
-  max-width: 100%;
-  margin: 0 6px;
-  object-fit: contain;
-}
+.helmet-img { height: 80px; max-width: 100%; margin: 0 6px; object-fit: contain; }
 
 .helmet-sequence {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2px;
-  margin: 0 0 4px 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 2px; margin: 0 0 4px 0;
 }
 
 @media (max-width: 600px) {
@@ -32,97 +21,44 @@
 
 /* Popups */
 .popup-modal {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 0, 0, 0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   z-index: 1000;
 }
-
-.fade-in { animation: fadeIn 0.4s ease-in-out forwards; opacity: 0; }
-
+.fade-in { animation: fadeIn 0.5s ease-in-out forwards; opacity: 0; } /* slightly slower */
 @keyframes fadeIn { to { opacity: 1; } }
 
 .popup-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  text-align: center;
-  max-width: 400px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-  position: relative;
+  background: white; padding: 2rem; border-radius: 12px; text-align: center;
+  max-width: 400px; box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
+.popup-content button { margin: 8px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
+.close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
-.popup-content button {
-  margin: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-}
-
-.close-button {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: transparent;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-}
-
-/* Guess input result bubbles in your original */
+/* Guess feedback bubbles */
 .guess-input p { margin-top: 6px; font-weight: bold; }
-.guess-input p.correct {
-  color: white; background-color: #28a745; padding: 4px 8px; border-radius: 6px; display: inline-block;
-}
-.guess-input p.incorrect {
-  color: white; background-color: #dc3545; padding: 4px 8px; border-radius: 6px; display: inline-block;
-}
+.guess-input p.correct { color: white; background-color: #28a745; padding: 4px 8px; border-radius: 6px; display: inline-block; }
+.guess-input p.incorrect { color: white; background-color: #dc3545; padding: 4px 8px; border-radius: 6px; display: inline-block; }
 
-.arrow {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 0 4px;
-  line-height: 1;
-  vertical-align: middle;
-}
+.arrow { font-size: 1.5rem; font-weight: bold; margin: 0 4px; line-height: 1; vertical-align: middle; }
 
 .title-container { text-align: center; margin-top: 16px; }
 .title-container span { font-size: 28px; margin-right: 8px; vertical-align: middle; }
 
 .game-meta { font-size: 16px; color: #555; margin-top: 4px; }
 
-.guess-input.correct input {
-  border: 2px solid #28a745;
-  background-color: #eaf8ef;
-  transition: all 0.3s ease;
-}
+.guess-input.correct input { border: 2px solid #28a745; background-color: #eaf8ef; transition: all 0.3s ease; }
+.guess-input.incorrect input { border: 2px solid #dc3545; background-color: #fdecec; transition: all 0.3s ease; }
 
-.guess-input.incorrect input {
-  border: 2px solid #dc3545;
-  background-color: #fdecec;
-  transition: all 0.3s ease;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.guess-input p.correct { animation: fadeInUp 0.3s ease-in; }
-.guess-input p.incorrect { animation: fadeInUp 0.3s ease-in; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.guess-input p.correct { animation: fadeInUp 0.35s ease-in; }
+.guess-input p.incorrect { animation: fadeInUp 0.35s ease-in; }
 
 .guess-input-container { display: flex; justify-content: center; margin-top: 10px; }
 
 .pulse { animation: pulse-grow 0.3s ease-in-out; }
-@keyframes pulse-grow {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
+@keyframes pulse-grow { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
 /* Suggestions */
 .suggestion-box {
@@ -131,115 +67,64 @@
 }
 .suggestion-item { padding: 6px 10px; cursor: pointer; }
 .suggestion-item:hover, .suggestion-item.highlighted { background-color: #f0f0f0; }
-.fade-in-fast { animation: fadeIn 0.3s ease-out; }
+.fade-in-fast { animation: fadeIn 0.35s ease-out; }
 
-@keyframes blinkRed {
-  0% { background-color: #dc3545; }
-  50% { background-color: #ff6b6b; }
-  100% { background-color: #dc3545; }
-}
+@keyframes blinkRed { 0% { background-color: #dc3545; } 50% { background-color: #ff6b6b; } 100% { background-color: #dc3545; } }
 
-@media (max-width: 480px) {
-  .helmet-img-responsive { width: 24px; height: 24px; }
-}
+@media (max-width: 480px) { .helmet-img-responsive { width: 24px; height: 24px; } }
 .helmet-arrow { font-size: 1rem; font-weight: 700; margin: 0 2px; line-height: 1; }
-@media (max-width: 480px) {
-  .helmet-arrow { font-size: 1rem; margin: 0 2px; }
-}
+@media (max-width: 480px) { .helmet-arrow { font-size: 1rem; margin: 0 2px; } }
 
 .helmet-img-scale { width: 40px; height: 40px; }
 @media (max-width: 480px) { .helmet-img-scale { width: 32px; height: 32px; } }
-
-@media (max-width: 480px) {
-  .helmet-img-mobile { width: 32px; height: 32px; }
-  .helmet-arrow-mobile { font-size: 0.75rem; margin: 0 1px; }
-  .bubble-container-mobile { padding: 6px; }
-}
-
-@media (max-width: 480px) {
-  .guess-input-mobile { font-size: 0.8rem; padding: 4px 8px; }
-  .locked-answer-mobile { font-size: 0.8rem; padding: 4px 8px; }
-}
-
-@media (max-width: 480px) {
-  .font-mobile { font-family: 'Fira Sans', sans-serif; font-size: 0.8rem; font-weight: 500; }
-}
+@media (max-width: 480px) { .helmet-img-mobile { width: 32px; height: 32px; } .helmet-arrow-mobile { font-size: 0.75rem; margin: 0 1px; } .bubble-container-mobile { padding: 6px; } }
+@media (max-width: 480px) { .guess-input-mobile { font-size: 0.8rem; padding: 4px 8px; } .locked-answer-mobile { font-size: 0.8rem; padding: 4px 8px; } }
+@media (max-width: 480px) { .font-mobile { font-family: 'Fira Sans', sans-serif; font-size: 0.8rem; font-weight: 500; } }
 
 .helmet-img-fixed { width: 72px; height: 72px; }
 @media (max-width: 480px) { .helmet-img-fixed { width: 56px; height: 56px; } }
 @media (max-width: 480px) { .helmet-img-mobile-lg { width: 80px; height: 80px; } }
 
-/* Path block states */
+/* Path blocks */
 .path-block-correct { background-color: #e6ffe6; border-color: #28a745; }
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
-@media (min-width: 768px) {
-  .game-wrapper { max-width: 700px; font-size: 16px; }
-}
+@media (min-width: 768px) { .game-wrapper { max-width: 700px; font-size: 16px; } }
 
 .app-container {
   transform: scale(0.92);
   transform-origin: top center;
-  width: 100vw;
-  overflow-x: hidden;
-  padding-top: 24px;
-  padding-left: 4px;
-  padding-right: 4px;
+  width: 100vw; overflow-x: hidden;
+  padding-top: 24px; padding-left: 4px; padding-right: 4px;
 }
-
 .share-score-button { background-color: #417ff0; color: #ffff; }
 .previous-day-games { font-size: 11px; }
 
 /* ===== Logo + Title alignment ===== */
-.title-row {
-  display: flex; align-items: center; justify-content: center;
-  gap: 0.5em; margin-bottom: 0.25rem; flex-wrap: nowrap;
-}
+.title-row { display: flex; align-items: center; justify-content: center; gap: 0.5em; margin-bottom: 0.25rem; flex-wrap: nowrap; }
 .game-logo { height: 1.2em; width: auto; display: block; }
-.game-title {
-  margin: 0; font-weight: 800; line-height: 1;
-  font-size: clamp(1.4rem, 3.6vw, 2.25rem);
-}
+.game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.4rem, 3.6vw, 2.25rem); }
 .game-header { text-align: center; margin: 16px 0; color: #fff; }
 @media (max-width: 768px) { .game-title { font-size: clamp(1.25rem, 4vw, 1.8rem); } }
 @media (max-width: 520px) { .game-title { font-size: clamp(1.1rem, 5.5vw, 1.5rem); } }
 @media (max-width: 360px) { .game-title { font-size: clamp(1rem, 6vw, 1.3rem); } }
 
-/* ===== Extracted layout classes (from the refactor) ===== */
+/* ===== Extracted layout ===== */
 .path-block {
-  border: 2px solid;
-  border-radius: 10px;
-  padding: 6px 6px;
-  margin-bottom: 6px;
+  border: 2px solid; border-radius: 10px; padding: 6px 6px; margin-bottom: 6px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.04);
-  max-width: 420px;
-  width: 98%;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
+  max-width: 420px; width: 98%; margin-left: auto; margin-right: auto; text-align: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 .path-block-default { border-color: #ccc; background-color: #f9f9f9; }
 
 .guess-input-field {
-  width: 98%;
-  max-width: 360px;
-  padding: 4px 6px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  width: 98%; max-width: 360px; padding: 4px 6px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc;
 }
 
-.locked-answer {
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-weight: bold;
-  color: #fff;
-  font-size: 0.75rem;
-  text-align: center;
-}
-.answer-correct { background-color: #28a745; animation: fadeIn 0.3s ease-in-out; }
+.locked-answer { padding: 4px 6px; border-radius: 6px; font-weight: bold; color: #fff; font-size: 0.75rem; text-align: center; }
+.answer-correct { background-color: #28a745; animation: fadeIn 0.35s ease-in-out; }
 .answer-incorrect { background-color: #dc3545; }
 
 .possible-answers { margin-top: 6px; padding: 6px; background: #eee; border-radius: 6px; }
@@ -249,15 +134,8 @@
 .fab-history { top: 12px; right: 12px; }
 .fab-feedback { bottom: 2px; left: 50%; transform: translateX(-50%); }
 
-.center-cta { text-align: center; margin-top: 20px; }
-.giveup-button { padding: 8px 16px; font-size: 16px; }
-
-.calendar-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem;
-}
-.calendar-grid-button {
-  padding: 6px; font-size: 0.7rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2;
-}
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
+.calendar-grid-button { padding: 6px; font-size: 0.7rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2; }
 
 .email-row { display: flex; align-items: center; margin-top: 1em; }
 .email-emoji { font-size: 1.2rem; margin-right: 8px; }
@@ -272,84 +150,101 @@
 .complete-banner h3 { margin: 0; }
 .complete-banner p { margin: 4px 0 0 0; font-size: 0.9rem; }
 
-/* ===== One-by-one flow: backdrop + cards + animations ===== */
+/* ===== One-by-one flow: backdrop + centered active card + slow animations ===== */
 
-/* Dim overlay behind the active level */
+/* Dim overlay behind active level */
 .level-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(1px);
-  z-index: 900;                /* below modals (1000) */
-  pointer-events: none;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.38);
+  backdrop-filter: blur(1.2px); z-index: 940; pointer-events: none;
 }
 
-/* Base card + states */
+/* Base card */
 .level-card {
   position: relative;
-  transition: transform 200ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease;
+  transition: transform 300ms cubic-bezier(.2,.8,.2,1), box-shadow 300ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease;
   overflow: hidden;
 }
 
+/* Center the active card (fixed overlay) */
 .level-card--active {
-  transform: scale(1.12); /* bigger center enlargement */
-  box-shadow: 0 14px 44px rgba(0,0,0,0.3);
-  z-index: 901;           /* above backdrop */
-  animation: card-enter 200ms cubic-bezier(.2,.8,.2,1) both;
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(1.12); /* larger, centered */
+  width: min(92vw, 480px);
+  z-index: 950; /* above backdrop, below modal */
+  box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+  animation: card-enter 420ms cubic-bezier(.2,.8,.2,1) both; /* slower entrance */
 }
 
-.level-card--locked { opacity: 1; }
+/* Locked (not active, not guessed) */
+.level-card--locked { opacity: 1; pointer-events: none; }
+/* In completed mode, allow clicks on locked levels */
+.is-complete .level-card--locked { pointer-events: auto; }
+
+/* Already answered */
 .level-card--done { opacity: 1; }
 
-/* COVER: show only “Level N” when not active & not guessed */
+/* Cover that hides helmets/input on locked cards */
 .level-cover {
   position: absolute; inset: 0;
   display: grid; place-items: center;
   background: linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.46));
   color: #fff; font-weight: 700; letter-spacing: 0.3px;
-  opacity: 0; pointer-events: none; transition: opacity 150ms ease;
+  opacity: 0; pointer-events: none; transition: opacity 180ms ease;
 }
 .level-card.is-covered .level-cover { opacity: 1; }
-
 .level-cover-label {
   font-size: clamp(1rem, 3.2vw, 1.25rem);
   border: 2px solid rgba(255,255,255,0.75);
   padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
 }
 
-/* Hide content when covered (keep layout height) */
+/* Hide content when covered (preserve height) */
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; }
 
-/* Active card: helmets spin + fade in (faster) */
+/* Active card: helmets spin + fade slower with larger stagger */
 @keyframes spin-fade-in {
-  0%   { opacity: 0; transform: rotate(-180deg) scale(0.88); }
-  100% { opacity: 1; transform: rotate(0deg)     scale(1);    }
+  0%   { opacity: 0; transform: rotate(-210deg) scale(0.84); }
+  100% { opacity: 1; transform: rotate(0deg)    scale(1.00); }
 }
 .level-card--active .helmet-sequence img {
   opacity: 0;
   animation-name: spin-fade-in;
-  animation-duration: 320ms;                /* faster spin */
+  animation-duration: 620ms;                           /* slower spin */
   animation-timing-function: cubic-bezier(.2,.8,.2,1);
-  animation-delay: var(--i, 0ms);           /* stagger from inline style */
+  animation-delay: var(--i, 0ms);                      /* stagger from inline style */
   animation-fill-mode: both;
 }
 
-/* Arrows fade quickly */
+/* Arrows fade a bit later */
 @keyframes arrow-fade-in {
   from { opacity: 0; transform: translateY(2px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .level-card--active .helmet-sequence .arrow {
   opacity: 0;
-  animation: arrow-fade-in 220ms ease-out calc(var(--i, 0ms) + 120ms) both;
+  animation: arrow-fade-in 420ms ease-out calc(var(--i, 0ms) + 220ms) both;
 }
 
-/* Active card entrance (snappier) */
+/* Active card entrance (slower) */
 @keyframes card-enter {
-  from { opacity: 0; transform: scale(1.02); }
-  to   { opacity: 1; transform: scale(1.12); }
+  from { opacity: 0; transform: translate(-50%, -46%) scale(1.02); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
 }
+
+/* Skip button */
+.skip-button {
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 6px;
+  background: #6b7280;  /* neutral gray */
+  color: #fff;
+  cursor: pointer;
+}
+.skip-button:hover { filter: brightness(1.05); }
 
 /* Accessibility: reduce motion */
 @media (prefers-reduced-motion: reduce) {
@@ -362,5 +257,5 @@
   }
 }
 
-/* Keep header subtitle readable */
+/* Keep subtitle readable */
 .game-subtitle { font-size: 1rem; color: #fff; margin-top: 4px; }
