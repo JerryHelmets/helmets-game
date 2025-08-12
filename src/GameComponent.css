@@ -393,3 +393,27 @@
     animation: none !important;
   }
 }
+
+
+/* One-by-one flow visuals */
+.level-card {
+  transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+  position: relative;
+}
+
+.level-card--active {
+  transform: scale(1.04);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  z-index: 2;
+}
+
+.level-card--locked {
+  opacity: 0.45;
+  filter: grayscale(20%);
+  pointer-events: none; /* no clicks or input */
+}
+
+.level-card--done {
+  opacity: 1;
+  filter: none;
+}
