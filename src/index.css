@@ -9,5 +9,5 @@ html, body, #root {
 }
 
 body {
-background: linear-gradient(135deg, rgba(53, 39, 112, 1) 0%, rgba(38, 56, 82, 1) 30%, rgba(30, 40, 50, 1) 65%, rgba(53, 39, 112, 1) 100%);
+background: linear-gradient(135deg, rgba(53, 39, 112, 1) 0%, rgba(30, 40, 60, 1) 30%, rgba(30, 40, 50, 1) 65%, rgba(53, 39, 112, 1) 100%);
 }
