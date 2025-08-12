@@ -353,265 +353,278 @@ return (
       <div className="game-subtitle">
         <span>{new Date().toLocaleDateString()}</span>
         <span className="score-value"> | Score: {score}</span>
-        <span>
-          {" "}
-          | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}
-        </span>
+        <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
       </div>
 
       <button className="rules-button" onClick={() => setShowRules(true)}>
         Rules
       </button>
     </header>
+
+    {dailyPaths.map((path, idx) => {
+      const blockClass = guesses[idx]
+        ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect')
+        : 'path-block-default';
+
+      return (
+        <div
+          key={idx}
+          className={`path-block ${blockClass}`}
+          style={{
+            border: '2px solid',
+            borderColor: guesses[idx] ? (guesses[idx]!.correct ? '#28a745' : '#dc3545') : '#ccc',
+            backgroundColor: guesses[idx] ? (guesses[idx]!.correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
+            borderRadius: '10px',
+            padding: '6px 6px',
+            marginBottom: '6px',
+            boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
+            maxWidth: '420px',
+            width: '98%',
+            margin: '2px auto',
+            textAlign: 'center',
+            transition: 'background-color 0.3s ease, border-color 0.3s ease'
+          }}
+          onClick={() => {
+            if (gameOver) {
+              const updated = [...revealedAnswers];
+              updated[idx] = !updated[idx];
+              setRevealedAnswers(updated);
+            }
+          }}
+        >
+          <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '0px' }}>
+            {path.path.map((team, i) => (
+              <React.Fragment key={i}>
+                <img
+                  src={`/images/${sanitizeImageName(team)}.png`}
+                  alt={team}
+                  className="helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg"
+                  style={{ width: '40px', height: '40px', objectFit: 'contain', maxWidth: '40px', flexShrink: 0 }}
+                />
+                {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <div className="guess-input-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '0px' }}>
+            <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
+              {!guesses[idx] ? (
+                <input
+                  ref={(el) => (inputRefs.current[idx] = el)}
+                  type="text"
+                  placeholder="Guess Player"
+                  inputMode="text"
+                  onFocus={() => setFocusedInput(idx)}
+                  onBlur={() => document.activeElement instanceof HTMLElement && document.activeElement.blur()}
+                  onChange={(e) => handleInputChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(e, idx)}
+                  style={{ width: '98%', maxWidth: '360px', padding: '4px 6px', fontSize: '14px', borderRadius: '6px', border: '1px solid #ccc' }}
+                  className="guess-input-mobile font-mobile"
+                />
+              ) : (
+                <div
+                  className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
+                  style={{
+                    padding: '4px 6px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    animation: guesses[idx]!.correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
+                    color: '#fff',
+                    backgroundColor: guesses[idx]!.correct ? '#28a745' : '#dc3545',
+                    fontSize: '0.75rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess}`}
+                </div>
+              )}
+
+              {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
+                <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.3s ease-out' }}>
+                  {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
+                    const typed = inputRefs.current[idx]?.value || '';
+                    const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                    return (
+                      <div
+                        key={i}
+                        className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                        style={{ padding: '6px 10px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.9rem' }}
+                        onMouseDown={() => handleGuess(idx, name)}
+                      >
+                        {match >= 0 ? (
+                          <>
+                            {name.slice(0, match)}
+                            <strong>{name.slice(match, match + typed.length)}</strong>
+                            {name.slice(match + typed.length)}
+                          </>
+                        ) : name}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Possible answers — lives INSIDE the map where idx exists */}
+          {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
+            <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
+              <strong>Possible Answers:</strong>
+              <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
+                {answerLists[idx].map((name, i) => (
+                  <li key={i}>👤 {name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    })}
+
+    {/* Floating buttons */}
+    <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>
+      📅 History
+    </button>
+    <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', bottom: '2px', left: '50%', transform: 'translateX(-50%)', padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>
+      💬 Feedback
+    </button>
+
+    {/* History modal */}
+    {showHistory && (
+      <div className="popup-modal">
+        <div className="popup-content">
+          <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+          <h3>📆 Game History</h3>
+          <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
+            {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
+              <button
+                key={date}
+                style={{ padding: '6px', fontSize: '0.7rem', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: '#f2f2f2' }}
+                onClick={() => (window.location.href = `/?date=${date}`)}
+              >
+                {date.slice(5)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+
+    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+      <button onClick={handleGiveUp} style={{ padding: '8px 16px', fontSize: '16px' }}>
+        Give Up
+      </button>
+    </div>
+
+    {/* Feedback modal */}
+    {showFeedback && (
+      <div className="popup-modal">
+        <div className="popup-content">
+          <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
+          <h3>Thoughts for Jerry?</h3>
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: '1em' }}>
+            <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
+            <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText('jerry.helmetsgame@gmail.com');
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+            style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}
+          >
+            Copy Email
+          </button>
+          {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Email copied!</p>}
+        </div>
+      </div>
+    )}
+
+    {/* Rules modal */}
+    {showRules && (
+      <div className="popup-modal fade-in">
+        <div className="popup-content">
+          <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
+          <h2>WELCOME TO HELMETS!</h2>
+          <p><em>Match each helmet path to an NFL player</em></p>
+          <h3>HOW TO PLAY</h3>
+          <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', marginTop: '5px' }}>
+            <li>🏈 Match a player to the helmet path on each level.</li>
+            <li>🏈 Only one guess per level.</li>
+            <li>🏈 Multiple players may share the same path.</li>
+            <li>🏈 Any active or retired NFL player drafted in 2000 or later qualifies.</li>
+            <li>🏈 Paths start with draft college, then list NFL teams in order of career path.</li>
+            <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
+            <li>🏈 Each level is worth 100 pts x level multiplier (1-5).</li>
+            <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
+          </ul>
+          <p><strong>Good Luck!</strong></p>
+        </div>
+      </div>
+    )}
+
+    {/* Game complete banner */}
+    {gameOver && (
+      <div style={{
+        textAlign: 'center',
+        padding: '10px',
+        marginBottom: '12px',
+        backgroundColor: '#d1e7dd',
+        color: '#0f5132',
+        border: '1px solid #badbcc',
+        borderRadius: '6px'
+      }}>
+        <h3 style={{ margin: 0 }}>🎯 Game Complete</h3>
+        <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>Click each box to view possible answers</p>
+      </div>
+    )}
+
+    {/* Score/share modal */}
+    {showPopup && (
+      <div className="popup-modal fade-in">
+        <div className="popup-content">
+          <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
+          <h3>🎉 Game Complete!</h3>
+          <p>You scored {score} pts</p>
+          <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
+          <p>{getEmojiSummary()}</p>
+          <button
+            onClick={() => {
+              const today = new Date().toISOString().split('T')[0];
+              const correctCount = guesses.filter(g => g && g.correct).length;
+              const shareMsg = `🏈 Helmets Game – ${formattedDate}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nwww.helmets-game.com`;
+
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Helmets Game',
+                  text: `${shareMsg}`,
+                }).catch(() => navigator.clipboard.writeText(shareMsg));
+              } else {
+                navigator.clipboard.writeText(shareMsg);
+                alert('Score copied!');
+              }
+            }}
+            className="share-score-button"
+          >
+            Share Score!
+          </button>
+          <div className="popup-footer">
+            <button
+              onClick={() => {
+                setShowPopup(false);
+                setShowHistory(true);
+              }}
+              className="previous-day-games"
+            >
+              Play previous day's games
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 );
 
-
-  
-{dailyPaths.map((path, idx) => {
-  const blockClass = guesses[idx] ? (guesses[idx].correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
-  return (
-    <div
-      key={idx}
-      className={`path-block ${blockClass}`}
-      style={{
-        border: '2px solid',
-        borderColor: guesses[idx] ? (guesses[idx].correct ? '#28a745' : '#dc3545') : '#ccc',
-        backgroundColor: guesses[idx] ? (guesses[idx].correct ? '#e6ffe6' : '#ffe6e6') : '#f9f9f9',
-        borderRadius: '10px',
-        padding: '6px 6px',
-        marginBottom: '6px',
-        boxShadow: '0 1px 1px rgba(0,0,0,0.04)',
-        maxWidth: '420px',
-        width: '98%',
-        margin: '2px auto',
-        textAlign: 'center',
-        transition: 'background-color 0.3s ease, border-color 0.3s ease'
-      }}
-      onClick={() => {
-  if (gameOver) {
-    const updated = [...revealedAnswers];
-    updated[idx] = !updated[idx];
-    setRevealedAnswers(updated);
-  }
-}}
-    >
-      <div className="helmet-sequence" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center', gap: '2px', marginBottom: '4px', marginTop: '0px' }}>
-        {path.path.map((team, i) => (
-          <React.Fragment key={i}>
-            <img
-              src={`/images/${sanitizeImageName(team)}.png`}
-              alt={team}
-              className='helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg'
-              style={{ width: '40px', height: '40px', objectFit: 'contain', maxWidth: '40px', flexShrink: 0 }}
-            />
-            {i < path.path.length - 1 && <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>}
-          </React.Fragment>
-        ))}
-      </div>
-
-      <div className="guess-input-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '0px' }}>
-        <div className={`guess-input ${guesses[idx] ? (guesses[idx].correct ? 'correct' : 'incorrect') : ''}`}>
-          {!guesses[idx] ? (
-            <input
-              ref={(el) => (inputRefs.current[idx] = el)}
-              type="text"
-              placeholder="Guess Player"
-              inputMode="text"
-              onFocus={() => setFocusedInput(idx)}
-              onBlur={() => document.activeElement.blur()}
-              onChange={(e) => handleInputChange(idx, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, idx)}
-              style={{ width: '98%', maxWidth: '360px', padding: '4px 6px', fontSize: '14px', borderRadius: '6px', border: '1px solid #ccc' }}
-              className="guess-input-mobile font-mobile"
-            />
-          ) : (
-            <div
-              className={`locked-answer ${guesses[idx].correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
-              style={{
-                padding: '4px 6px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                animation: guesses[idx].correct ? 'fadeIn 0.3s ease-in-out' : 'blinkRed 0.6s ease-in-out 1',
-                color: '#fff',
-                backgroundColor: guesses[idx].correct ? '#28a745' : '#dc3545',
-                fontSize: '0.75rem',
-                textAlign: 'center'
-              }}
-            >
-              {guesses[idx].correct ? `✅ ${path.name}` : `❌ ${guesses[idx].guess}`}
-            </div>
-          )}
-          
-          {!guesses[idx] && filteredSuggestions[idx]?.length > 0 && (
-            <div className="suggestion-box" style={{ fontFamily: 'Fira Sans, sans-serif', animation: 'fadeIn 0.3s ease-out' }}>
-              {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
-                const match = name.toLowerCase().indexOf(inputRefs.current[idx]?.value.toLowerCase() || '');
-                return (
-                  <div
-                    key={i}
-                    className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                    style={{ padding: '6px 10px', cursor: 'pointer', fontFamily: 'Fira Sans, sans-serif', fontSize: '0.9rem' }}
-                    onMouseDown={() => handleGuess(idx, name)}
-                  >
-                    {match >= 0 ? (
-                      <>
-                        {name.slice(0, match)}
-                        <strong>{name.slice(match, match + (inputRefs.current[idx]?.value.length || 0))}</strong>
-                        {name.slice(match + (inputRefs.current[idx]?.value.length || 0))}
-                      </>
-                    ) : name}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-})};
-</div>
-
-          
-{gameOver && revealedAnswers[idx] && answerLists[idx] && answerLists[idx].length > 0 && (
-  <div style={{ marginTop: '6px', padding: '6px', background: '#eee', borderRadius: '6px' }}>
-    <strong>Possible Answers:</strong>
-    <ul style={{ listStyle: 'none', paddingLeft: 0, marginTop: '4px', fontSize: '0.8rem' }}>
-      {answerLists[idx].map((name, i) => (
-        <li key={i}>👤 {name}</li>
-      ))}
-    </ul>
-  </div>
-)}
-      <button onClick={() => setShowHistory(true)} style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 10px', fontSize: '0.8rem' }}>📅 History</button>
-      <button onClick={() => setShowFeedback(true)} style={{ position: 'absolute', bottom: '2px', left: '50%',transform: 'translateX(-50%)',padding: '6px 10px', fontSize: '0.8rem', zIndex: 1000 }}>💬 Feedback</button>
-
-    
-      {showHistory && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-            <h3>📆 Game History</h3>
-           <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', marginBottom: '1rem' }}>
-              {Object.entries(JSON.parse(localStorage.getItem('helmets-history') || '{}')).map(([date]) => (
-                <button
-                  key={date}
-                  style={{ padding: '6px', fontSize: '0.7rem', border: '1px solid #ccc', borderRadius: '6px', backgroundColor: '#f2f2f2' }}
-                  onClick={() => window.location.href = `/?date=${date}`}
-                >
-                  {date.slice(5)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <button onClick={handleGiveUp} style={{ padding: '8px 16px', fontSize: '16px' }}>Give Up</button>
-      </div>
-      
-{showFeedback && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-            <h3>Thoughts for Jerry?</h3>
-            <div style={{ display: 'flex', alignItems: 'center', marginTop: '1em' }}>
-              <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📧</span>
-              <span style={{ fontFamily: 'Fira Sans, sans-serif', fontSize: '0.95rem' }}>jerry.helmetsgame@gmail.com</span>
-            </div>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText('jerry.helmetsgame@gmail.com');
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
-              }} 
-              style={{ marginTop: '1em', padding: '6px 12px', fontSize: '0.8rem' }}>
-              Copy Email
-            </button>
-            {copied && <p style={{ marginTop: '0.5em', color: 'green', fontSize: '0.8rem' }}>Email copied!</p>}
-          </div>
-        </div>
-      )}
-
-      {showRules && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
-            <h2>WELCOME TO HELMETS!</h2>
-            <p><em>Match each helmet path to an NFL player</em></p>
-            <h3>HOW TO PLAY</h3>
-            <ul style={{ listStyle: 'none', paddingLeft: 0, textAlign: 'left', marginTop: '5px' }}>
-              <li>🏈 Match a player to the helmet path on each level.</li>
-              <li>🏈 Only one guess per level.</li>
-              <li>🏈 Multiple players may share the same path.</li>
-              <li>🏈 Any active or retired NFL player drafted in 2000 or later qualifies.</li>
-              <li>🏈 Paths start with draft college, then list NFL teams in order of career path.</li>
-              <li>🏈 5 levels: 1 (easiest) to 5 (hardest) in ascending order.</li>
-              <li>🏈 Each level is worth 100 pts x level multiplier (1-5).</li>
-              <li>🏈 "Give Up" ends the game and marks remaining levels incorrect.</li>
-            </ul>
-            <p><strong>Good Luck!</strong></p>
-          </div>
-        </div>
-      )}
-
-    {gameOver && (
-  <div style={{
-    textAlign: 'center',
-    padding: '10px',
-    marginBottom: '12px',
-    backgroundColor: '#d1e7dd',
-    color: '#0f5132',
-    border: '1px solid #badbcc',
-    borderRadius: '6px'
-  }}>
-    <h3 style={{ margin: 0 }}>🎯 Game Complete</h3>
-    <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>Click each box to view possible answers</p>
-  </div>
-)}
-    
-        {showPopup && (
-  <div className="popup-modal fade-in">
-    <div className="popup-content">
-      <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
-      <h3>🎉 Game Complete!</h3>
-      <p>You scored {score} pts</p>
-      <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
-      <p>{getEmojiSummary()}</p>
-      <button onClick={() => {
-        const today = new Date().toISOString().split('T')[0];
-        const correctCount = guesses.filter(g => g && g.correct).length;
-        const shareMsg = `🏈 Helmets Game – ${formattedDate}\n\nScore: ${score}\n${correctCount}/5\n\n${getEmojiSummary()}\n\nwww.helmets-game.com`;
-
-        if (navigator.share) {
-          navigator.share({
-            title: 'Helmets Game',
-            text: `${shareMsg}`,
-          }).catch(() => navigator.clipboard.writeText(shareMsg));
-        } else {
-          navigator.clipboard.writeText(shareMsg);
-          alert('Score copied!');
-        }
-      }}
-        className="share-score-button"
-        >Share Score!</button>
-      <div className="popup-footer">
-      <button
-        onClick={() => {
-          setShowPopup(false);
-          setShowHistory(true);
-        }}
-        className="previous-day-games"
-      >
-        Play previous day's games
-      </button>
-    </div>
-    </div>
-  </div>
-)}
-</div>
-)};
 
 export default GameComponent;
