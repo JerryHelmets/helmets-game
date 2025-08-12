@@ -296,7 +296,7 @@ const GameComponent: React.FC = () => {
 
   const advanceToNext = (index: number) => {
     if (index < dailyPaths.length - 1) {
-      setTimeout(() => setActiveLevel(index + 1), 220);
+      setTimeout(() => setActiveLevel(index + 1), 260);
     }
   };
 
@@ -338,7 +338,7 @@ const GameComponent: React.FC = () => {
   const handleSkip = (index: number) => {
     if (guesses[index]) return;
     const updated = [...guesses];
-    updated[index] = { guess: '', correct: false };
+    updated[index] = { guess: 'Skipped', correct: false }; // <-- show as Skipped
     setGuesses(updated);
 
     const sugg = [...filteredSuggestions];
@@ -353,7 +353,7 @@ const GameComponent: React.FC = () => {
     setStartedFor(today, true);
     setShowRules(false);
     setActiveLevel(0);
-    setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    setTimeout(() => inputRefs.current[0]?.focus(), 120);
   };
 
   const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
@@ -408,6 +408,9 @@ const GameComponent: React.FC = () => {
               }
             }}
           >
+            {/* Level multiplier badge */}
+            <div className="level-badge" aria-hidden="true">{idx + 1}x</div>
+
             {/* Cover for hidden levels */}
             <div className="level-cover" aria-hidden={!isCovered}>
               <span className="level-cover-label">Level {idx + 1}</span>
@@ -420,8 +423,8 @@ const GameComponent: React.FC = () => {
                   <img
                     src={`/images/${sanitizeImageName(team)}.png`}
                     alt={team}
-                    className="helmet-img-responsive helmet-img-scale helmet-img-mobile font-mobile helmet-img-fixed helmet-img-mobile-lg"
-                    style={{ ['--i' as any]: `${i * 160}ms` }}  // slower stagger
+                    className="helmet-icon"
+                    style={{ ['--i' as any]: `${i * 180}ms` }}  // slower/wider stagger
                   />
                   {i < path.path.length - 1 && (
                     <span className="arrow helmet-arrow helmet-arrow-mobile font-mobile">→</span>
@@ -444,6 +447,35 @@ const GameComponent: React.FC = () => {
                       className="guess-input-field guess-input-mobile font-mobile"
                       disabled={!inputEnabled}
                     />
+
+                    {/* suggestions */}
+                    {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
+                      <div className="suggestion-box fade-in-fast">
+                        {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
+                          const typed = inputRefs.current[idx]?.value || '';
+                          const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                          return (
+                            <div
+                              key={i}
+                              className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                              onMouseDown={() => handleGuess(idx, name)}
+                            >
+                              {match >= 0 ? (
+                                <>
+                                  {name.slice(0, match)}
+                                  <strong>{name.slice(match, match + typed.length)}</strong>
+                                  {name.slice(match + typed.length)}
+                                </>
+                              ) : (
+                                name
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Skip below suggestions */}
                     {inputEnabled && (
                       <button
                         className="skip-button"
@@ -458,31 +490,7 @@ const GameComponent: React.FC = () => {
                   <div
                     className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}
                   >
-                    {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess}`}
-                  </div>
-                )}
-
-                {!guesses[idx] && inputEnabled && filteredSuggestions[idx]?.length > 0 && (
-                  <div className="suggestion-box fade-in-fast">
-                    {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
-                      const typed = inputRefs.current[idx]?.value || '';
-                      const match = name.toLowerCase().indexOf(typed.toLowerCase());
-                      return (
-                        <div
-                          key={i}
-                          className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                          onMouseDown={() => handleGuess(idx, name)}
-                        >
-                          {match >= 0 ? (
-                            <>
-                              {name.slice(0, match)}
-                              <strong>{name.slice(match, match + typed.length)}</strong>
-                              {name.slice(match + typed.length)}
-                            </>
-                          ) : name}
-                        </div>
-                      );
-                    })}
+                    {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
                   </div>
                 )}
               </div>
