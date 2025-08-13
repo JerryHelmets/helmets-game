@@ -1,9 +1,10 @@
-/* Global size tunables */
+/* Tunables */
 :root{
-  --active-top: 88px;            /* popups & active card offset from top */
-  --scale: 0.88;                  /* shrink whole app a touch */
-  --card-w: 310px;                /* base card width cap */
-  --card-min-h: 120px;            /* background card height */
+  --active-top: 110px;        /* active card offset from top */
+  --popup-offset: 130px;      /* popups start a bit lower than top */
+  --scale: 0.88;              /* shrink whole app a touch */
+  --card-w: 310px;            /* base card width cap */
+  --card-min-h: 120px;        /* background card height */
 }
 
 /* Prevent scroll chaining */
@@ -24,6 +25,7 @@ html, body { overscroll-behavior: none; }
 .game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.8rem, 5.4vw, 3rem); }
 .game-header { position: relative; z-index: 1200; text-align: center; margin: 12px 0; color: #fff; }
 .game-subtitle { font-size: 0.95rem; color: #fff; margin-top: 6px; }
+.rules-button { margin-top: 6px; }
 
 /* App shell — shrink whole game a bit */
 .app-container {
@@ -54,12 +56,12 @@ html, body { overscroll-behavior: none; }
 .arrow { font-size: 0.85rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
 @media (max-width: 480px) { .arrow { font-size: 0.75rem; } }
 
-/* Popups — closer to the top & larger */
+/* Popups — down from the top & final is bigger */
 .popup-modal {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.65);
   display: flex; align-items: flex-start; justify-content: center;
-  padding-top: var(--active-top);
+  padding-top: var(--popup-offset);
   z-index: 1100;
 }
 .fade-in { animation: fadeIn 0.5s ease-in-out forwards; opacity: 0; }
@@ -67,12 +69,13 @@ html, body { overscroll-behavior: none; }
 
 .popup-content {
   background: #fff; padding: 2rem; border-radius: 12px; text-align: center;
-  max-width: 520px; /* bigger to match */
+  max-width: 520px;
   width: calc(100% - 32px);
-  max-height: calc(var(--app-height, 100svh) - var(--active-top) - 40px);
+  max-height: calc(var(--app-height, 100svh) - var(--popup-offset) - 24px);
   overflow: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
-.popup-large { max-width: 520px; } /* explicit on final popup for clarity */
+.popup-final { font-size: 1.08rem; }    /* bigger text on final popup */
+.popup-final h3 { font-size: 1.4rem; }
 
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
@@ -91,8 +94,8 @@ html, body { overscroll-behavior: none; }
 
 /* Path cards — background/list size (pre-start & post-complete) */
 .path-block {
-  position: relative; /* ensure badges anchor to card */
-  border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
+  position: relative; /* anchor badges/cover to the card */
+  border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 12px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
   width: min(86vw, var(--card-w));
   margin-left: auto; margin-right: auto; text-align: center;
@@ -150,26 +153,19 @@ html, body { overscroll-behavior: none; }
 /* Cover to hide unguessed content */
 .level-cover {
   position: absolute; inset: 0; display: grid; place-items: center;
-  background: linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.46));
-  color: #fff; font-weight: 700; letter-spacing: 0.3px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.34));
+  color: #111; font-weight: 700; letter-spacing: 0.3px;
   opacity: 0; pointer-events: none; transition: opacity 200ms ease; z-index: 2;
 }
 .level-card.is-covered .level-cover { opacity: 1; }
 
-/* Pre-start: lighter cover so page doesn't look dimmed */
-.is-prestart .level-card.is-covered .level-cover {
-  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.34));
-  color: #111;
-}
-
 .level-cover-label {
   font-size: clamp(0.95rem, 3vw, 1.1rem);
-  border: 2px solid rgba(255,255,255,0.75);
+  border: 2px solid rgba(0,0,0,0.35);
   padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
 }
-.is-prestart .level-cover-label { border-color: rgba(0,0,0,0.35); }
 
-/* Level multiplier / points badge */
+/* Level multiplier / points badge (always visible; switches to +points at end) */
 .level-badge {
   position: absolute; top: 8px; left: 8px; z-index: 5;
   background: rgba(0,0,0,0.68); color: #fff; font-weight: 700; font-size: 0.9rem;
@@ -228,8 +224,8 @@ html, body { overscroll-behavior: none; }
   margin-left: auto; margin-right: auto;
 }
 
-/* Skip button — a bit lower */
-.skip-button { margin-top: 16px; }
+/* Skip button — lower */
+.skip-button { margin-top: 18px; }
 
 /* Locked answers */
 .locked-answer { padding: 6px 10px; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.85rem; text-align: center; }
