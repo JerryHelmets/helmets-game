@@ -116,13 +116,15 @@ function setStartedFor(date: string, v: boolean) {
 function getStartedFor(date: string) { const m = getStartedMap(); return !!m[date]; }
 
 const GameComponent: React.FC = () => {
-  /* Date setup (ET) */
-  const params = new URLSearchParams(window.location.search);
-  the:
-  const dateParam = params.get('date'); // YYYY-MM-DD
-  const todayET = todayETISO();
-  const gameDate = dateParam || todayET;
-  const shareDateMMDDYY = todayET_MMDDYY();
+ // Date setup (ET) 
+const params = new URLSearchParams(
+  typeof window !== 'undefined' ? window.location.search : ''
+);
+const dateParam = params.get('date'); // YYYY-MM-DD or null
+const todayET = todayETISO();
+const gameDate = dateParam || todayET;
+const shareDateMMDDYY = todayET_MMDDYY();
+
 
   /* State */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
