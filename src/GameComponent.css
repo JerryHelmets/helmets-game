@@ -1,27 +1,19 @@
 /* Prevent scroll chaining & rubber banding a bit */
-html, body {
-  overscroll-behavior: none;
-}
+html, body { overscroll-behavior: none; }
 
 /* Position of the active card relative to the page top */
-:root {
-  --active-top: 130px; /* tweak this to move the active card up/down */
-}
+:root { --active-top: 130px; }
 
 /* === Score flash (only number) === */
 @keyframes scoreFlash {
-  0%   { background: transparent; color: #fff; }
-  25%  { background: rgba(255, 221, 0, 0.9); color: #000; }
-  60%  { background: rgba(255, 221, 0, 0.75); color: #000; }
+  0% { background: transparent; color: #fff; }
+  25% { background: rgba(255,221,0,0.9); color: #000; }
+  60% { background: rgba(255,221,0,0.75); color: #000; }
   100% { background: transparent; color: #fff; }
 }
-.score-flash {
-  animation: scoreFlash 0.6s ease-out 1;
-  border-radius: 4px;
-  padding: 0 4px;
-}
+.score-flash { animation: scoreFlash 0.6s ease-out 1; border-radius: 4px; padding: 0 4px; }
 
-/* Header — bigger logo/title, always above backdrop */
+/* Header */
 .title-row { display: flex; align-items: center; justify-content: center; gap: 0.7em; margin-bottom: 0.4rem; flex-wrap: nowrap; }
 .game-logo { height: 2.0em; width: auto; display: block; }
 .game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(2rem, 6vw, 3.2rem); }
@@ -35,25 +27,18 @@ html, body {
   margin: 0 auto;
   padding: 24px 8px 40px;
   overflow-x: hidden;
-  min-height: var(--app-height, 100svh); /* locked height to prevent jump */
+  min-height: var(--app-height, 100svh); /* lock height to prevent keyboard jump */
 }
+.app-container.app-fixed { position: fixed; inset: 0; height: var(--app-height, 100svh); }
 
-/* When a level is active, pin the whole app so the page won't move */
-.app-container.app-fixed {
-  position: fixed;
-  inset: 0;
-  height: var(--app-height, 100svh);
-}
-
-/* Mobile fit tweaks (light scale on very narrow phones) */
+/* Light scale on very narrow phones */
 @media (max-width: 430px) { .app-container { transform: scale(0.96); transform-origin: top center; } }
 @media (max-width: 380px) { .app-container { transform: scale(0.92); transform-origin: top center; } }
 
-/* Helmet row & helmets */
+/* Helmet row */
 .helmet-sequence {
   display: flex; align-items: center; justify-content: center;
-  flex-wrap: wrap; gap: 8px; margin: 0 0 10px 0;
-  text-align: center;
+  flex-wrap: wrap; gap: 8px; margin: 0 0 10px 0; text-align: center;
 }
 .helmet-icon { width: 68px; height: 68px; object-fit: contain; }
 @media (max-width: 480px) { .helmet-icon { width: 56px; height: 56px; } }
@@ -65,7 +50,7 @@ html, body {
 /* Popups */
 .popup-modal {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background-color: rgba(0, 0, 0, 0.65);
+  background: rgba(0,0,0,0.65);
   display: flex; align-items: center; justify-content: center;
   z-index: 1100;
 }
@@ -73,19 +58,18 @@ html, body {
 @keyframes fadeIn { to { opacity: 1; } }
 
 .popup-content {
-  background: white; padding: 2rem; border-radius: 12px; text-align: center;
+  background: #fff; padding: 2rem; border-radius: 12px; text-align: center;
   max-width: 440px; max-height: calc(var(--app-height, 100svh) - 120px);
-  overflow: auto;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
+  overflow: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
 .popup-content button { margin: 8px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
-/* Path cards (default list view) — smaller & narrower to fit every phone */
+/* Path cards — smaller & narrower (list view) */
 .path-block {
   border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-  width: min(90vw, 380px);              /* narrower */
+  width: min(88vw, 360px);
   margin-left: auto; margin-right: auto; text-align: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   background: #f9f9f9;
@@ -95,24 +79,23 @@ html, body {
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
-/* Stronger dim backdrop below header */
+/* Dim backdrop (below header) */
 .level-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.68);          /* darker dim */
+  background: rgba(0,0,0,0.68);
   backdrop-filter: blur(3px);
-  z-index: 1005;
-  pointer-events: none;
+  z-index: 1005; pointer-events: none;
 }
 
-/* Active card — closer to top, **much shorter vertically**, fully centered horizontally */
+/* Active card — near top, MUCH shorter, centered horizontally */
 .level-card--active {
   position: fixed;
   left: 50%;
   top: var(--active-top, 130px);
   transform: translateX(-50%);
-  width: min(90vw, 420px);                              /* a bit narrower */
-  max-height: min(520px, calc(var(--app-height, 100svh) - var(--active-top, 130px) - 80px));
-  min-height: 340px;                                    /* << shorter */
+  width: min(92vw, 380px);
+  max-height: min(440px, calc(var(--app-height, 100svh) - var(--active-top, 130px) - 80px));
+  min-height: 300px;
   overflow-y: auto;
   z-index: 1105;
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
@@ -124,25 +107,20 @@ html, body {
   text-align: center;
 }
 
-/* Keep non-active/covered cards the same size as end-of-game */
-.level-card.is-covered {
-  position: static;           /* no fixed positioning */
-  width: min(90vw, 380px);    /* same as list card */
-}
+/* Keep covered (unguessed) cards same size as end-of-game cards */
+.level-card.is-covered { position: static; width: min(88vw, 360px); }
 
-/* Locked / done */
+/* State classes */
 .level-card--locked { opacity: 1; pointer-events: none; }
 .is-complete .level-card--locked { pointer-events: auto; }
 .level-card--done { opacity: 1; }
 
-/* Cover that hides content on locked cards */
+/* Cover to hide unguessed content */
 .level-cover {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
+  position: absolute; inset: 0; display: grid; place-items: center;
   background: linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.46));
   color: #fff; font-weight: 700; letter-spacing: 0.3px;
-  opacity: 0; pointer-events: none; transition: opacity 220ms ease;
-  z-index: 1;
+  opacity: 0; pointer-events: none; transition: opacity 220ms ease; z-index: 1;
 }
 .level-card.is-covered .level-cover { opacity: 1; }
 .level-cover-label {
@@ -151,14 +129,11 @@ html, body {
   padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
 }
 
-/* Level multiplier / points badge (top-left) */
+/* Level multiplier / points badge */
 .level-badge {
-  position: absolute; top: 8px; left: 8px;
-  z-index: 2;
-  background: rgba(0,0,0,0.68);
-  color: #fff; font-weight: 700; font-size: 0.95rem;
-  padding: 6px 10px; border-radius: 10px;
-  line-height: 1;
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  background: rgba(0,0,0,0.68); color: #fff; font-weight: 700; font-size: 0.95rem;
+  padding: 6px 10px; border-radius: 10px; line-height: 1;
 }
 .level-badge.won { background: #28a745; }
 .level-badge.none { background: #6b7280; }
@@ -167,10 +142,10 @@ html, body {
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; }
 
-/* Helmet spin/appear */
+/* Animations for helmets/arrows on active card */
 @keyframes spin-fade-in {
-  0%   { opacity: 0; transform: rotate(-210deg) scale(0.86); }
-  100% { opacity: 1; transform: rotate(0deg)    scale(1.00); }
+  0% { opacity: 0; transform: rotate(-210deg) scale(0.86); }
+  100% { opacity: 1; transform: rotate(0deg) scale(1.00); }
 }
 .level-card--active .helmet-sequence img {
   opacity: 0;
@@ -181,53 +156,44 @@ html, body {
   animation-fill-mode: both;
 }
 
-/* Arrows fade a bit later */
 @keyframes arrow-fade-in {
   from { opacity: 0; transform: translateY(2px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .level-card--active .helmet-sequence .arrow {
-  opacity: 0;
-  animation: arrow-fade-in 520ms ease-out calc(var(--i, 0ms) + 340ms) both;
+  opacity: 0; animation: arrow-fade-in 520ms ease-out calc(var(--i, 0ms) + 340ms) both;
 }
 
 /* Active card entrance */
 @keyframes card-enter {
   from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* Suggestions */
 .suggestion-box {
   max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px;
   margin: 6px auto 0; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: min(92%, 360px);
-  text-align: left;
+  width: min(92%, 340px); text-align: left;
 }
 .suggestion-item { padding: 8px 10px; cursor: pointer; }
-.suggestion-item:hover, .suggestion-item.highlighted { background-color: #f0f0f0; }
+.suggestion-item:hover, .suggestion-item.highlighted { background: #f0f0f0; }
 .fade-in-fast { animation: fadeIn 0.4s ease-out; }
 
-/* Input — still >=16px to avoid iOS zoom; centered on card */
+/* Input (>=16px to avoid iOS zoom) */
 .guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
 .guess-input-field {
-  width: 98%; max-width: 340px; padding: 4px 6px; font-size: 16px;
+  width: 98%; max-width: 320px; padding: 4px 6px; font-size: 16px;
   border-radius: 8px; border: 1px solid #ccc;
   -webkit-text-size-adjust: 100%;
   margin-left: auto; margin-right: auto;
 }
 
-/* Skip button centered */
+/* Skip button */
 .skip-button {
-  display: inline-block;
-  margin: 10px auto 0;
-  padding: 5px 9px;
-  font-size: 0.8rem;
-  border: none;
-  border-radius: 8px;
-  background: #417ff0;
-  color: #fff;
-  cursor: pointer;
+  display: inline-block; margin: 10px auto 0;
+  padding: 5px 9px; font-size: 0.8rem; border: none; border-radius: 8px;
+  background: #417ff0; color: #fff; cursor: pointer;
 }
 .skip-button:hover { filter: brightness(1.06); }
 
@@ -236,14 +202,14 @@ html, body {
 .answer-correct { background-color: #28a745; animation: fadeIn 0.35s ease-in-out; }
 .answer-incorrect { background-color: #dc3545; }
 
-/* Floating action buttons */
+/* Floating buttons */
 .fab-button { position: fixed; padding: 6px 10px; font-size: 0.8rem; z-index: 1201; }
 .fab-history { top: 12px; right: 12px; }
 .fab-feedback { bottom: 8px; left: 50%; transform: translateX(-50%); }
 
-/* History grid */
+/* History */
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
-.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background-color: #f2f2f2; }
+.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background: #f2f2f2; }
 .calendar-grid-button.today { background: #e0ecff; border-color: #417ff0; }
 
 /* Complete banner */
@@ -260,7 +226,6 @@ html, body {
   .level-card--active,
   .level-card--active .helmet-sequence img,
   .level-card--active .helmet-sequence .arrow {
-    animation: none !important;
-    transition: none !important;
+    animation: none !important; transition: none !important;
   }
 }
