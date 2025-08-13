@@ -30,9 +30,10 @@ type StoredGuesses = {
 const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_STARTED = 'helmets-started';
+const LS_BASE_PREFIX = 'helmets-basepoints-'; // per-day countdown storage
 
 const REVEAL_HOLD_MS = 2000;       // feedback hold on normal levels
-const FINAL_REVEAL_HOLD_MS = 500;  // last level: half again (was 1000)
+const FINAL_REVEAL_HOLD_MS = 500;  // last level immediate feedback (short)
 const MAX_BASE_POINTS = 100;       // per-level starting points
 const TICK_MS = 1000;              // 1s tick
 
@@ -144,7 +145,7 @@ const GameComponent: React.FC = () => {
   // freeze index during immediate feedback hold
   const [freezeActiveAfterAnswer, setFreezeActiveAfterAnswer] = useState<number | null>(null);
 
-  // per-level base points remaining (0..100)
+  // per-level base points remaining (0..100), persisted per day
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   // points actually awarded after guess/skip (includes multiplier)
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
@@ -265,9 +266,24 @@ const GameComponent: React.FC = () => {
       setRulesOpenedManually(false);
     }
 
+    // restore per-level countdown if present
+    let base = Array(dailyPaths.length).fill(MAX_BASE_POINTS);
+    const savedBase = localStorage.getItem(LS_BASE_PREFIX + gameDate);
+    if (savedBase) {
+      try {
+        const parsed = JSON.parse(savedBase);
+        if (Array.isArray(parsed)) {
+          base = base.map((v, i) => {
+            const pv = parsed[i];
+            return (typeof pv === 'number' && pv >= 0 && pv <= MAX_BASE_POINTS) ? pv : v;
+          });
+        }
+      } catch {}
+    }
+    setBasePointsLeft(base);
+
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
-    setBasePointsLeft(Array(dailyPaths.length).fill(MAX_BASE_POINTS));
     setAwardedPoints(Array(dailyPaths.length).fill(0));
     setPopupDismissed(false);
   }, [dailyPaths, gameDate, dateParam]);
@@ -284,6 +300,14 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, gameDate, dailyPaths.length, dateParam]);
 
+  /* Persist per-level countdown */
+  useEffect(() => {
+    if (!dailyPaths.length) return;
+    try {
+      localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
+    } catch {}
+  }, [basePointsLeft, gameDate, dailyPaths.length]);
+
   /* Score flash */
   useEffect(() => {
     const el = document.querySelector('.score-number');
@@ -296,14 +320,9 @@ const GameComponent: React.FC = () => {
   /* Completion detection that respects feedback hold */
   useEffect(() => {
     if (!dailyPaths.length) return;
-
     const complete = guesses.length === dailyPaths.length && guesses.every(Boolean);
-
     if (complete) {
-      // Wait for the last feedback hold to end; then popup is opened by the hold callback.
-      if (freezeActiveAfterAnswer !== null) return;
-
-      // Reloaded completed day -> enter complete now.
+      if (freezeActiveAfterAnswer !== null) return; // wait until hold ends
       setGameOver(true);
       if (!showPopup && !popupDismissed) setShowPopup(true);
     } else {
@@ -311,12 +330,19 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed, gameOver]);
 
-  /* Focus input on active card */
+  /* Focus input on active card (prevent scroll jump) */
   useEffect(() => {
     if (!started || gameOver) return;
     if (activeLevel >= 0) {
       const el = inputRefs.current[activeLevel];
-      if (el) el.focus();
+      if (el && 'focus' in el) {
+        try {
+          (el as any).focus({ preventScroll: true });
+        } catch {
+          el.focus();
+          window.scrollTo(0, 0);
+        }
+      }
     }
   }, [activeLevel, started, gameOver]);
 
@@ -488,11 +514,16 @@ const GameComponent: React.FC = () => {
     setStartedFor(gameDate, true);
     setShowRules(false);
     setRulesOpenedManually(false);
-    // slightly longer delay before first card appears
+    // small delay before first card appears
     setActiveLevel(-1);
     setTimeout(() => {
       setActiveLevel(0);
-      setTimeout(() => inputRefs.current[0]?.focus(), 120);
+      setTimeout(() => {
+        const el = inputRefs.current[0];
+        if (el && 'focus' in el) {
+          try { (el as any).focus({ preventScroll: true }); } catch { el.focus(); window.scrollTo(0, 0); }
+        }
+      }, 120);
     }, 420);
   };
 
@@ -743,12 +774,16 @@ const GameComponent: React.FC = () => {
             <h2>WELCOME TO HELMETS!</h2>
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
-            <ul className="rules-list">
-              <li>🏈 Solve 5 levels, one at a time.</li>
-              <li>🏈 Each level shows college → NFL teams in order.</li>
-              <li>🏈 One guess per level; Skip for 0 points.</li>
-              <li>🏈 Your points start at 100 and drop by 1 per second.</li>
-              <li>🏈 Award = remaining points × level multiplier (1x–5x).</li>
+            <ul className="rules-list football-bullets">
+              <li>Guess a player that fits the career path of the helmets</li>
+              <li>5 levels, one level at a time. Each level gets increasingly more difficult</li>
+              <li>Only one guess per level</li>
+              <li>If you skip a level, it will mark the level as incorrect and award 0 points</li>
+              <li>Each level is worth 100 points but you lose points as time passes so BE QUICK!</li>
+              <li>Each level has a level multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+              <li>All active or retired NFL players drafted in 2000 or later are eligible</li>
+              <li>College helmet is the player's draft college</li>
+              <li>Some paths may have multiple possible answers</li>
             </ul>
             {!started && !gameOver && (
               <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
