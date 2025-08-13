@@ -36,6 +36,7 @@ const REVEAL_HOLD_MS = 2000;       // feedback hold on normal levels
 const FINAL_REVEAL_HOLD_MS = 500;  // last level immediate feedback (short)
 const MAX_BASE_POINTS = 100;       // per-level starting points
 const TICK_MS = 1000;              // 1s tick
+const COUNTDOWN_START_DELAY_MS = 500; // ↓ shorter delay before per-level countdown starts
 
 /* ---------------- Eastern Time helpers ---------------- */
 function getETDateParts(date: Date = new Date()) {
@@ -117,14 +118,11 @@ function getStartedFor(date: string) { const m = getStartedMap(); return !!m[dat
 
 const GameComponent: React.FC = () => {
   /* Date (ET) */
-const params = new URLSearchParams(
-  typeof window !== 'undefined' ? window.location.search : ''
-);
-const dateParam = params.get('date'); // YYYY-MM-DD
-const todayET = todayETISO();
-const gameDate = dateParam || todayET;
-const shareDateMMDDYY = todayET_MMDDYY();
-
+  const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const dateParam = params.get('date'); // YYYY-MM-DD
+  const todayET = todayETISO();
+  const gameDate = dateParam || todayET;
+  const shareDateMMDDYY = todayET_MMDDYY();
 
   /* State */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
@@ -132,6 +130,12 @@ const shareDateMMDDYY = todayET_MMDDYY();
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([]);
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
+
+  // Animated scores
+  const [displayScore, setDisplayScore] = useState<number>(0);
+  const prevScoreRef = useRef<number>(0);
+  const [finalDisplayScore, setFinalDisplayScore] = useState<number>(0);
+
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [popupDismissed, setPopupDismissed] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
@@ -155,7 +159,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
-  const levelDelayRef = useRef<number | null>(null); // <-- start delay before countdown
+  const levelDelayRef = useRef<number | null>(null); // start delay before countdown
 
   /* ===== Mobile viewport lock to avoid jump on keyboard ===== */
   useEffect(() => {
@@ -290,6 +294,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
     setAwardedPoints(Array(dailyPaths.length).fill(0));
     setPopupDismissed(false);
+    setConfettiFired(false);
   }, [dailyPaths, gameDate, dateParam]);
 
   /* Persist archive (score + guesses) */
@@ -312,7 +317,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     } catch {}
   }, [basePointsLeft, gameDate, dailyPaths.length]);
 
-  /* Score flash */
+  /* Header score number flash */
   useEffect(() => {
     const el = document.querySelector('.score-number');
     if (!el) return;
@@ -320,6 +325,46 @@ const shareDateMMDDYY = todayET_MMDDYY();
     const t = window.setTimeout(() => el.classList.remove('score-flash'), 600);
     return () => window.clearTimeout(t);
   }, [score]);
+
+  /* Header score count-up animation */
+  useEffect(() => {
+    const start = prevScoreRef.current;
+    const end = score;
+    if (start === end) return;
+    let raf = 0;
+    const duration = 800;
+    const t0 = performance.now();
+    const ease = (p: number) => (p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p);
+    const step = (t: number) => {
+      const p = Math.min(1, (t - t0) / duration);
+      const val = Math.round(start + (end - start) * ease(p));
+      setDisplayScore(val);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else prevScoreRef.current = end;
+    };
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [score]);
+
+  /* Final popup score count-up (from 0 to total when popup opens) */
+  useEffect(() => {
+    if (!showPopup) { setFinalDisplayScore(0); return; }
+    let raf = 0;
+    const start = 0;
+    const end = score;
+    const duration = 900;
+    const t0 = performance.now();
+    const ease = (p: number) => (p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p);
+    const step = (t: number) => {
+      const p = Math.min(1, (t - t0) / duration);
+      const val = Math.round(start + (end - start) * ease(p));
+      setFinalDisplayScore(val);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [showPopup, score]);
 
   /* Completion detection that respects feedback hold */
   useEffect(() => {
@@ -350,7 +395,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     }
   }, [activeLevel, started, gameOver]);
 
-  /* Per-level countdown while a level is active and not answered (with 1s initial delay) */
+  /* Per-level countdown while a level is active and not answered (with delay) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -365,7 +410,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
       return next;
     });
 
-    // delay 1s before starting the countdown
+    // delay before starting the countdown
     levelDelayRef.current = window.setTimeout(() => {
       levelTimerRef.current = window.setInterval(() => {
         setBasePointsLeft(prev => {
@@ -375,7 +420,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
           return next;
         });
       }, TICK_MS);
-    }, 1000);
+    }, COUNTDOWN_START_DELAY_MS);
 
     return () => {
       if (levelDelayRef.current) {
@@ -556,10 +601,10 @@ const shareDateMMDDYY = todayET_MMDDYY();
           <h1 className="game-title">HELMETS</h1>
         </div>
 
-        <div className="game-subtitle">
-          <span>{new Date().toLocaleDateString()}</span>
-          <span> | Score: <span className="score-number">{score}</span></span>
-        </div>
+        {/* Date directly below the title */}
+        <div className="date-line">{new Date().toLocaleDateString()}</div>
+        {/* Score below date, big with count-up */}
+        <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
 
         <button
           className="rules-button"
@@ -590,7 +635,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
 
         const multiplier = idx + 1;
         const wonPoints = awardedPoints[idx] || 0;
-        const showPointsNow = gameOver; // at game complete show +points
+        const showPointsNow = gameOver; // at game complete show +points badge ONLY
         const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
         const badgeClass =
           showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
@@ -612,12 +657,13 @@ const shareDateMMDDYY = todayET_MMDDYY();
             {/* Top-left "Level X" tag for the ACTIVE card */}
             {isActive && <div className="level-tag">Level {idx + 1}</div>}
 
-            {/* Multiplier/points badge (moves to top-right on active) */}
+            {/* Multiplier/points badge (moves to top-right on active; top-left otherwise)
+                On game complete, ONLY +points is shown */}
             <div className={badgeClass} aria-hidden="true">{badgeText}</div>
 
             {/* Cover for hidden/unguessed cards */}
             <div className="level-cover" aria-hidden={!isCovered}>
-              {/* Hide label before the game starts */}
+              {/* No label shown pre-start (stays blank) */}
               {started && <span className="level-cover-label">Level {idx + 1}</span>}
             </div>
 
@@ -703,10 +749,12 @@ const shareDateMMDDYY = todayET_MMDDYY();
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
                       {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
-                      {/* Immediate feedback: show awarded points for this level */}
-                      <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
-                        {`+${awardedPoints[idx] || 0} pts`}
-                      </div>
+                      {/* Show +points text only during immediate feedback, not in game-complete */}
+                      {(!gameOver || isFeedback) && (
+                        <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
+                          {`+${awardedPoints[idx] || 0} pts`}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -736,7 +784,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
-              {last30Dates.map((date) => {
+              {getLastNDatesET(30).map((date) => {
                 const isToday = date === todayET;
                 return (
                   <button
@@ -810,11 +858,14 @@ const shareDateMMDDYY = todayET_MMDDYY();
         </div>
       )}
 
-      {/* Complete banner */}
+      {/* Complete banner (add previous-days button here) */}
       {gameOver && (
         <div className="complete-banner">
           <h3>🎯 Game Complete</h3>
           <p>Tap each box to view possible answers</p>
+          <button className="primary-button" onClick={() => setShowHistory(true)} style={{ marginTop: 8 }}>
+            Play previous day's games
+          </button>
         </div>
       )}
 
@@ -829,7 +880,8 @@ const shareDateMMDDYY = todayET_MMDDYY();
               ✖
             </button>
             <h3>🎉 Game Complete!</h3>
-            <p>You scored {score} pts</p>
+            <p className="popup-date">{shareDateMMDDYY}</p>
+            <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
             <p>{getEmojiSummary()}</p>
             <button
               onClick={() => {
@@ -847,14 +899,6 @@ const shareDateMMDDYY = todayET_MMDDYY();
             >
               Share Score!
             </button>
-            <div className="popup-footer">
-              <button
-                onClick={() => { setShowPopup(false); setPopupDismissed(true); setShowHistory(true); }}
-                className="previous-day-games"
-              >
-                Play previous day's games
-              </button>
-            </div>
           </div>
         </div>
       )}
