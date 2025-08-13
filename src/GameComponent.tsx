@@ -116,14 +116,12 @@ function getStartedFor(date: string) { const m = getStartedMap(); return !!m[dat
 /* ===================================================== */
 
 const GameComponent: React.FC = () => {
-  // Date (ET)
-const params = new URLSearchParams(
-  typeof window !== 'undefined' ? window.location.search : ''
-);
-const dateParam = params.get('date'); // YYYY-MM-DD
-const todayET = todayETISO();
-const gameDate = dateParam || todayET;
-const shareDateMMDDYY = todayET_MMDDYY();
+  /* Date (ET) */
+  const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const dateParam = params.get('date'); // YYYY-MM-DD
+  const todayET = todayETISO();
+  const gameDate = dateParam || todayET;
+  const shareDateMMDDYY = todayET_MMDDYY();
 
   /* State */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
@@ -320,16 +318,25 @@ const shareDateMMDDYY = todayET_MMDDYY();
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection (after feedback hold) */
+  /* Completion detection that respects the feedback hold */
   useEffect(() => {
     if (!dailyPaths.length) return;
-    const complete = isComplete(guesses, dailyPaths.length);
-    setGameOver(complete);
-    if (complete && !showPopup && !popupDismissed) {
-      // Only auto-open if we're not in the middle of a feedback hold
-      if (freezeActiveAfterAnswer === null) setShowPopup(true);
+
+    const complete = guesses.length === dailyPaths.length && guesses.every(Boolean);
+
+    if (complete) {
+      // If we're in the middle of the immediate-feedback hold, do nothing.
+      // The callback in handleGuess/handleSkip will finish the flow.
+      if (freezeActiveAfterAnswer !== null) return;
+
+      // Likely a reload or previously completed day — enter complete mode now.
+      setGameOver(true);
+      if (!showPopup && !popupDismissed) setShowPopup(true);
+    } else {
+      // If guesses changed (e.g., navigating days), ensure gameOver is false.
+      if (gameOver) setGameOver(false);
     }
-  }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed]);
+  }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed, gameOver]);
 
   /* Focus input on active card */
   useEffect(() => {
@@ -418,8 +425,11 @@ const shareDateMMDDYY = todayET_MMDDYY();
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
-      // Hold on the last level (same position) then show final popup
-      startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
+      // Hold the last level in-place for immediate feedback, then enter complete mode & show popup.
+      startRevealHold(index, () => {
+        setGameOver(true);
+        setShowPopup(true); // final popup opens immediately after hold
+      }, FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
     }
@@ -437,7 +447,10 @@ const shareDateMMDDYY = todayET_MMDDYY();
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
-      startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
+      startRevealHold(index, () => {
+        setGameOver(true);
+        setShowPopup(true);
+      }, FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
     }
