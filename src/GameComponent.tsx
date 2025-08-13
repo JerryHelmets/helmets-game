@@ -34,8 +34,8 @@ const LS_TIMER = 'helmets-timer';
 const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
-const REVEAL_HOLD_MS = 2000;       // hold after each guess before advancing
-const FINAL_REVEAL_HOLD_MS = 1200; // last card: keep centered briefly before final popup
+const REVEAL_HOLD_MS = 2000;       // feedback hold on each level
+const FINAL_REVEAL_HOLD_MS = 1200; // last level feedback hold
 
 /* ---------------- Eastern Time helpers ---------------- */
 function getETDateParts(date: Date = new Date()) {
@@ -120,6 +120,7 @@ const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date'); // YYYY-MM-DD
   const todayET = todayETISO();
+  the:
   const gameDate = dateParam || todayET;
   const shareDateMMDDYY = todayET_MMDDYY();
 
@@ -146,7 +147,7 @@ const GameComponent: React.FC = () => {
   const [showRules, setShowRules] = useState<boolean>(false);
   const [rulesOpenedManually, setRulesOpenedManually] = useState<boolean>(false);
 
-  // index of card that is frozen for feedback (green/red). While this equals idx, keep the card centered.
+  // index of card that is frozen for feedback (green/red). While equal to idx, we hold it.
   const [freezeActiveAfterAnswer, setFreezeActiveAfterAnswer] = useState<number | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -292,7 +293,7 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, timer, gameDate, dailyPaths.length, dateParam]);
 
-  /* Score flash (the number only) */
+  /* Score flash */
   useEffect(() => {
     const el = document.querySelector('.score-number');
     if (!el) return;
@@ -318,12 +319,13 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection (after reveal hold) */
+  /* Completion detection (after feedback hold) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = isComplete(guesses, dailyPaths.length);
     setGameOver(complete);
     if (complete && !showPopup && !popupDismissed) {
+      // Only auto-open if we're not in the middle of a feedback hold
       if (freezeActiveAfterAnswer === null) setShowPopup(true);
     }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed]);
@@ -337,10 +339,12 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* Confetti on final popup */
+  /* Confetti on final popup (more fireworks) */
   useEffect(() => {
     if (showPopup && !confettiFired) {
-      confetti({ particleCount: 875, spread: 145, origin: { y: 0.5 } });
+      confetti({ particleCount: 1200, spread: 160, origin: { y: 0.5 } });
+      setTimeout(() => confetti({ particleCount: 800, spread: 120, origin: { x: 0.2, y: 0.45 } }), 150);
+      setTimeout(() => confetti({ particleCount: 800, spread: 120, origin: { x: 0.8, y: 0.45 } }), 300);
       setConfettiFired(true);
     }
   }, [showPopup, confettiFired]);
@@ -395,13 +399,15 @@ const GameComponent: React.FC = () => {
       const level = index + 1;
       const points = 100 * level;
       setScore((prev) => prev + points);
+
       const inputBox = inputRefs.current[index];
       if (inputBox) {
         const rect = inputBox.getBoundingClientRect();
-        confetti({
-          particleCount: 80, spread: 100,
-          origin: { x: (rect.left + rect.right) / 2 / window.innerWidth, y: rect.bottom / window.innerHeight },
-        });
+        const x = (rect.left + rect.right) / 2 / window.innerWidth;
+        const y = rect.bottom / window.innerHeight;
+        // beefier local celebration
+        confetti({ particleCount: 140, spread: 100, startVelocity: 45, origin: { x, y } });
+        confetti({ particleCount: 100, spread: 70, startVelocity: 55, origin: { x: Math.min(0.95, x + 0.08), y } });
       }
     }
 
@@ -411,7 +417,7 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
-      // Keep last level centered during immediate feedback, then show popup
+      // Hold on the last level (same position) then show final popup
       startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -441,12 +447,12 @@ const GameComponent: React.FC = () => {
     setStartedFor(gameDate, true);
     setShowRules(false);
     setRulesOpenedManually(false);
-    // slight delay so the first card "appears" in
+    // slightly longer delay before first card appears
     setActiveLevel(-1);
     setTimeout(() => {
       setActiveLevel(0);
       setTimeout(() => inputRefs.current[0]?.focus(), 120);
-    }, 280);
+    }, 420);
   };
 
   const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
@@ -460,7 +466,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-        <h1 className="game-title">HELMETS</h1>
+          <h1 className="game-title">HELMETS</h1>
         </div>
 
         <div className="game-subtitle">
@@ -483,7 +489,7 @@ const GameComponent: React.FC = () => {
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
 
-        // Active while answering OR during feedback hold
+        // Active while answering OR during feedback hold (same position)
         const isFeedback = freezeActiveAfterAnswer === idx;
         const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || isFeedback);
 
@@ -495,10 +501,7 @@ const GameComponent: React.FC = () => {
 
         let stateClass = 'level-card--locked';
         if (isDone && !isFeedback) stateClass = 'level-card--done';
-        else if (isActive) stateClass = 'level-card--active';
-
-        // center only during feedback (including last level)
-        if (isFeedback) stateClass += ' level-card--centered';
+        else if (isActive) stateClass = 'level-card--active'; // no centering during feedback
 
         const inputEnabled = isActive && !isDone;
 
@@ -623,7 +626,7 @@ const GameComponent: React.FC = () => {
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
-              {getLastNDatesET(30).map((date) => {
+              {last30Dates.map((date) => {
                 const isToday = date === todayET;
                 return (
                   <button
