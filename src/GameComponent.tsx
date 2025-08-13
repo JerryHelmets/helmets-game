@@ -34,12 +34,10 @@ const LS_TIMER = 'helmets-timer';
 const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
-/** Hold time for immediate feedback before advancing */
-const REVEAL_HOLD_MS = 2000;
-/** Keep final level visible (green/red) a bit longer before Game Complete */
-const FINAL_REVEAL_HOLD_MS = 1200;
+const REVEAL_HOLD_MS = 2000;     // normal cards
+const FINAL_REVEAL_HOLD_MS = 1200; // keep last card centered/visible a bit longer
 
-/* ---------- Eastern Time helpers ---------- */
+/* ---------- ET helpers ---------- */
 function getETDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
@@ -116,15 +114,12 @@ function setStartedFor(date: string, v: boolean) {
 function getStartedFor(date: string) { const m = getStartedMap(); return !!m[date]; }
 
 const GameComponent: React.FC = () => {
- // Date setup (ET) 
-const params = new URLSearchParams(
-  typeof window !== 'undefined' ? window.location.search : ''
-);
-const dateParam = params.get('date'); // YYYY-MM-DD or null
-const todayET = todayETISO();
-const gameDate = dateParam || todayET;
-const shareDateMMDDYY = todayET_MMDDYY();
-
+  /* Date setup (ET) */
+  const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const dateParam = params.get('date'); // YYYY-MM-DD
+  const todayET = todayETISO();
+  const gameDate = dateParam || todayET;
+  const shareDateMMDDYY = todayET_MMDDYY();
 
   /* State */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
@@ -149,13 +144,13 @@ const shareDateMMDDYY = todayET_MMDDYY();
   const [showRules, setShowRules] = useState<boolean>(false);
   const [rulesOpenedManually, setRulesOpenedManually] = useState<boolean>(false);
 
-  // Hold the answered card on screen briefly (green/red) before moving on
+  // Keep answered card on screen briefly (green/red)
   const [freezeActiveAfterAnswer, setFreezeActiveAfterAnswer] = useState<number | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  /* --------- MOBILE VIEWPORT LOCK --------- */
+  /* Viewport sizing for mobile */
   useEffect(() => {
     const setInitialHeight = () => {
       const h = window.innerHeight;
@@ -167,7 +162,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     return () => { window.removeEventListener('orientationchange', onOrientation); };
   }, []);
 
-  /* Lock/unlock page scroll while playing or when any popup is open */
+  /* Lock scroll while playing / popup open */
   useEffect(() => {
     const shouldLock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const origHtml = document.documentElement.style.overflow;
@@ -185,7 +180,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
-  /* Load players once */
+  /* Load players */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -217,7 +212,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
   const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
 
-  /* Init (hydrate for chosen gameDate) */
+  /* Init for chosen day */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -270,10 +265,10 @@ const shareDateMMDDYY = todayET_MMDDYY();
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
-    setPopupDismissed(false); // reset per day navigation
+    setPopupDismissed(false);
   }, [dailyPaths, gameDate, dateParam]);
 
-  /* Per-day (ET) timer reset for today only */
+  /* Reset ET timer daily (only today) */
   useEffect(() => {
     if (dateParam) return;
     const lastET = localStorage.getItem(LS_LAST_PLAYED);
@@ -295,7 +290,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     }
   }, [guesses, score, timer, gameDate, dailyPaths.length, dateParam]);
 
-  /* Score flash (only the number) */
+  /* Score flash */
   useEffect(() => {
     const el = document.querySelector('.score-number');
     if (!el) return;
@@ -304,7 +299,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     return () => window.clearTimeout(t);
   }, [score]);
 
-  /* Timer */
+  /* Timer tick */
   useEffect(() => {
     if (!showPopup && !dateParam) {
       timerRef.current = window.setInterval(() => {
@@ -321,7 +316,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection (respect reveal hold) */
+  /* Completion detection (after reveal hold) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = isComplete(guesses, dailyPaths.length);
@@ -331,14 +326,14 @@ const shareDateMMDDYY = todayET_MMDDYY();
     }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed]);
 
-  /* Focus on active input */
+  /* Focus */
   useEffect(() => {
     if (!started || gameOver) return;
     const el = inputRefs.current[activeLevel];
     if (el) el.focus();
   }, [activeLevel, started, gameOver]);
 
-  /* Confetti when final popup appears */
+  /* Confetti when popup appears */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 875, spread: 145, origin: { y: 0.5 } });
@@ -346,7 +341,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
     }
   }, [showPopup, confettiFired]);
 
-  /* Handlers */
+  /* Helpers */
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
 
   const handleInputChange = (index: number, value: string) => {
@@ -382,7 +377,7 @@ const shareDateMMDDYY = todayET_MMDDYY();
   };
 
   const handleGuess = (index: number, value: string) => {
-    if (guesses[index]) return; // locked
+    if (guesses[index]) return;
     const correctPath = dailyPaths[index]?.path.join('>');
     const matched = players.find(
       (p) => p.name.toLowerCase() === value.toLowerCase() && p.path.join('>') === correctPath
@@ -406,13 +401,13 @@ const shareDateMMDDYY = todayET_MMDDYY();
       }
     }
 
-    const upd = [...filteredSuggestions];
-    upd[index] = [];
-    setFilteredSuggestions(upd);
+    const sugg = [...filteredSuggestions];
+    sugg[index] = [];
+    setFilteredSuggestions(sugg);
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
-      // Keep the last card visible briefly (green/red), then show popup
+      // Keep LAST level centered & active during immediate feedback, then show final popup.
       startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -447,7 +442,6 @@ const shareDateMMDDYY = todayET_MMDDYY();
   };
 
   const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
-
   const last30Dates = useMemo(() => getLastNDatesET(30), []);
 
   const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
@@ -475,13 +469,15 @@ const shareDateMMDDYY = todayET_MMDDYY();
         </button>
       </header>
 
-      {/* Dim only when playing (a level active) */}
+      {/* Dim only while actively playing a card */}
       {started && !gameOver && !showPopup && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
         const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || idx === freezeActiveAfterAnswer);
-        const isCovered = !started || (!isDone && !isActive); // pre-start: covered
+        const isLast = idx === dailyPaths.length - 1;
+        const centerThisActive = isActive && freezeActiveAfterAnswer === idx && isLast; // center the last during feedback
+        const isCovered = !started || (!isDone && !isActive);
 
         const blockClass = isDone
           ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect')
@@ -490,17 +486,16 @@ const shareDateMMDDYY = todayET_MMDDYY();
         let stateClass = 'level-card--locked';
         if (isDone && idx !== freezeActiveAfterAnswer) stateClass = 'level-card--done';
         else if (isActive) stateClass = 'level-card--active';
+        if (centerThisActive) stateClass += ' level-card--centered';
 
         const inputEnabled = isActive && !isDone;
 
         const multiplier = idx + 1;
         const wonPoints = isDone && guesses[idx]!.correct ? 100 * multiplier : 0;
-        const showPointsNow = gameOver; // show +points at end
+        const showPointsNow = gameOver; // at game complete show +points
         const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
         const badgeClass =
-          showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge none') : 'level-badge';
-
-        const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
+          showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
 
         return (
           <div
@@ -655,17 +650,18 @@ const shareDateMMDDYY = todayET_MMDDYY();
         <div className="popup-modal fade-in">
           <div className="popup-content">
             {rulesOpenedManually && (
-              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>✖</button>
+              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+                ✖
+              </button>
             )}
             <h2>WELCOME TO HELMETS!</h2>
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
             <ul className="rules-list">
-              <li>🏈 You’ll solve 5 levels, one at a time.</li>
-              <li>🏈 Each level shows a college, then NFL teams in order.</li>
-              <li>🏈 One guess per level. Multiple players may share a path.</li>
-              <li>🏈 Points are 100 × level (1–5).</li>
-              <li>🏈 You can Skip a level for 0 points.</li>
+              <li>🏈 Solve 5 levels, one at a time.</li>
+              <li>🏈 Each level shows college → NFL teams in order.</li>
+              <li>🏈 One guess per level; paths may map to multiple players.</li>
+              <li>🏈 Points are 100 × level (1–5). You can Skip for 0 points.</li>
             </ul>
             {!started && !gameOver && (
               <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
