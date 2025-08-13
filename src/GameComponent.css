@@ -2,7 +2,7 @@
 html, body { overscroll-behavior: none; }
 
 /* Position of the active card relative to the page top */
-:root { --active-top: 120px; }
+:root { --active-top: 118px; }
 
 /* === Score flash (only number) === */
 @keyframes scoreFlash {
@@ -65,7 +65,7 @@ html, body { overscroll-behavior: none; }
 .popup-content button { margin: 8px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
-/* Path cards — list view size */
+/* Path cards — list view size (used before game start and after completion) */
 .path-block {
   border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
@@ -79,7 +79,7 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
-/* Dim backdrop (ONLY while a level card is active) */
+/* Dim backdrop (ONLY while a level card is active or a popup is open) */
 .level-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.68);
@@ -87,29 +87,29 @@ html, body { overscroll-behavior: none; }
   z-index: 1005; pointer-events: none;
 }
 
-/* Active card — near top, SHORT */
+/* Active card — near top, shorter */
 .level-card--active {
   position: fixed;
   left: 50%;
-  top: var(--active-top, 120px);
+  top: var(--active-top, 118px);
   transform: translateX(-50%);
   width: min(92vw, 360px);
-  max-height: min(360px, calc(var(--app-height, 100svh) - var(--active-top, 120px) - 80px));
-  min-height: 260px;             /* shorter */
+  max-height: min(320px, calc(var(--app-height, 100svh) - var(--active-top, 118px) - 80px));
+  min-height: 240px;             /* shorter */
   overflow-y: auto;
   z-index: 1105;
-  /* Don't force a background here so green/red from path-block-* shows immediately */
+  /* don't force background so correct/incorrect colors show immediately */
   border: 2px solid #e5e7eb;
   border-radius: 18px;
   padding: 16px;
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
-  animation: card-enter 420ms cubic-bezier(.2,.8,.2,1) 40ms both;
+  animation: card-enter 380ms cubic-bezier(.2,.8,.2,1) 20ms both;
   text-align: center;
 }
-/* When active but not yet answered, give it a white canvas; let green/red override */
+/* When active but unanswered, give it a clean white canvas */
 .path-block-default.level-card--active { background-color: #ffffff; }
 
-/* Keep unguessed/covered cards same size as end-of-game cards */
+/* Keep unguessed/covered cards the same size as end-of-game cards */
 .level-card.is-covered { position: static; width: min(88vw, 360px); }
 
 /* States */
