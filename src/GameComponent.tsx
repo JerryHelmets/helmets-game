@@ -36,8 +36,8 @@ const LS_STARTED = 'helmets-started';
 
 /** Hold time for immediate feedback before advancing */
 const REVEAL_HOLD_MS = 2000;
-/** Slightly longer than before for the last card, then show final popup */
-const FINAL_REVEAL_HOLD_MS = 700;
+/** Keep final level visible (green/red) a bit longer before Game Complete */
+const FINAL_REVEAL_HOLD_MS = 1200;
 
 /* ---------- Eastern Time helpers ---------- */
 function getETDateParts(date: Date = new Date()) {
@@ -118,6 +118,7 @@ function getStartedFor(date: string) { const m = getStartedMap(); return !!m[dat
 const GameComponent: React.FC = () => {
   /* Date setup (ET) */
   const params = new URLSearchParams(window.location.search);
+  the:
   const dateParam = params.get('date'); // YYYY-MM-DD
   const todayET = todayETISO();
   const gameDate = dateParam || todayET;
@@ -144,6 +145,7 @@ const GameComponent: React.FC = () => {
   const [started, setStarted] = useState<boolean>(() => getStartedFor(gameDate));
   const [activeLevel, setActiveLevel] = useState<number>(0);
   const [showRules, setShowRules] = useState<boolean>(false);
+  const [rulesOpenedManually, setRulesOpenedManually] = useState<boolean>(false);
 
   // Hold the answered card on screen briefly (green/red) before moving on
   const [freezeActiveAfterAnswer, setFreezeActiveAfterAnswer] = useState<number | null>(null);
@@ -234,6 +236,7 @@ const GameComponent: React.FC = () => {
       setGameOver(complete);
       setShowPopup(complete && !popupDismissed);
       setShowRules(!startedFlag && !complete);
+      setRulesOpenedManually(false);
 
       const firstNull = g.findIndex(x => !x);
       setActiveLevel(firstNull === -1 ? dailyPaths.length - 1 : firstNull);
@@ -260,6 +263,7 @@ const GameComponent: React.FC = () => {
       setGameOver(complete);
       setShowPopup(complete && !popupDismissed);
       setShowRules(!startedFlag && !complete);
+      setRulesOpenedManually(false);
     }
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
@@ -315,7 +319,7 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection (respect dismissal) */
+  /* Completion detection (respect reveal hold) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = isComplete(guesses, dailyPaths.length);
@@ -406,6 +410,7 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
+      // Keep the last card visible briefly (green/red), then show popup
       startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -434,6 +439,7 @@ const GameComponent: React.FC = () => {
     setStarted(true);
     setStartedFor(gameDate, true);
     setShowRules(false);
+    setRulesOpenedManually(false);
     setActiveLevel(0);
     setTimeout(() => inputRefs.current[0]?.focus(), 120);
   };
@@ -459,7 +465,12 @@ const GameComponent: React.FC = () => {
           <span> | Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</span>
         </div>
 
-        <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
+        <button
+          className="rules-button"
+          onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}
+        >
+          Rules
+        </button>
       </header>
 
       {/* Dim only when playing (a level active) */}
@@ -482,7 +493,7 @@ const GameComponent: React.FC = () => {
 
         const multiplier = idx + 1;
         const wonPoints = isDone && guesses[idx]!.correct ? 100 * multiplier : 0;
-        const showPointsNow = gameOver;
+        const showPointsNow = gameOver; // show +points at end
         const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
         const badgeClass =
           showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge none') : 'level-badge';
@@ -637,11 +648,13 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Rules modal — today and past days if not started */}
+      {/* Rules modal — auto at pre-start (no close), manual = has close */}
       {showRules && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
-            <button className="close-button" onClick={() => setShowRules(false)}>✖</button>
+            {rulesOpenedManually && (
+              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>✖</button>
+            )}
             <h2>WELCOME TO HELMETS!</h2>
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
@@ -672,7 +685,7 @@ const GameComponent: React.FC = () => {
       {/* Final popup */}
       {showPopup && (
         <div className="popup-modal fade-in">
-          <div className="popup-content popup-large">
+          <div className="popup-content popup-final">
             <button
               className="close-button"
               onClick={() => { setShowPopup(false); setPopupDismissed(true); }}
