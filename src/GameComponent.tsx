@@ -120,6 +120,7 @@ const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date'); // YYYY-MM-DD
   const todayET = todayETISO();
+  the:
   const gameDate = dateParam || todayET;
   const shareDateMMDDYY = todayET_MMDDYY();
 
@@ -152,6 +153,7 @@ const GameComponent: React.FC = () => {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
+  const levelDelayRef = useRef<number | null>(null); // <-- start delay before countdown
 
   /* ===== Mobile viewport lock to avoid jump on keyboard ===== */
   useEffect(() => {
@@ -346,12 +348,12 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* Per-level countdown while a level is active and not answered */
+  /* Per-level countdown while a level is active and not answered (with 1s initial delay) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
     if (idx < 0 || idx >= dailyPaths.length) return;
-    if (guesses[idx]) return;                  // already answered
+    if (guesses[idx]) return;                     // already answered
     if (freezeActiveAfterAnswer !== null) return; // in feedback hold
 
     // Ensure initial value exists
@@ -361,16 +363,23 @@ const GameComponent: React.FC = () => {
       return next;
     });
 
-    levelTimerRef.current = window.setInterval(() => {
-      setBasePointsLeft(prev => {
-        const next = [...prev];
-        const cur = next[idx] ?? MAX_BASE_POINTS;
-        next[idx] = Math.max(0, cur - 1);
-        return next;
-      });
-    }, TICK_MS);
+    // delay 1s before starting the countdown
+    levelDelayRef.current = window.setTimeout(() => {
+      levelTimerRef.current = window.setInterval(() => {
+        setBasePointsLeft(prev => {
+          const next = [...prev];
+          const cur = next[idx] ?? MAX_BASE_POINTS;
+          next[idx] = Math.max(0, cur - 1);
+          return next;
+        });
+      }, TICK_MS);
+    }, 1000);
 
     return () => {
+      if (levelDelayRef.current) {
+        window.clearTimeout(levelDelayRef.current);
+        levelDelayRef.current = null;
+      }
       if (levelTimerRef.current) {
         window.clearInterval(levelTimerRef.current);
         levelTimerRef.current = null;
@@ -412,6 +421,10 @@ const GameComponent: React.FC = () => {
   };
 
   const stopLevelTimer = () => {
+    if (levelDelayRef.current) {
+      window.clearTimeout(levelDelayRef.current);
+      levelDelayRef.current = null;
+    }
     if (levelTimerRef.current) {
       window.clearInterval(levelTimerRef.current);
       levelTimerRef.current = null;
@@ -602,7 +615,8 @@ const GameComponent: React.FC = () => {
 
             {/* Cover for hidden/unguessed cards */}
             <div className="level-cover" aria-hidden={!isCovered}>
-              <span className="level-cover-label">Level {idx + 1}</span>
+              {/* Hide label before the game starts */}
+              {started && <span className="level-cover-label">Level {idx + 1}</span>}
             </div>
 
             {/* Push content down to avoid overlap with badges */}
@@ -765,7 +779,7 @@ const GameComponent: React.FC = () => {
       {/* Rules modal — auto at pre-start (no close), manual = has close */}
       {showRules && (
         <div className="popup-modal fade-in">
-          <div className="popup-content">
+          <div className="popup-content popup-rules">
             {rulesOpenedManually && (
               <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
                 ✖
@@ -776,11 +790,11 @@ const GameComponent: React.FC = () => {
             <h3>HOW TO PLAY</h3>
             <ul className="rules-list football-bullets">
               <li>Guess a player that fits the career path of the helmets</li>
-              <li>5 levels, one level at a time. Each level gets increasingly more difficult</li>
+              <li>5 levels, each level gets more difficult</li>
               <li>Only one guess per level</li>
               <li>If you skip a level, it will mark the level as incorrect and award 0 points</li>
               <li>Each level is worth 100 points but you lose points as time passes so BE QUICK!</li>
-              <li>Each level has a level multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+              <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
               <li>All active or retired NFL players drafted in 2000 or later are eligible</li>
               <li>College helmet is the player's draft college</li>
               <li>Some paths may have multiple possible answers</li>
