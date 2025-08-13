@@ -37,7 +37,13 @@ html, body { overscroll-behavior: none; }
   transform: scale(var(--scale));
   transform-origin: top center;
 }
-.app-container.app-fixed { position: fixed; inset: 0; height: var(--app-height, 100svh); background: transparent; }
+.app-container.app-fixed {
+  position: fixed;
+  inset: 0;
+  height: var(--app-height, 100svh);
+  overflow: hidden; /* lock page when keyboard opens */
+  background: transparent;
+}
 
 @media (max-width: 430px){ :root{ --scale: 0.86; --card-w: 300px; } }
 @media (max-width: 380px){ :root{ --scale: 0.84; --card-w: 290px; } }
@@ -119,15 +125,16 @@ html, body { overscroll-behavior: none; }
   z-index: 1005; pointer-events: none;
 }
 
-/* Active card near top (stays here during feedback) */
+/* Active card near top (stays here during feedback)
+   → made a little taller per your request */
 .level-card--active {
   position: fixed;
   left: 50%;
   top: var(--active-top);
   transform: translateX(-50%);
-  width: min(92vw, calc(var(--card-w) + 20px));
-  max-height: min(300px, calc(var(--app-height, 100svh) - var(--active-top) - 80px));
-  min-height: 220px;
+  width: min(92vw, calc(var(--card-w) + 24px));
+  max-height: min(420px, calc(var(--app-height, 100svh) - var(--active-top) - 80px));
+  min-height: 260px;         /* was 220px → a bit longer */
   overflow-y: auto;
   z-index: 1105;
   border: 2px solid #e5e7eb;
@@ -156,6 +163,12 @@ html, body { overscroll-behavior: none; }
 
 /* hide points badge when covered (pre-start or locked background) */
 .level-card.is-covered .level-badge { display: none; }
+
+/* When game is complete: touch wider & a touch shorter */
+.is-complete .level-card {
+  width: min(92vw, calc(var(--card-w) + 36px));
+  min-height: 100px;
+}
 
 /* Cover layer with simple label */
 .level-cover {
@@ -195,7 +208,7 @@ html, body { overscroll-behavior: none; }
 .level-card--active .level-badge { left: auto; right: 8px; }
 
 /* Push content down so badges don't overlap */
-.card-body { margin-top: 36px; }
+.card-body { margin-top: 42px; } /* moved down a bit to clear taller active card */
 
 /* Animations for helmets/arrows on active card */
 @keyframes spin-fade-in {
@@ -243,7 +256,7 @@ html, body { overscroll-behavior: none; }
   margin-left: auto; margin-right: auto;
 }
 
-/* Points row + progress bar (moved from inline) */
+/* Points row + progress bar */
 .points-wrap { width: 100%; margin-top: 10px; display: flex; flex-direction: column; align-items: center; }
 .points-row { display: flex; justify-content: space-between; width: min(92%, 320px); font-size: 12px; color: #111; }
 .points-label, .points-value { font-weight: 700; }
@@ -283,6 +296,16 @@ html, body { overscroll-behavior: none; }
 }
 .complete-banner h3 { margin: 0; }
 .complete-banner p { margin: 4px 0 0 0; font-size: 0.9rem; }
+
+/* Rules list with football bullets, left aligned */
+.rules-list { list-style: none; padding-left: 0; margin-top: 8px; text-align: left; }
+.rules-list.football-bullets li { position: relative; padding-left: 1.6rem; margin: 6px 0; }
+.rules-list.football-bullets li::before {
+  content: "🏈";
+  position: absolute; left: 0; top: 0;
+  transform: translateY(2px);
+  font-size: 1rem;
+}
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
