@@ -1,6 +1,6 @@
 :root{
-  --active-top: 110px;        /* default active card offset from top */
-  --popup-offset: 168px;      /* popups start lower from the top */
+  --active-top: 136px;        /* active card sits a bit lower from the top */
+  --popup-offset: 184px;      /* popups start lower from the top */
   --scale: 0.88;              /* shrink whole app a touch */
   --card-w: 310px;            /* base card width cap */
   --card-min-h: 110px;        /* height of hidden/background cards */
@@ -37,7 +37,7 @@ html, body { overscroll-behavior: none; }
   transform: scale(var(--scale));
   transform-origin: top center;
 }
-.app-container.app-fixed { position: fixed; inset: 0; height: var(--app-height, 100svh); }
+.app-container.app-fixed { position: fixed; inset: 0; height: var(--app-height, 100svh); background: transparent; }
 
 @media (max-width: 430px){ :root{ --scale: 0.86; --card-w: 300px; } }
 @media (max-width: 380px){ :root{ --scale: 0.84; --card-w: 290px; } }
@@ -72,11 +72,14 @@ html, body { overscroll-behavior: none; }
   max-height: calc(var(--app-height, 100svh) - var(--popup-offset) - 16px);
   overflow: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
+
 .popup-final {
-  max-width: 460px;           /* a bit narrower */
-  font-size: 1.12rem;         /* bigger font */
+  max-width: 440px;        /* narrower */
+  font-size: 1.16rem;      /* bigger font */
+  padding: 2.25rem 1.5rem; /* a bit taller */
+  min-height: 420px;       /* longer vertically */
 }
-.popup-final h3 { font-size: 1.45rem; }
+.popup-final h3 { font-size: 1.5rem; }
 
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
@@ -134,7 +137,7 @@ html, body { overscroll-behavior: none; }
   animation: card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
   text-align: center;
 }
-/* Center the LAST active card during final feedback */
+/* Center card during feedback hold (including last level) */
 .level-card--centered {
   top: 50% !important;
   transform: translate(-50%, -50%) !important;
@@ -152,6 +155,7 @@ html, body { overscroll-behavior: none; }
 }
 
 /* hide inner content when covered */
+.level-card.is-covered .card-body,
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; visibility: hidden; height: 0; }
 
@@ -173,7 +177,18 @@ html, body { overscroll-behavior: none; }
   padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
 }
 
-/* Level multiplier / points badge */
+/* NEW: top-left "Level X" tag for ACTIVE card */
+.level-tag{
+  position: absolute;
+  top: 8px; left: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.68);
+  color: #fff; font-weight: 800; font-size: 0.9rem; line-height: 1;
+  z-index: 6;
+}
+
+/* Multiplier/points badge defaults to top-left... */
 .level-badge {
   position: absolute; top: 8px; left: 8px; z-index: 5;
   background: rgba(0,0,0,0.68); color: #fff; font-weight: 700; font-size: 0.9rem;
@@ -181,6 +196,11 @@ html, body { overscroll-behavior: none; }
 }
 .level-badge.won { background: #28a745; }
 .level-badge.zero { background: #6b7280; }
+/* ...but moves to top-right on ACTIVE card */
+.level-card--active .level-badge { left: auto; right: 8px; }
+
+/* Push content down so badges don't overlap */
+.card-body { margin-top: 36px; }
 
 /* Animations for helmets/arrows on active card */
 @keyframes spin-fade-in {
