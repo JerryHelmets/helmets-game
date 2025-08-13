@@ -34,7 +34,7 @@ const LS_TIMER = 'helmets-timer';
 const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
-const REVEAL_HOLD_MS = 900; // how long to keep the answered card visible (green/red) before advancing
+const REVEAL_HOLD_MS = 300; // short hold so you see green/red immediately
 
 /* ---------- Eastern Time helpers ---------- */
 function getETDateParts(date: Date = new Date()) {
@@ -141,7 +141,7 @@ const GameComponent: React.FC = () => {
   const [activeLevel, setActiveLevel] = useState<number>(0);
   const [showRules, setShowRules] = useState<boolean>(false);
 
-  // Keep the just-answered card on screen briefly (green/red) before moving on
+  // Hold the answered card on screen briefly (green/red) before moving on
   const [freezeActiveAfterAnswer, setFreezeActiveAfterAnswer] = useState<number | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -159,7 +159,7 @@ const GameComponent: React.FC = () => {
     return () => { window.removeEventListener('orientationchange', onOrientation); };
   }, []);
 
-  /* Lock/unlock page scroll while a level is active */
+  /* Lock/unlock page scroll only while a level is active */
   useEffect(() => {
     const shouldLock = started && !gameOver && !showPopup;
     const origHtml = document.documentElement.style.overflow;
@@ -209,7 +209,7 @@ const GameComponent: React.FC = () => {
   const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
 
-  /* Init (hydrate for the chosen gameDate) */
+  /* Init (hydrate for chosen gameDate) */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -217,7 +217,7 @@ const GameComponent: React.FC = () => {
     let s = 0; let t = 0;
 
     if (dateParam) {
-      // Past day -> allow play if not started; always show Rules if not started/complete
+      // Past day -> allow play if not started; show Rules if not started/complete
       const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
       const data = history[gameDate];
       if (data) { g = data.guesses || g; s = data.score || 0; t = data.timer || 0; }
@@ -230,7 +230,7 @@ const GameComponent: React.FC = () => {
       setStarted(startedFlag);
       setGameOver(complete);
       setShowPopup(complete);
-      setShowRules(!startedFlag && !complete); // <-- show rules for past day if not started
+      setShowRules(!startedFlag && !complete); // show rules for past day if not started
 
       const firstNull = g.findIndex(x => !x);
       setActiveLevel(firstNull === -1 ? dailyPaths.length - 1 : firstNull);
@@ -312,23 +312,22 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection — defer popup until after reveal hold ends */
+  /* Completion detection (popup nearly immediate after last answer) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = isComplete(guesses, dailyPaths.length);
     setGameOver(complete);
-    if (complete) {
-      if (freezeActiveAfterAnswer === null) {
-        setShowPopup(true);
-      } // else: we'll open popup after freeze clears
+    if (complete && !showPopup) {
+      // If we're in the brief reveal hold, let it finish; otherwise show now.
+      if (freezeActiveAfterAnswer === null) setShowPopup(true);
     }
-  }, [guesses, dailyPaths.length, freezeActiveAfterAnswer]);
+  }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup]);
 
   useEffect(() => {
-    if (freezeActiveAfterAnswer === null && gameOver) {
+    if (freezeActiveAfterAnswer === null && gameOver && !showPopup) {
       setShowPopup(true);
     }
-  }, [freezeActiveAfterAnswer, gameOver]);
+  }, [freezeActiveAfterAnswer, gameOver, showPopup]);
 
   /* Focus on active input */
   useEffect(() => {
@@ -368,18 +367,16 @@ const GameComponent: React.FC = () => {
     else if (e.key === 'Enter' && highlightIndex >= 0) { handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
   };
 
-  const advanceToNext = (index: number) => {
-    if (index < dailyPaths.length - 1) {
-      setActiveLevel(index + 1);
-    }
-  };
-
-  const startRevealHold = (index: number, then: () => void) => {
+  const startRevealHold = (index: number, then: () => void, holdMs = REVEAL_HOLD_MS) => {
     setFreezeActiveAfterAnswer(index);
     window.setTimeout(() => {
       setFreezeActiveAfterAnswer(null);
       then();
-    }, REVEAL_HOLD_MS);
+    }, holdMs);
+  };
+
+  const advanceToNext = (index: number) => {
+    if (index < dailyPaths.length - 1) setActiveLevel(index + 1);
   };
 
   const handleGuess = (index: number, value: string) => {
@@ -407,12 +404,19 @@ const GameComponent: React.FC = () => {
       }
     }
 
-    const updatedSuggestions = [...filteredSuggestions];
-    updatedSuggestions[index] = [];
-    setFilteredSuggestions(updatedSuggestions);
+    // Clear suggestions
+    const upd = [...filteredSuggestions];
+    upd[index] = [];
+    setFilteredSuggestions(upd);
 
-    // Keep the answered card up (green/red) briefly before advancing
-    startRevealHold(index, () => advanceToNext(index));
+    const willComplete = updatedGuesses.every(Boolean);
+    if (willComplete) {
+      // tiny hold so you see the green/red, then show final popup
+      startRevealHold(index, () => setShowPopup(true), REVEAL_HOLD_MS);
+    } else {
+      // hold briefly, then move to next level
+      startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
+    }
   };
 
   const handleSkip = (index: number) => {
@@ -425,8 +429,12 @@ const GameComponent: React.FC = () => {
     sugg[index] = [];
     setFilteredSuggestions(sugg);
 
-    // Show red state briefly, then advance
-    startRevealHold(index, () => advanceToNext(index));
+    const willComplete = updated.every(Boolean);
+    if (willComplete) {
+      startRevealHold(index, () => setShowPopup(true), REVEAL_HOLD_MS);
+    } else {
+      startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
+    }
   };
 
   const handleStartGame = () => {
@@ -460,6 +468,7 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
+      {/* Dim only while a level card is active */}
       {started && !gameOver && !showPopup && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
@@ -480,7 +489,6 @@ const GameComponent: React.FC = () => {
 
         const multiplier = idx + 1;
         const wonPoints = isDone && guesses[idx]!.correct ? 100 * multiplier : 0;
-        // During play show Nx Points; after game over show +points on answered cards
         const showPointsNow = gameOver;
         const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
         const badgeClass =
@@ -513,7 +521,7 @@ const GameComponent: React.FC = () => {
                     src={`/images/${sanitizeImageName(team)}.png`}
                     alt={team}
                     className="helmet-icon"
-                    style={{ ['--i' as any]: `${i * 180}ms` }}
+                    style={{ ['--i' as any]: `${i * 160}ms` }}
                   />
                   {i < path.path.length - 1 && <span className="arrow">→</span>}
                 </React.Fragment>
@@ -534,7 +542,6 @@ const GameComponent: React.FC = () => {
                       className="guess-input-field guess-input-mobile font-mobile"
                       disabled={!inputEnabled}
                     />
-
                     {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                       <div className="suggestion-box fade-in-fast">
                         {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
@@ -558,7 +565,6 @@ const GameComponent: React.FC = () => {
                         })}
                       </div>
                     )}
-
                     {inputEnabled && (
                       <button className="skip-button" type="button" onClick={() => handleSkip(idx)}>
                         Skip (0 points)
