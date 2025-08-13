@@ -36,8 +36,8 @@ const LS_STARTED = 'helmets-started';
 
 /** Hold time for immediate feedback before advancing */
 const REVEAL_HOLD_MS = 2000;
-/** Short hold before final popup so it feels quick */
-const FINAL_REVEAL_HOLD_MS = 300;
+/** Slightly longer than before for the last card, then show final popup */
+const FINAL_REVEAL_HOLD_MS = 700;
 
 /* ---------- Eastern Time helpers ---------- */
 function getETDateParts(date: Date = new Date()) {
@@ -163,7 +163,7 @@ const GameComponent: React.FC = () => {
     return () => { window.removeEventListener('orientationchange', onOrientation); };
   }, []);
 
-  /* Lock/unlock page scroll only while a level is active or a popup is open */
+  /* Lock/unlock page scroll while playing or when any popup is open */
   useEffect(() => {
     const shouldLock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const origHtml = document.documentElement.style.overflow;
@@ -315,7 +315,7 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection (respect dismissal; final popup appears quickly) */
+  /* Completion detection (respect dismissal) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = isComplete(guesses, dailyPaths.length);
@@ -443,9 +443,10 @@ const GameComponent: React.FC = () => {
   const last30Dates = useMemo(() => getLastNDatesET(30), []);
 
   const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
+  const prestartClass = !started ? 'is-prestart' : '';
 
   return (
-    <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''}`}>
+    <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
@@ -461,13 +462,13 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
-      {/* Dim only when a level card is active (during play) */}
+      {/* Dim only when playing (a level active) */}
       {started && !gameOver && !showPopup && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
         const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || idx === freezeActiveAfterAnswer);
-        const isCovered = !started || (!isDone && !isActive);
+        const isCovered = !started || (!isDone && !isActive); // pre-start: covered
 
         const blockClass = isDone
           ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect')
@@ -558,7 +559,7 @@ const GameComponent: React.FC = () => {
                       </div>
                     )}
                     {inputEnabled && (
-                      <button className="primary-button" type="button" onClick={() => handleSkip(idx)}>
+                      <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
                         Skip (0 points)
                       </button>
                     )}
@@ -668,10 +669,10 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Final popup (respects dismissal until reload) */}
+      {/* Final popup */}
       {showPopup && (
         <div className="popup-modal fade-in">
-          <div className="popup-content">
+          <div className="popup-content popup-large">
             <button
               className="close-button"
               onClick={() => { setShowPopup(false); setPopupDismissed(true); }}
