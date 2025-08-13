@@ -34,10 +34,10 @@ const LS_TIMER = 'helmets-timer';
 const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
-/** Hold time for immediate feedback before advancing (longer). */
-const REVEAL_HOLD_MS = 900;
-/** Slightly shorter hold before showing final popup (feels quicker). */
-const FINAL_REVEAL_HOLD_MS = 500;
+/** Hold time for immediate feedback before advancing */
+const REVEAL_HOLD_MS = 2000;
+/** Short hold before final popup so it feels quick */
+const FINAL_REVEAL_HOLD_MS = 300;
 
 /* ---------- Eastern Time helpers ---------- */
 function getETDateParts(date: Date = new Date()) {
@@ -130,7 +130,7 @@ const GameComponent: React.FC = () => {
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const [popupDismissed, setPopupDismissed] = useState<boolean>(false); // keep dismissed until reload/nav
+  const [popupDismissed, setPopupDismissed] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -221,7 +221,6 @@ const GameComponent: React.FC = () => {
     let s = 0; let t = 0;
 
     if (dateParam) {
-      // Past day -> allow play if not started; show Rules if not started/complete
       const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
       const data = history[gameDate];
       if (data) { g = data.guesses || g; s = data.score || 0; t = data.timer || 0; }
@@ -234,12 +233,11 @@ const GameComponent: React.FC = () => {
       setStarted(startedFlag);
       setGameOver(complete);
       setShowPopup(complete && !popupDismissed);
-      setShowRules(!startedFlag && !complete); // show rules for past day if not started
+      setShowRules(!startedFlag && !complete);
 
       const firstNull = g.findIndex(x => !x);
       setActiveLevel(firstNull === -1 ? dailyPaths.length - 1 : firstNull);
     } else {
-      // Today (ET)
       const raw = localStorage.getItem(LS_GUESSES);
       if (raw) {
         try {
@@ -266,7 +264,7 @@ const GameComponent: React.FC = () => {
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
-    setPopupDismissed(false); // reset per navigation/day load
+    setPopupDismissed(false); // reset per day navigation
   }, [dailyPaths, gameDate, dateParam]);
 
   /* Per-day (ET) timer reset for today only */
@@ -279,7 +277,7 @@ const GameComponent: React.FC = () => {
     }
   }, [todayET, dateParam]);
 
-  /* Persist archive for any viewed day; quick payload for today */
+  /* Persist archive */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
@@ -323,7 +321,6 @@ const GameComponent: React.FC = () => {
     const complete = isComplete(guesses, dailyPaths.length);
     setGameOver(complete);
     if (complete && !showPopup && !popupDismissed) {
-      // If we're in the brief reveal-hold for the last answer, we'll open after it.
       if (freezeActiveAfterAnswer === null) setShowPopup(true);
     }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed]);
@@ -403,14 +400,12 @@ const GameComponent: React.FC = () => {
       }
     }
 
-    // Clear suggestions
     const upd = [...filteredSuggestions];
     upd[index] = [];
     setFilteredSuggestions(upd);
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
-      // shorter hold for final popup so it feels quick
       startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -447,7 +442,6 @@ const GameComponent: React.FC = () => {
 
   const last30Dates = useMemo(() => getLastNDatesET(30), []);
 
-  // Dim only when level active or popup open
   const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
 
   return (
@@ -455,7 +449,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-        <h1 className="game-title">HELMETS</h1>
+          <h1 className="game-title">HELMETS</h1>
         </div>
 
         <div className="game-subtitle">
@@ -467,16 +461,12 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
-      {/* Dim only when a level card is active or a popup is open */}
+      {/* Dim only when a level card is active (during play) */}
       {started && !gameOver && !showPopup && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
-
-        // Active when started and not gameOver; also keep active during reveal hold
         const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || idx === freezeActiveAfterAnswer);
-
-        // Before the game starts, covered; during play, covered if not done & not active
         const isCovered = !started || (!isDone && !isActive);
 
         const blockClass = isDone
@@ -568,7 +558,7 @@ const GameComponent: React.FC = () => {
                       </div>
                     )}
                     {inputEnabled && (
-                      <button className="skip-button" type="button" onClick={() => handleSkip(idx)}>
+                      <button className="primary-button" type="button" onClick={() => handleSkip(idx)}>
                         Skip (0 points)
                       </button>
                     )}
@@ -637,7 +627,7 @@ const GameComponent: React.FC = () => {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1500);
               }}
-              className="copy-email-button"
+              className="primary-button"
             >
               Copy Email
             </button>
@@ -646,7 +636,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Rules modal — for today and for past days if not started */}
+      {/* Rules modal — today and past days if not started */}
       {showRules && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
@@ -662,7 +652,7 @@ const GameComponent: React.FC = () => {
               <li>🏈 You can Skip a level for 0 points.</li>
             </ul>
             {!started && !gameOver && (
-              <button onClick={handleStartGame} className="share-score-button" style={{ marginTop: 12 }}>
+              <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
                 Start Game!
               </button>
             )}
@@ -704,7 +694,7 @@ const GameComponent: React.FC = () => {
                   alert('Score copied!');
                 }
               }}
-              className="share-score-button"
+              className="primary-button"
             >
               Share Score!
             </button>
