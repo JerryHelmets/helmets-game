@@ -2,7 +2,7 @@
 html, body { overscroll-behavior: none; }
 
 /* Position of the active card relative to the page top */
-:root { --active-top: 130px; }
+:root { --active-top: 120px; }
 
 /* === Score flash (only number) === */
 @keyframes scoreFlash {
@@ -27,7 +27,7 @@ html, body { overscroll-behavior: none; }
   margin: 0 auto;
   padding: 24px 8px 40px;
   overflow-x: hidden;
-  min-height: var(--app-height, 100svh); /* lock height to prevent keyboard jump */
+  min-height: var(--app-height, 100svh);
 }
 .app-container.app-fixed { position: fixed; inset: 0; height: var(--app-height, 100svh); }
 
@@ -65,13 +65,13 @@ html, body { overscroll-behavior: none; }
 .popup-content button { margin: 8px; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; }
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 
-/* Path cards — smaller & narrower (list view) */
+/* Path cards — list view size */
 .path-block {
   border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 10px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
   width: min(88vw, 360px);
   margin-left: auto; margin-right: auto; text-align: center;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
   background: #f9f9f9;
 }
 .path-block-default { border-color: #d0d0d0; }
@@ -79,7 +79,7 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
-/* Dim backdrop (below header) */
+/* Dim backdrop (ONLY while a level card is active) */
 .level-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.68);
@@ -87,30 +87,32 @@ html, body { overscroll-behavior: none; }
   z-index: 1005; pointer-events: none;
 }
 
-/* Active card — near top, MUCH shorter, centered horizontally */
+/* Active card — near top, SHORT */
 .level-card--active {
   position: fixed;
   left: 50%;
-  top: var(--active-top, 130px);
+  top: var(--active-top, 120px);
   transform: translateX(-50%);
-  width: min(92vw, 380px);
-  max-height: min(440px, calc(var(--app-height, 100svh) - var(--active-top, 130px) - 80px));
-  min-height: 300px;
+  width: min(92vw, 360px);
+  max-height: min(360px, calc(var(--app-height, 100svh) - var(--active-top, 120px) - 80px));
+  min-height: 260px;             /* shorter */
   overflow-y: auto;
   z-index: 1105;
-  box-shadow: 0 22px 60px rgba(0,0,0,0.42);
-  background: #ffffff;
+  /* Don't force a background here so green/red from path-block-* shows immediately */
   border: 2px solid #e5e7eb;
   border-radius: 18px;
   padding: 16px;
-  animation: card-enter 560ms cubic-bezier(.2,.8,.2,1) 220ms both;
+  box-shadow: 0 22px 60px rgba(0,0,0,0.42);
+  animation: card-enter 420ms cubic-bezier(.2,.8,.2,1) 40ms both;
   text-align: center;
 }
+/* When active but not yet answered, give it a white canvas; let green/red override */
+.path-block-default.level-card--active { background-color: #ffffff; }
 
-/* Keep covered (unguessed) cards same size as end-of-game cards */
+/* Keep unguessed/covered cards same size as end-of-game cards */
 .level-card.is-covered { position: static; width: min(88vw, 360px); }
 
-/* State classes */
+/* States */
 .level-card--locked { opacity: 1; pointer-events: none; }
 .is-complete .level-card--locked { pointer-events: auto; }
 .level-card--done { opacity: 1; }
@@ -120,7 +122,7 @@ html, body { overscroll-behavior: none; }
   position: absolute; inset: 0; display: grid; place-items: center;
   background: linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.46));
   color: #fff; font-weight: 700; letter-spacing: 0.3px;
-  opacity: 0; pointer-events: none; transition: opacity 220ms ease; z-index: 1;
+  opacity: 0; pointer-events: none; transition: opacity 200ms ease; z-index: 1;
 }
 .level-card.is-covered .level-cover { opacity: 1; }
 .level-cover-label {
@@ -150,24 +152,23 @@ html, body { overscroll-behavior: none; }
 .level-card--active .helmet-sequence img {
   opacity: 0;
   animation-name: spin-fade-in;
-  animation-duration: 760ms;
+  animation-duration: 640ms;
   animation-timing-function: cubic-bezier(.2,.8,.2,1);
-  animation-delay: calc(var(--i, 0ms) + 220ms);
+  animation-delay: calc(var(--i, 0ms) + 140ms);
   animation-fill-mode: both;
 }
-
 @keyframes arrow-fade-in {
   from { opacity: 0; transform: translateY(2px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .level-card--active .helmet-sequence .arrow {
-  opacity: 0; animation: arrow-fade-in 520ms ease-out calc(var(--i, 0ms) + 340ms) both;
+  opacity: 0; animation: arrow-fade-in 420ms ease-out calc(var(--i, 0ms) + 220ms) both;
 }
 
 /* Active card entrance */
 @keyframes card-enter {
   from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* Suggestions */
@@ -178,7 +179,7 @@ html, body { overscroll-behavior: none; }
 }
 .suggestion-item { padding: 8px 10px; cursor: pointer; }
 .suggestion-item:hover, .suggestion-item.highlighted { background: #f0f0f0; }
-.fade-in-fast { animation: fadeIn 0.4s ease-out; }
+.fade-in-fast { animation: fadeIn 0.3s ease-out; }
 
 /* Input (>=16px to avoid iOS zoom) */
 .guess-input-container { display: flex; justify-content: center; margin-top: 8px; }
@@ -199,7 +200,7 @@ html, body { overscroll-behavior: none; }
 
 /* Locked answers */
 .locked-answer { padding: 6px 10px; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.85rem; text-align: center; }
-.answer-correct { background-color: #28a745; animation: fadeIn 0.35s ease-in-out; }
+.answer-correct { background-color: #28a745; animation: fadeIn 0.25s ease-in-out; }
 .answer-incorrect { background-color: #dc3545; }
 
 /* Floating buttons */
