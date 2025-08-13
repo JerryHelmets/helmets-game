@@ -34,10 +34,10 @@ const LS_TIMER = 'helmets-timer';
 const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
-const REVEAL_HOLD_MS = 2000;     // normal cards
-const FINAL_REVEAL_HOLD_MS = 1200; // keep last card centered/visible a bit longer
+const REVEAL_HOLD_MS = 2000;       // hold after each guess before advancing
+const FINAL_REVEAL_HOLD_MS = 1200; // last card: keep centered briefly before final popup
 
-/* ---------- ET helpers ---------- */
+/* ---------------- Eastern Time helpers ---------------- */
 function getETDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',
@@ -70,7 +70,7 @@ function getLastNDatesET(n: number): string[] {
   return arr;
 }
 
-/* ---------- Daily selection ---------- */
+/* ---------------- Daily selection ---------------- */
 function seededRandom(seed: number) {
   return function () {
     const x = Math.sin(seed++) * 10000;
@@ -104,7 +104,7 @@ function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
 const isComplete = (guesses: (Guess | null)[], total: number) =>
   guesses.length === total && guesses.every(Boolean);
 
-/* ---------- started flags per day ---------- */
+/* ---------------- started flags per day ---------------- */
 function getStartedMap() {
   try { return JSON.parse(localStorage.getItem(LS_STARTED) || '{}'); } catch { return {}; }
 }
@@ -113,8 +113,10 @@ function setStartedFor(date: string, v: boolean) {
 }
 function getStartedFor(date: string) { const m = getStartedMap(); return !!m[date]; }
 
+/* ===================================================== */
+
 const GameComponent: React.FC = () => {
-  /* Date setup (ET) */
+  /* Date (ET) */
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date'); // YYYY-MM-DD
   const todayET = todayETISO();
@@ -140,17 +142,17 @@ const GameComponent: React.FC = () => {
     return stored ? parseInt(stored, 10) : 0;
   });
   const [started, setStarted] = useState<boolean>(() => getStartedFor(gameDate));
-  const [activeLevel, setActiveLevel] = useState<number>(0);
+  const [activeLevel, setActiveLevel] = useState<number>(0); // when -1, none visible yet
   const [showRules, setShowRules] = useState<boolean>(false);
   const [rulesOpenedManually, setRulesOpenedManually] = useState<boolean>(false);
 
-  // Keep answered card on screen briefly (green/red)
+  // index of card that is frozen for feedback (green/red). While this equals idx, keep the card centered.
   const [freezeActiveAfterAnswer, setFreezeActiveAfterAnswer] = useState<number | null>(null);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  /* Viewport sizing for mobile */
+  /* ===== Mobile viewport lock to avoid jump on keyboard ===== */
   useEffect(() => {
     const setInitialHeight = () => {
       const h = window.innerHeight;
@@ -159,10 +161,10 @@ const GameComponent: React.FC = () => {
     setInitialHeight();
     const onOrientation = () => { setTimeout(setInitialHeight, 250); };
     window.addEventListener('orientationchange', onOrientation);
-    return () => { window.removeEventListener('orientationchange', onOrientation); };
+    return () => window.removeEventListener('orientationchange', onOrientation);
   }, []);
 
-  /* Lock scroll while playing / popup open */
+  /* Lock scroll while playing / showing a popup */
   useEffect(() => {
     const shouldLock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const origHtml = document.documentElement.style.overflow;
@@ -180,7 +182,7 @@ const GameComponent: React.FC = () => {
     };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
-  /* Load players */
+  /* Load players once */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -268,7 +270,7 @@ const GameComponent: React.FC = () => {
     setPopupDismissed(false);
   }, [dailyPaths, gameDate, dateParam]);
 
-  /* Reset ET timer daily (only today) */
+  /* Reset ET timer daily (today only) */
   useEffect(() => {
     if (dateParam) return;
     const lastET = localStorage.getItem(LS_LAST_PLAYED);
@@ -290,7 +292,7 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, timer, gameDate, dailyPaths.length, dateParam]);
 
-  /* Score flash */
+  /* Score flash (the number only) */
   useEffect(() => {
     const el = document.querySelector('.score-number');
     if (!el) return;
@@ -299,7 +301,7 @@ const GameComponent: React.FC = () => {
     return () => window.clearTimeout(t);
   }, [score]);
 
-  /* Timer tick */
+  /* Timer */
   useEffect(() => {
     if (!showPopup && !dateParam) {
       timerRef.current = window.setInterval(() => {
@@ -326,14 +328,16 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed]);
 
-  /* Focus */
+  /* Focus input on active card */
   useEffect(() => {
     if (!started || gameOver) return;
-    const el = inputRefs.current[activeLevel];
-    if (el) el.focus();
+    if (activeLevel >= 0) {
+      const el = inputRefs.current[activeLevel];
+      if (el) el.focus();
+    }
   }, [activeLevel, started, gameOver]);
 
-  /* Confetti when popup appears */
+  /* Confetti on final popup */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 875, spread: 145, origin: { y: 0.5 } });
@@ -407,7 +411,7 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
-      // Keep LAST level centered & active during immediate feedback, then show final popup.
+      // Keep last level centered during immediate feedback, then show popup
       startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -437,8 +441,12 @@ const GameComponent: React.FC = () => {
     setStartedFor(gameDate, true);
     setShowRules(false);
     setRulesOpenedManually(false);
-    setActiveLevel(0);
-    setTimeout(() => inputRefs.current[0]?.focus(), 120);
+    // slight delay so the first card "appears" in
+    setActiveLevel(-1);
+    setTimeout(() => {
+      setActiveLevel(0);
+      setTimeout(() => inputRefs.current[0]?.focus(), 120);
+    }, 280);
   };
 
   const getEmojiSummary = () => guesses.map((g) => (g?.correct ? '🟩' : '🟥')).join('');
@@ -452,7 +460,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
 
         <div className="game-subtitle">
@@ -474,9 +482,11 @@ const GameComponent: React.FC = () => {
 
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
-        const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || idx === freezeActiveAfterAnswer);
-        const isLast = idx === dailyPaths.length - 1;
-        const centerThisActive = isActive && freezeActiveAfterAnswer === idx && isLast; // center the last during feedback
+
+        // Active while answering OR during feedback hold
+        const isFeedback = freezeActiveAfterAnswer === idx;
+        const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || isFeedback);
+
         const isCovered = !started || (!isDone && !isActive);
 
         const blockClass = isDone
@@ -484,9 +494,11 @@ const GameComponent: React.FC = () => {
           : 'path-block-default';
 
         let stateClass = 'level-card--locked';
-        if (isDone && idx !== freezeActiveAfterAnswer) stateClass = 'level-card--done';
+        if (isDone && !isFeedback) stateClass = 'level-card--done';
         else if (isActive) stateClass = 'level-card--active';
-        if (centerThisActive) stateClass += ' level-card--centered';
+
+        // center only during feedback (including last level)
+        if (isFeedback) stateClass += ' level-card--centered';
 
         const inputEnabled = isActive && !isDone;
 
@@ -509,85 +521,93 @@ const GameComponent: React.FC = () => {
               }
             }}
           >
+            {/* Top-left "Level X" tag for the ACTIVE card */}
+            {isActive && <div className="level-tag">Level {idx + 1}</div>}
+
+            {/* Multiplier/points badge (moves to top-right on active) */}
             <div className={badgeClass} aria-hidden="true">{badgeText}</div>
 
+            {/* Cover for hidden/unguessed cards */}
             <div className="level-cover" aria-hidden={!isCovered}>
               <span className="level-cover-label">Level {idx + 1}</span>
             </div>
 
-            <div className="helmet-sequence">
-              {path.path.map((team, i) => (
-                <React.Fragment key={i}>
-                  <img
-                    src={`/images/${sanitizeImageName(team)}.png`}
-                    alt={team}
-                    className="helmet-icon"
-                    style={{ ['--i' as any]: `${i * 160}ms` }}
-                  />
-                  {i < path.path.length - 1 && <span className="arrow">→</span>}
-                </React.Fragment>
-              ))}
-            </div>
-
-            <div className="guess-input-container">
-              <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
-                {!guesses[idx] ? (
-                  <>
-                    <input
-                      ref={(el) => (inputRefs.current[idx] = el)}
-                      type="text"
-                      placeholder={inputEnabled ? "Guess Player" : "Locked"}
-                      inputMode="text"
-                      onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
-                      onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
-                      className="guess-input-field guess-input-mobile font-mobile"
-                      disabled={!inputEnabled}
+            {/* Push content down to avoid overlap with badges */}
+            <div className="card-body">
+              <div className="helmet-sequence">
+                {path.path.map((team, i) => (
+                  <React.Fragment key={i}>
+                    <img
+                      src={`/images/${sanitizeImageName(team)}.png`}
+                      alt={team}
+                      className="helmet-icon"
+                      style={{ ['--i' as any]: `${i * 160}ms` }}
                     />
-                    {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
-                      <div className="suggestion-box fade-in-fast">
-                        {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
-                          const typed = inputRefs.current[idx]?.value || '';
-                          const match = name.toLowerCase().indexOf(typed.toLowerCase());
-                          return (
-                            <div
-                              key={i}
-                              className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                              onMouseDown={() => handleGuess(idx, name)}
-                            >
-                              {match >= 0 ? (
-                                <>
-                                  {name.slice(0, match)}
-                                  <strong>{name.slice(match, match + typed.length)}</strong>
-                                  {name.slice(match + typed.length)}
-                                </>
-                              ) : name}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {inputEnabled && (
-                      <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
-                        Skip (0 points)
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                    {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
-                  </div>
-                )}
+                    {i < path.path.length - 1 && <span className="arrow">→</span>}
+                  </React.Fragment>
+                ))}
               </div>
-            </div>
 
-            {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
-              <div className="possible-answers">
-                <strong>Possible Answers:</strong>
-                <ul className="possible-answers-list">
-                  {answerLists[idx].map((name, i) => (<li key={i}>👤 {name}</li>))}
-                </ul>
+              <div className="guess-input-container">
+                <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
+                  {!guesses[idx] ? (
+                    <>
+                      <input
+                        ref={(el) => (inputRefs.current[idx] = el)}
+                        type="text"
+                        placeholder={inputEnabled ? "Guess Player" : "Locked"}
+                        inputMode="text"
+                        onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
+                        onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
+                        className="guess-input-field guess-input-mobile font-mobile"
+                        disabled={!inputEnabled}
+                      />
+                      {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
+                        <div className="suggestion-box fade-in-fast">
+                          {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
+                            const typed = inputRefs.current[idx]?.value || '';
+                            const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                            return (
+                              <div
+                                key={i}
+                                className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                                onMouseDown={() => handleGuess(idx, name)}
+                              >
+                                {match >= 0 ? (
+                                  <>
+                                    {name.slice(0, match)}
+                                    <strong>{name.slice(match, match + typed.length)}</strong>
+                                    {name.slice(match + typed.length)}
+                                  </>
+                                ) : name}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {inputEnabled && (
+                        <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
+                          Skip (0 points)
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
+                      {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+
+              {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
+                <div className="possible-answers">
+                  <strong>Possible Answers:</strong>
+                  <ul className="possible-answers-list">
+                    {answerLists[idx].map((name, i) => (<li key={i}>👤 {name}</li>))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         );
       })}
@@ -603,7 +623,7 @@ const GameComponent: React.FC = () => {
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
-              {last30Dates.map((date) => {
+              {getLastNDatesET(30).map((date) => {
                 const isToday = date === todayET;
                 return (
                   <button
@@ -660,7 +680,7 @@ const GameComponent: React.FC = () => {
             <ul className="rules-list">
               <li>🏈 Solve 5 levels, one at a time.</li>
               <li>🏈 Each level shows college → NFL teams in order.</li>
-              <li>🏈 One guess per level; paths may map to multiple players.</li>
+              <li>🏈 One guess per level; multiple players may share a path.</li>
               <li>🏈 Points are 100 × level (1–5). You can Skip for 0 points.</li>
             </ul>
             {!started && !gameOver && (
