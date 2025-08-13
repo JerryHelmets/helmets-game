@@ -34,7 +34,10 @@ const LS_TIMER = 'helmets-timer';
 const LS_LAST_PLAYED = 'lastPlayedDateET';
 const LS_STARTED = 'helmets-started';
 
-const REVEAL_HOLD_MS = 300; // short hold so you see green/red immediately
+/** Hold time for immediate feedback before advancing (longer). */
+const REVEAL_HOLD_MS = 900;
+/** Slightly shorter hold before showing final popup (feels quicker). */
+const FINAL_REVEAL_HOLD_MS = 500;
 
 /* ---------- Eastern Time helpers ---------- */
 function getETDateParts(date: Date = new Date()) {
@@ -127,6 +130,7 @@ const GameComponent: React.FC = () => {
   const [highlightIndex, setHighlightIndex] = useState<number>(-1);
   const [score, setScore] = useState<number>(0);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [popupDismissed, setPopupDismissed] = useState<boolean>(false); // keep dismissed until reload/nav
   const [copied, setCopied] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -147,7 +151,7 @@ const GameComponent: React.FC = () => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  /* --------- MOBILE VIEWPORT LOCK (prevents jumping when keyboard opens) --------- */
+  /* --------- MOBILE VIEWPORT LOCK --------- */
   useEffect(() => {
     const setInitialHeight = () => {
       const h = window.innerHeight;
@@ -159,9 +163,9 @@ const GameComponent: React.FC = () => {
     return () => { window.removeEventListener('orientationchange', onOrientation); };
   }, []);
 
-  /* Lock/unlock page scroll only while a level is active */
+  /* Lock/unlock page scroll only while a level is active or a popup is open */
   useEffect(() => {
-    const shouldLock = started && !gameOver && !showPopup;
+    const shouldLock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const origHtml = document.documentElement.style.overflow;
     const origBody = document.body.style.overflow;
     if (shouldLock) {
@@ -175,7 +179,7 @@ const GameComponent: React.FC = () => {
       document.documentElement.style.overflow = origHtml;
       document.body.style.overflow = origBody;
     };
-  }, [started, gameOver, showPopup]);
+  }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
   /* Load players once */
   useEffect(() => {
@@ -229,7 +233,7 @@ const GameComponent: React.FC = () => {
 
       setStarted(startedFlag);
       setGameOver(complete);
-      setShowPopup(complete);
+      setShowPopup(complete && !popupDismissed);
       setShowRules(!startedFlag && !complete); // show rules for past day if not started
 
       const firstNull = g.findIndex(x => !x);
@@ -256,12 +260,13 @@ const GameComponent: React.FC = () => {
 
       const complete = isComplete(g, dailyPaths.length);
       setGameOver(complete);
-      setShowPopup(complete);
+      setShowPopup(complete && !popupDismissed);
       setShowRules(!startedFlag && !complete);
     }
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
+    setPopupDismissed(false); // reset per navigation/day load
   }, [dailyPaths, gameDate, dateParam]);
 
   /* Per-day (ET) timer reset for today only */
@@ -312,22 +317,16 @@ const GameComponent: React.FC = () => {
     return () => { if (timerRef.current) window.clearInterval(timerRef.current); timerRef.current = null; };
   }, [showPopup, dateParam]);
 
-  /* Completion detection (popup nearly immediate after last answer) */
+  /* Completion detection (respect dismissal; final popup appears quickly) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = isComplete(guesses, dailyPaths.length);
     setGameOver(complete);
-    if (complete && !showPopup) {
-      // If we're in the brief reveal hold, let it finish; otherwise show now.
+    if (complete && !showPopup && !popupDismissed) {
+      // If we're in the brief reveal-hold for the last answer, we'll open after it.
       if (freezeActiveAfterAnswer === null) setShowPopup(true);
     }
-  }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup]);
-
-  useEffect(() => {
-    if (freezeActiveAfterAnswer === null && gameOver && !showPopup) {
-      setShowPopup(true);
-    }
-  }, [freezeActiveAfterAnswer, gameOver, showPopup]);
+  }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed]);
 
   /* Focus on active input */
   useEffect(() => {
@@ -367,7 +366,7 @@ const GameComponent: React.FC = () => {
     else if (e.key === 'Enter' && highlightIndex >= 0) { handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
   };
 
-  const startRevealHold = (index: number, then: () => void, holdMs = REVEAL_HOLD_MS) => {
+  const startRevealHold = (index: number, then: () => void, holdMs: number) => {
     setFreezeActiveAfterAnswer(index);
     window.setTimeout(() => {
       setFreezeActiveAfterAnswer(null);
@@ -411,10 +410,9 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updatedGuesses.every(Boolean);
     if (willComplete) {
-      // tiny hold so you see the green/red, then show final popup
-      startRevealHold(index, () => setShowPopup(true), REVEAL_HOLD_MS);
+      // shorter hold for final popup so it feels quick
+      startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
-      // hold briefly, then move to next level
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
     }
   };
@@ -431,7 +429,7 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
-      startRevealHold(index, () => setShowPopup(true), REVEAL_HOLD_MS);
+      startRevealHold(index, () => setShowPopup(true), FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
     }
@@ -449,6 +447,7 @@ const GameComponent: React.FC = () => {
 
   const last30Dates = useMemo(() => getLastNDatesET(30), []);
 
+  // Dim only when level active or popup open
   const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
 
   return (
@@ -456,7 +455,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
 
         <div className="game-subtitle">
@@ -468,14 +467,17 @@ const GameComponent: React.FC = () => {
         <button className="rules-button" onClick={() => setShowRules(true)}>Rules</button>
       </header>
 
-      {/* Dim only while a level card is active */}
+      {/* Dim only when a level card is active or a popup is open */}
       {started && !gameOver && !showPopup && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
-        // Keep the just-answered card "active" during reveal hold
+
+        // Active when started and not gameOver; also keep active during reveal hold
         const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || idx === freezeActiveAfterAnswer);
-        const isCovered = !isDone && !isActive;
+
+        // Before the game starts, covered; during play, covered if not done & not active
+        const isCovered = !started || (!isDone && !isActive);
 
         const blockClass = isDone
           ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect')
@@ -676,11 +678,16 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Final popup */}
+      {/* Final popup (respects dismissal until reload) */}
       {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content">
-            <button className="close-button" onClick={() => setShowPopup(false)}>✖</button>
+            <button
+              className="close-button"
+              onClick={() => { setShowPopup(false); setPopupDismissed(true); }}
+            >
+              ✖
+            </button>
             <h3>🎉 Game Complete!</h3>
             <p>You scored {score} pts</p>
             <p>Time: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
@@ -703,7 +710,7 @@ const GameComponent: React.FC = () => {
             </button>
             <div className="popup-footer">
               <button
-                onClick={() => { setShowPopup(false); setShowHistory(true); }}
+                onClick={() => { setShowPopup(false); setPopupDismissed(true); setShowHistory(true); }}
                 className="previous-day-games"
               >
                 Play previous day's games
