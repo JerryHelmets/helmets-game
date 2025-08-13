@@ -54,7 +54,7 @@ html, body { overscroll-behavior: none; }
 .arrow { font-size: 0.85rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
 @media (max-width: 480px) { .arrow { font-size: 0.75rem; } }
 
-/* Popups — lower from top; final popup taller/narrower/bigger font */
+/* Popups — lower from top; final popup narrower/shorter/bigger font */
 .popup-modal {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.65);
@@ -74,10 +74,10 @@ html, body { overscroll-behavior: none; }
 }
 
 .popup-final {
-  max-width: 440px;        /* narrower */
+  max-width: 400px;        /* narrower */
   font-size: 1.16rem;      /* bigger font */
-  padding: 2.25rem 1.5rem; /* a bit taller */
-  min-height: 420px;       /* longer vertically */
+  padding: 2rem 1.25rem;   /* slightly less padding */
+  min-height: 360px;       /* shorter vertically */
 }
 .popup-final h3 { font-size: 1.5rem; }
 
@@ -119,7 +119,7 @@ html, body { overscroll-behavior: none; }
   z-index: 1005; pointer-events: none;
 }
 
-/* Active card near top */
+/* Active card near top (stays here during feedback) */
 .level-card--active {
   position: fixed;
   left: 50%;
@@ -136,11 +136,6 @@ html, body { overscroll-behavior: none; }
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
   animation: card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
   text-align: center;
-}
-/* Center card during feedback hold (including last level) */
-.level-card--centered {
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
 }
 
 /* Background/hidden cards: dark, compact, label only */
@@ -177,7 +172,7 @@ html, body { overscroll-behavior: none; }
   padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
 }
 
-/* NEW: top-left "Level X" tag for ACTIVE card */
+/* Top-left "Level X" tag for ACTIVE card */
 .level-tag{
   position: absolute;
   top: 8px; left: 8px;
