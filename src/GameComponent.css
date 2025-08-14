@@ -21,9 +21,11 @@ html, body { overscroll-behavior: none; }
 .title-row { display: flex; align-items: center; justify-content: center; gap: 0.6em; margin-bottom: 0.25rem; }
 .game-logo { height: 1.9em; width: auto; display: block; }
 .game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.8rem, 5.4vw, 3rem); }
+
+/* make score a little bigger */
 .game-header { position: relative; z-index: 1200; text-align: center; margin: 12px 0; color: #fff; }
 .date-line { color: #fff; font-size: 1rem; margin-top: 4px; }
-.score-line { color: #fff; font-size: clamp(1.25rem, 4.2vw, 1.9rem); font-weight: 800; margin-top: 2px; }
+.score-line { color: #fff; font-size: clamp(1.35rem, 5vw, 2.2rem); font-weight: 900; margin-top: 2px; }
 .score-number { display: inline-block; min-width: 2ch; text-align: right; }
 .rules-button { margin-top: 8px; }
 
@@ -70,7 +72,7 @@ html, body { overscroll-behavior: none; }
 }
 .popup-rules { max-width: 600px; min-height: 520px; }
 
-/* final popup smaller/narrower; smaller title; spacing between date & score */
+/* final popup smaller/narrower */
 .popup-final {
   max-width: 300px;
   font-size: 1.08rem;
@@ -194,10 +196,14 @@ html, body { overscroll-behavior: none; }
 .complete-banner h3 { margin: 0; }
 .complete-banner p { margin: 6px 0 8px; font-size: 0.92rem; }
 
-/* rules list */
+/* rules lists */
 .rules-list { list-style: none; padding-left: 0; margin-top: 8px; text-align: left; }
 .rules-list.football-bullets li { position: relative; padding-left: 1.6rem; margin: 6px 0; }
 .rules-list.football-bullets li::before { content: "🏈"; position: absolute; left: 0; top: 0; transform: translateY(2px); font-size: 1rem; }
+
+.rules-main li { font-weight: 800; font-size: 1rem; }
+.fine-print-title { margin: 10px 0 4px; font-size: 1rem; font-weight: 800; }
+.rules-fineprint li { font-weight: 400; font-size: 0.9rem; opacity: 0.95; }
 
 /* reduce motion */
 @media (prefers-reduced-motion: reduce) {
