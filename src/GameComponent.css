@@ -1,15 +1,14 @@
 :root{
-  --active-top: 136px;        /* active card sits a bit lower from the top */
-  --popup-offset: 150px;      /* popups start a bit higher (smaller value = higher) */
-  --scale: 0.88;              /* shrink whole app a touch */
-  --card-w: 310px;            /* base card width cap */
-  --card-min-h: 110px;        /* height of hidden/background cards */
+  --active-top: 136px;
+  --popup-offset: 150px;
+  --scale: 0.88;
+  --card-w: 310px;
+  --card-min-h: 110px;
 }
 
-/* Prevent scroll chaining */
 html, body { overscroll-behavior: none; }
 
-/* === Score flash (only number) === */
+/* score flash (number only) */
 @keyframes scoreFlash {
   0% { background: transparent; color: #fff; }
   25% { background: rgba(255,221,0,0.9); color: #000; }
@@ -18,20 +17,17 @@ html, body { overscroll-behavior: none; }
 }
 .score-flash { animation: scoreFlash 0.6s ease-out 1; border-radius: 4px; padding: 0 4px; }
 
-/* Header */
+/* header */
 .title-row { display: flex; align-items: center; justify-content: center; gap: 0.6em; margin-bottom: 0.25rem; }
 .game-logo { height: 1.9em; width: auto; display: block; }
 .game-title { margin: 0; font-weight: 800; line-height: 1; font-size: clamp(1.8rem, 5.4vw, 3rem); }
 .game-header { position: relative; z-index: 1200; text-align: center; margin: 12px 0; color: #fff; }
-
-/* New header lines */
 .date-line { color: #fff; font-size: 1rem; margin-top: 4px; }
 .score-line { color: #fff; font-size: clamp(1.25rem, 4.2vw, 1.9rem); font-weight: 800; margin-top: 2px; }
 .score-number { display: inline-block; min-width: 2ch; text-align: right; }
-
 .rules-button { margin-top: 8px; }
 
-/* App shell */
+/* app shell */
 .app-container {
   width: 100%;
   max-width: 820px;
@@ -43,290 +39,169 @@ html, body { overscroll-behavior: none; }
   transform-origin: top center;
 }
 .app-container.app-fixed {
-  position: fixed;
-  inset: 0;
-  height: var(--app-height, 100svh);
-  overflow: hidden; /* lock page when keyboard opens */
-  background: transparent;
+  position: fixed; inset: 0; height: var(--app-height, 100svh);
+  overflow: hidden; background: transparent;
 }
-
 @media (max-width: 430px){ :root{ --scale: 0.86; --card-w: 300px; } }
 @media (max-width: 380px){ :root{ --scale: 0.84; --card-w: 290px; } }
 
-/* Helmet row */
-.helmet-sequence {
-  display: flex; align-items: center; justify-content: center;
-  flex-wrap: wrap; gap: 6px; margin: 0 0 8px 0; text-align: center;
-}
+/* helmets + arrows */
+.helmet-sequence { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 0 0 8px 0; text-align: center; }
 .helmet-icon { width: 68px; height: 68px; object-fit: contain; }
 @media (max-width: 480px) { .helmet-icon { width: 56px; height: 56px; } }
-
-/* Smaller arrows */
 .arrow { font-size: 0.85rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
 @media (max-width: 480px) { .arrow { font-size: 0.75rem; } }
 
-/* Popups — above active card; final popup smaller with bigger title/score */
+/* popups */
 .popup-modal {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.65);
   display: flex; align-items: flex-start; justify-content: center;
   padding-top: var(--popup-offset);
-  z-index: 1300; /* above .level-card--active (1105) */
+  z-index: 1300;
 }
 .fade-in { animation: fadeIn 0.5s ease-in-out forwards; opacity: 0; }
 @keyframes fadeIn { to { opacity: 1; } }
-
 .popup-content {
   background: #fff; padding: 2rem; border-radius: 12px; text-align: center;
-  max-width: 520px;
-  width: calc(100% - 32px);
+  max-width: 520px; width: calc(100% - 32px);
   max-height: calc(var(--app-height, 100svh) - var(--popup-offset) - 16px);
   overflow: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.25); position: relative;
 }
-
-/* Rules popup: tall so list fits without scrolling on most phones */
 .popup-rules { max-width: 600px; min-height: 520px; }
 
-/* Final popup — smaller overall, bigger title, much bigger score, score spaced down */
+/* final popup smaller/narrower; smaller title; spacing between date & score */
 .popup-final {
-  max-width: 360px;        /* smaller overall */
-  font-size: 1.12rem;
-  padding: 1.5rem 1.1rem;
-  min-height: 320px;
+  max-width: 300px;
+  font-size: 1.08rem;
+  padding: 1.25rem 1rem;
+  min-height: 280px;
 }
-.popup-title { font-size: 2rem; margin-bottom: 6px; } /* bigger “Game Complete” */
-.popup-date { margin: 4px 0 12px; font-weight: 700; color: #333; }
-.popup-score {
-  margin: 10px 0 12px;      /* moved down a bit */
-  font-weight: 900;
-  font-size: clamp(1.6rem, 6vw, 2.6rem); /* much bigger */
-}
+.popup-title { font-size: 1.55rem; margin-bottom: 6px; }
+.popup-date { margin: 6px 0 14px; font-weight: 700; color: #333; }
+.popup-score { margin: 12px 0 10px; font-weight: 900; font-size: clamp(1.6rem, 6.2vw, 2.7rem); }
 .popup-final .score-number { display: inline-block; min-width: 3ch; }
 
-/* Buttons */
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
 .primary-button, .share-score-button {
-  background: #2e6bff;
-  color: #fff;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
+  background: #2e6bff; color: #fff; padding: 10px 18px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer;
 }
 .primary-button:hover, .share-score-button:hover { filter: brightness(1.06); }
 
-/* Path cards (default) */
+/* path cards */
 .path-block {
-  position: relative; /* anchor badges/cover to the card */
-  border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 12px;
+  position: relative; border: 2px solid; border-radius: 14px; padding: 10px; margin-bottom: 12px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-  width: min(86vw, var(--card-w));
-  margin-left: auto; margin-right: auto; text-align: center;
-  transition: background-color 0.25s ease, border-color 0.25s ease;
-  background: #f7f7f7;
+  width: min(86vw, var(--card-w)); margin-left: auto; margin-right: auto; text-align: center;
+  transition: background-color 0.25s ease, border-color 0.25s ease; background: #f7f7f7;
 }
 .path-block-default { border-color: #cfcfcf; }
 .path-block-correct { background-color: #e6ffe6; border-color: #28a745; }
 .path-block-incorrect { background-color: #ffe6e6; border-color: #dc3545; }
 .path-block-incorrect img { filter: grayscale(100%) brightness(85%); }
 
-/* Dim backdrop only while a level is active */
-.level-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.68);
-  backdrop-filter: blur(3px);
-  z-index: 1005; pointer-events: none;
-}
+/* dim backdrop only while active */
+.level-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.68); backdrop-filter: blur(3px); z-index: 1005; pointer-events: none; }
 
-/* Active card near top (stays here during feedback) */
+/* active card (fixed near top; stays during feedback) */
 .level-card--active {
-  position: fixed;
-  left: 50%;
-  top: var(--active-top);
-  transform: translateX(-50%);
+  position: fixed; left: 50%; top: var(--active-top); transform: translateX(-50%);
   width: min(92vw, calc(var(--card-w) + 24px));
   max-height: min(420px, calc(var(--app-height, 100svh) - var(--active-top) - 80px));
-  min-height: 260px;
-  overflow-y: auto;
-  z-index: 1105;
-  border: 2px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 14px;
+  min-height: 260px; overflow-y: auto; z-index: 1105;
+  border: 2px solid #e5e7eb; border-radius: 18px; padding: 14px;
   box-shadow: 0 22px 60px rgba(0,0,0,0.42);
-  animation: card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
-  text-align: center;
+  animation: card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both; text-align: center;
 }
 
-/* Covered cards (pre-start or locked background): dark, compact, label only */
+/* covered cards (pre-start / locked) */
 .level-card.is-covered {
-  position: static;
-  width: min(86vw, var(--card-w));
-  min-height: var(--card-min-h);
-  max-height: var(--card-min-h);
-  overflow: hidden;
-  background: #1b2838 !important;
-  border-color: #25354a !important;
+  position: static; width: min(86vw, var(--card-w));
+  min-height: var(--card-min-h); max-height: var(--card-min-h);
+  overflow: hidden; background: #1b2838 !important; border-color: #25354a !important;
 }
-
-/* Hide inner content when covered */
 .level-card.is-covered .card-body,
 .level-card.is-covered .helmet-sequence,
 .level-card.is-covered .guess-input-container { opacity: 0; visibility: hidden; height: 0; }
-
-/* Hide points badge when covered */
 .level-card.is-covered .level-badge { display: none; }
 
-/* Game-complete: slightly wider and a touch shorter */
-.is-complete .level-card {
-  width: min(92vw, calc(var(--card-w) + 36px));
-  min-height: 82px;
-}
+/* complete: a hair wider + shorter */
+.is-complete .level-card { width: min(92vw, calc(var(--card-w) + 36px)); min-height: 82px; }
 
-/* Cover layer + label */
-.level-cover {
-  position: absolute; inset: 0; display: grid; place-items: center;
-  background: transparent;
-  color: #fff; font-weight: 700; letter-spacing: 0.3px;
-  opacity: 0; pointer-events: none; transition: opacity 180ms ease; z-index: 2;
-}
+/* cover label */
+.level-cover { position: absolute; inset: 0; display: grid; place-items: center; background: transparent; color: #fff; font-weight: 700;
+  opacity: 0; pointer-events: none; transition: opacity 180ms ease; z-index: 2; }
 .level-card.is-covered .level-cover { opacity: 1; }
+.level-cover-label { font-size: clamp(0.95rem, 3vw, 1.1rem); border: 2px solid rgba(255,255,255,0.75); padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px); }
 
-.level-cover-label {
-  font-size: clamp(0.95rem, 3vw, 1.1rem);
-  border: 2px solid rgba(255,255,255,0.75);
-  padding: 6px 10px; border-radius: 8px; backdrop-filter: blur(2px);
-}
+/* top-left tag for ACTIVE card only */
+.level-tag{ position: absolute; top: 8px; left: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(0,0,0,0.68); color: #fff;
+  font-weight: 800; font-size: 0.9rem; line-height: 1; z-index: 6; }
 
-/* Top-left "Level X" tag for ACTIVE card */
-.level-tag{
-  position: absolute;
-  top: 8px; left: 8px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(0,0,0,0.68);
-  color: #fff; font-weight: 800; font-size: 0.9rem; line-height: 1;
-  z-index: 6;
-}
-
-/* Multiplier/points badge defaults to top-left... */
-.level-badge {
-  position: absolute; top: 8px; left: 8px; z-index: 5;
-  background: rgba(0,0,0,0.68); color: #fff; font-weight: 700; font-size: 0.9rem;
-  padding: 6px 10px; border-radius: 10px; line-height: 1;
-}
+/* multiplier/points badge */
+.level-badge { position: absolute; top: 8px; left: 8px; z-index: 5; background: rgba(0,0,0,0.68); color: #fff; font-weight: 700; font-size: 0.9rem; padding: 6px 10px; border-radius: 10px; line-height: 1; }
 .level-badge.won { background: #28a745; }
 .level-badge.zero { background: #6b7280; }
-/* ...but moves to top-right on ACTIVE card */
 .level-card--active .level-badge { left: auto; right: 8px; }
 
-/* Push content down so badges don't overlap */
+/* content spacing below badges */
 .card-body { margin-top: 42px; }
 
-/* Animations for helmets/arrows on active card */
-@keyframes spin-fade-in {
-  0% { opacity: 0; transform: rotate(-210deg) scale(0.86); }
-  100% { opacity: 1; transform: rotate(0deg) scale(1.00); }
-}
-.level-card--active .helmet-sequence img {
-  opacity: 0;
-  animation-name: spin-fade-in;
-  animation-duration: 640ms;
-  animation-timing-function: cubic-bezier(.2,.8,.2,1);
-  animation-delay: calc(var(--i, 0ms) + 140ms);
-  animation-fill-mode: both;
-}
-@keyframes arrow-fade-in {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.level-card--active .helmet-sequence .arrow {
-  opacity: 0; animation: arrow-fade-in 420ms ease-out calc(var(--i, 0ms) + 220ms) both;
-}
+/* helmet animation on active card */
+@keyframes spin-fade-in { 0%{opacity:0; transform:rotate(-210deg) scale(0.86);} 100%{opacity:1; transform:rotate(0) scale(1);} }
+.level-card--active .helmet-sequence img { opacity: 0; animation: spin-fade-in 640ms cubic-bezier(.2,.8,.2,1) calc(var(--i,0ms) + 140ms) both; }
+@keyframes arrow-fade-in { from{opacity:0; transform:translateY(2px);} to{opacity:1; transform:translateY(0);} }
+.level-card--active .helmet-sequence .arrow { opacity: 0; animation: arrow-fade-in 420ms ease-out calc(var(--i,0ms) + 220ms) both; }
 
-/* Active card entrance */
-@keyframes card-enter {
-  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
+/* card enter */
+@keyframes card-enter { from { opacity: 0; transform: translateX(-50%) translateY(-6px);} to { opacity: 1; transform: translateX(-50%) translateY(0);} }
 
-/* Suggestions */
-.suggestion-box {
-  max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px;
-  margin: 6px auto 0; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: min(92%, calc(var(--card-w) - 10px)); text-align: left;
-}
+/* suggestions + input */
+.suggestion-box { max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; margin: 6px auto 0; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1); width: min(92%, calc(var(--card-w) - 10px)); text-align: left; }
 .suggestion-item { padding: 8px 10px; cursor: pointer; }
 .suggestion-item:hover, .suggestion-item.highlighted { background: #f0f0f0; }
 .fade-in-fast { animation: fadeIn 0.3s ease-out; }
-
-/* Input (>=16px to avoid iOS zoom) */
 .guess-input-container { display: flex; justify-content: center; margin-top: 6px; }
-.guess-input-field {
-  width: 98%; max-width: 300px; padding: 4px 6px; font-size: 16px;
-  border-radius: 8px; border: 1px solid #ccc;
-  -webkit-text-size-adjust: 100%;
-  margin-left: auto; margin-right: auto;
-}
+.guess-input-field { width: 98%; max-width: 300px; padding: 4px 6px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; -webkit-text-size-adjust: 100%; margin-left: auto; margin-right: auto; }
 
-/* Points row + progress bar */
+/* points bar */
 .points-wrap { width: 100%; margin-top: 10px; display: flex; flex-direction: column; align-items: center; }
 .points-row { display: flex; justify-content: space-between; width: min(92%, 320px); font-size: 12px; color: #111; }
 .points-label, .points-value { font-weight: 700; }
-.points-bar {
-  width: min(92%, 320px); height: 10px; background: #e7efff; border-radius: 999px;
-  overflow: hidden; border: 1px solid #c9d6ff; margin-top: 4px;
-}
-.points-bar-fill {
-  height: 100%;
-  width: var(--fill, 100%);
-  background: #2e6bff;
-  transition: width 1s linear;
-}
+.points-bar { width: min(92%, 320px); height: 10px; background: #e7efff; border-radius: 999px; overflow: hidden; border: 1px solid #c9d6ff; margin-top: 4px; }
+.points-bar-fill { height: 100%; width: var(--fill, 100%); background: #2e6bff; transition: width 1s linear; }
 
-/* Skip button lower */
+/* skip */
 .skip-button { margin-top: 18px; }
 
-/* Locked answers */
+/* locked answer chips */
 .locked-answer { padding: 6px 10px; border-radius: 8px; font-weight: bold; color: #fff; font-size: 0.85rem; text-align: center; }
-.answer-correct { background-color: #28a745; animation: fadeIn 0.25s ease-in-out; }
-.answer-incorrect { background-color: #dc3545; }
+.answer-correct { background: #28a745; animation: fadeIn 0.25s ease-in-out; }
+.answer-incorrect { background: #dc3545; }
 
-/* Floating buttons */
+/* fabs */
 .fab-button { position: fixed; padding: 6px 10px; font-size: 0.8rem; z-index: 1201; }
 .fab-history { top: 12px; right: 12px; }
 .fab-feedback { bottom: 8px; left: 50%; transform: translateX(-50%); }
 
-/* History */
+/* history */
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
 .calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background: #f2f2f2; }
 .calendar-grid-button.today { background: #e0ecff; border-color: #2e6bff; }
 
-/* Complete banner */
-.complete-banner {
-  text-align: center; padding: 12px; margin-bottom: 12px;
-  background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; border-radius: 6px;
-}
+/* complete banner */
+.complete-banner { text-align: center; padding: 12px; margin-bottom: 12px; background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; border-radius: 6px; }
 .complete-banner h3 { margin: 0; }
 .complete-banner p { margin: 6px 0 8px; font-size: 0.92rem; }
 
-/* Rules list with football bullets, left aligned */
+/* rules list */
 .rules-list { list-style: none; padding-left: 0; margin-top: 8px; text-align: left; }
 .rules-list.football-bullets li { position: relative; padding-left: 1.6rem; margin: 6px 0; }
-.rules-list.football-bullets li::before {
-  content: "🏈";
-  position: absolute; left: 0; top: 0;
-  transform: translateY(2px);
-  font-size: 1rem;
-}
+.rules-list.football-bullets li::before { content: "🏈"; position: absolute; left: 0; top: 0; transform: translateY(2px); font-size: 1rem; }
 
-/* Reduce motion */
+/* reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  .level-card,
-  .level-card--active,
-  .level-card--active .helmet-sequence img,
-  .level-card--active .helmet-sequence .arrow {
+  .level-card, .level-card--active, .level-card--active .helmet-sequence img, .level-card--active .helmet-sequence .arrow {
     animation: none !important; transition: none !important;
   }
 }
