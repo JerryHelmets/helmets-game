@@ -408,6 +408,25 @@ const GameComponent: React.FC = () => {
     }
   };
 
+  const shareNow = () => {
+    const title = `🏈 Helmets – ${gameDateMMDDYY}`;
+    const emojiSquares = guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('');
+    const emojiForScore = scoreEmojis(score);
+    const text =
+`${title}
+
+${emojiSquares}
+Score: ${score} ${emojiForScore}
+
+www.helmets-game.com`;
+    if (navigator.share) {
+      navigator.share({ title: 'Helmets', text }).catch(() => navigator.clipboard.writeText(text));
+    } else {
+      navigator.clipboard.writeText(text);
+      alert('Score copied!');
+    }
+  };
+
   const handleStartGame = () => {
     setStarted(true); setStartedFor(gameDate, true); setShowRules(false); setRulesOpenedManually(false);
     setActiveLevel(-1);
@@ -416,8 +435,6 @@ const GameComponent: React.FC = () => {
       setTimeout(() => { const el=inputRefs.current[0]; if (el){ try{ (el as any).focus({preventScroll:true}); }catch{ el.focus(); window.scrollTo(0,0);} } }, 120);
     }, 420);
   };
-
-  const getEmojiSummary = () => guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('');
 
   const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
   const prestartClass = !started ? 'is-prestart' : '';
@@ -434,6 +451,22 @@ const GameComponent: React.FC = () => {
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
       </header>
+
+      {/* Game Complete banner at top */}
+      {gameOver && (
+        <div className="complete-banner">
+          <h3>🎯 Game Complete</h3>
+          <p>Tap each box to view possible answers</p>
+          <div className="complete-actions">
+            <button className="primary-button" onClick={shareNow}>
+              Share Score!
+            </button>
+            <button className="secondary-button small" onClick={() => setShowHistory(true)}>
+              Previous day's games
+            </button>
+          </div>
+        </div>
+      )}
 
       {duringActive && <div className="level-backdrop" aria-hidden="true" />}
 
@@ -463,7 +496,9 @@ const GameComponent: React.FC = () => {
             key={idx}
             className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
             onClick={() => {
-              if (gameOver) { const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u); }
+              if (gameOver) {
+                const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u);
+              }
             }}
           >
             {isActive && <div className="level-tag">Level {idx + 1}</div>}
@@ -474,11 +509,14 @@ const GameComponent: React.FC = () => {
             </div>
 
             <div className="card-body">
+              {/* Small per-card hint in game complete mode */}
+              {gameOver && <div className="click-hint">Click to view possible answers</div>}
+
               <div className="helmet-sequence">
                 {path.path.map((team, i) => (
                   <React.Fragment key={i}>
                     <img
-                      src={`/images/${sanitizeImageName(team)}.png`}
+                      src={`/images/${team.trim().replace(/\s+/g, '_')}.png`}
                       alt={team}
                       className="helmet-icon"
                       style={{ ['--i' as any]: `${i * 160}ms` }}
@@ -541,7 +579,6 @@ const GameComponent: React.FC = () => {
                     </>
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                      {/* Show the user's actual guess when correct */}
                       {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
                       {(!gameOver || isFeedback) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
@@ -566,8 +603,8 @@ const GameComponent: React.FC = () => {
         );
       })}
 
-      {/* Hide FABs when a level is active */}
-      {!duringActive && (
+      {/* Hide FABs when a level is active OR when game is complete */}
+      {!duringActive && !gameOver && (
         <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       )}
 
@@ -634,7 +671,7 @@ const GameComponent: React.FC = () => {
               <li><strong>Skipping a level will give you 0 points</strong></li>
             </ul>
 
-            {/* Fine print (smaller) */}
+            {/* Fine print (smaller, not bold title) */}
             <h4 className="fine-print-title">Fine Print:</h4>
             <ul className="rules-list football-bullets rules-fineprint">
               <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
@@ -652,16 +689,6 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {gameOver && (
-        <div className="complete-banner">
-          <h3>🎯 Game Complete</h3>
-          <p>Tap each box to view possible answers</p>
-          <button className="primary-button" onClick={() => setShowHistory(true)} style={{ marginTop: 8 }}>
-            Play previous day's games
-          </button>
-        </div>
-      )}
-
       {showPopup && (
         <div className="popup-modal fade-in">
           <div className="popup-content popup-final">
@@ -669,30 +696,8 @@ const GameComponent: React.FC = () => {
             <h3 className="popup-title">🎉 Game Complete!</h3>
             <p className="popup-date">{gameDateMMDDYY}</p>
             <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
-            <p>{getEmojiSummary()}</p>
-            <button
-              onClick={() => {
-                const title = `🏈 Helmets – ${gameDateMMDDYY}`;
-                const emojiSquares = getEmojiSummary();
-                const emojiForScore = scoreEmojis(score);
-                const text =
-`${title}
-
-${emojiSquares}
-Score: ${score} ${emojiForScore}
-
-www.helmets-game.com`;
-                if (navigator.share) {
-                  navigator.share({ title: 'Helmets', text }).catch(() => navigator.clipboard.writeText(text));
-                } else {
-                  navigator.clipboard.writeText(text);
-                  alert('Score copied!');
-                }
-              }}
-              className="primary-button"
-            >
-              Share Score!
-            </button>
+            <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
+            <button onClick={shareNow} className="primary-button">Share Score!</button>
           </div>
         </div>
       )}
