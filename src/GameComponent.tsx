@@ -22,47 +22,58 @@ const LS_STARTED = 'helmets-started';
 const LS_BASE_PREFIX = 'helmets-basepoints-';
 
 const REVEAL_HOLD_MS = 2000;
-const FINAL_REVEAL_HOLD_MS = 500;
+const FINAL_REVEAL_HOLD_MS = 500; // last level
 const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
-/* ---------- ET helpers ---------- */
-function getETDateParts(date: Date = new Date()) {
+/* ---------- PACIFIC TIME helpers (PST/PDT) ---------- */
+function getPTDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric', month: '2-digit', day: '2-digit',
   }).formatToParts(date);
   const y = parts.find(p => p.type === 'year')!.value;
   const m = parts.find(p => p.type === 'month')!.value;
   const d = parts.find(p => p.type === 'day')!.value;
   return { y, m, d };
 }
-function toETISO(date: Date) { const { y, m, d } = getETDateParts(date); return `${y}-${m}-${d}`; }
-function todayETISO() { return toETISO(new Date()); }
-
-/* header/final display for any game date (including history) */
+function toPTISO(date: Date) { const { y, m, d } = getPTDateParts(date); return `${y}-${m}-${d}`; }
+function todayPTISO() { return toPTISO(new Date()); }
 function isoToMDYYYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y}`; }
 function isoToMDYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y.slice(-2)}`; }
-
-function getLastNDatesET(n: number) {
-  const base = new Date(); const arr: string[] = [];
-  for (let i = 0; i < n; i++) { const d = new Date(base); d.setDate(base.getDate() - i); arr.push(toETISO(d)); }
-  return arr;
+function getLastNDatesPT(n: number) {
+  const base = new Date(); const out: string[] = [];
+  for (let i = 0; i < n; i++) { const d = new Date(base); d.setDate(base.getDate() - i); out.push(toPTISO(d)); }
+  return out;
 }
 
 /* ---------- daily selection ---------- */
-function seededRandom(seed: number) { return function () { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
+function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
-  const seed = parseInt(dateISO.replace(/-/g, ''), 10); const rng = seededRandom(seed);
+  const seed = parseInt(dateISO.replace(/-/g, ''), 10);
+  const rng = seededRandom(seed);
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
-  players.forEach(p => { if (p.path_level>=1 && p.path_level<=5) { const k = p.path.join('>'); if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k,p); }});
-  const sel: PlayerPath[] = []; for (let lvl=1; lvl<=5; lvl++){ const a = Array.from(buckets[lvl].values()); if (a.length) sel.push(a[Math.floor(rng()*a.length)]); }
+  players.forEach(p => {
+    if (p.path_level>=1 && p.path_level<=5) {
+      const k = p.path.join('>');
+      if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k,p);
+    }
+  });
+  const sel: PlayerPath[] = [];
+  for (let lvl=1; lvl<=5; lvl++) {
+    const a = Array.from(buckets[lvl].values());
+    if (a.length) sel.push(a[Math.floor(rng()*a.length)]);
+  }
   return sel;
 }
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
-  return targets.map(t => players.filter(p => p.path.join('>')===t.path.join('>')).map(p=>p.name).sort());
+  return targets.map(t =>
+    players.filter(p => p.path.join('>')===t.path.join('>')).map(p=>p.name).sort()
+  );
 }
-const isComplete = (guesses: (Guess | null)[], total: number) => guesses.length===total && guesses.every(Boolean);
+const isComplete = (guesses: (Guess | null)[], total: number) =>
+  guesses.length===total && guesses.every(Boolean);
 
 /* ---------- started flags ---------- */
 function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTED) || '{}'); } catch { return {}; } }
@@ -89,13 +100,13 @@ function scoreEmojis(total: number): string {
 }
 
 const GameComponent: React.FC = () => {
-  /* date */
+  /* date for current game (supports history) */
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
-  const todayET = todayETISO();
-  const gameDate = dateParam || todayET;                 // YYYY-MM-DD (ET)
-  const gameDateHeader = isoToMDYYYY(gameDate);          // e.g., 8/13/2025
-  const gameDateMMDDYY = isoToMDYY(gameDate);            // e.g., 8/13/25
+  const todayPT = todayPTISO();
+  const gameDate = dateParam || todayPT;               // YYYY-MM-DD (Pacific)
+  const gameDateHeader = isoToMDYYYY(gameDate);        // 8/13/2025
+  const gameDateMMDDYY = isoToMDYY(gameDate);          // 8/13/25
 
   /* state */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
@@ -224,12 +235,11 @@ const GameComponent: React.FC = () => {
     setPopupDismissed(false);
     setConfettiFired(false);
 
-    // header animated score starts at current score for this day
     setDisplayScore(s);
     prevScoreRef.current = s;
   }, [dailyPaths, gameDate, dateParam]);
 
-  /* persist */
+  /* persist state for the day */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
@@ -245,7 +255,7 @@ const GameComponent: React.FC = () => {
     try { localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft)); } catch {}
   }, [basePointsLeft, gameDate, dailyPaths.length]);
 
-  /* header flash + count up */
+  /* score flash + count-up (header) */
   useEffect(() => {
     const el = document.querySelector('.score-number'); if (!el) return;
     el.classList.add('score-flash'); const t = window.setTimeout(() => el.classList.remove('score-flash'), 600);
@@ -259,7 +269,7 @@ const GameComponent: React.FC = () => {
     raf = requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [score]);
 
-  /* final popup slow count-up */
+  /* final popup count-up */
   useEffect(() => {
     if (!showPopup) { setFinalDisplayScore(0); return; }
     let raf=0; const start=0, end=score, duration=1800; const t0=performance.now();
@@ -273,7 +283,7 @@ const GameComponent: React.FC = () => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
     if (complete) {
-      if (freezeActiveAfterAnswer !== null) return;
+      if (freezeActiveAfterAnswer !== null) return; // wait until feedback finishes
       setGameOver(true);
       if (!showPopup && !popupDismissed) setShowPopup(true);
     } else if (gameOver) { setGameOver(false); }
@@ -288,7 +298,7 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* per-level countdown */
+  /* per-level countdown (persisted) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -336,7 +346,8 @@ const GameComponent: React.FC = () => {
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
   const handleInputChange = (index: number, value: string) => {
-    const s = players.filter(p => p.name.toLowerCase().includes(value.toLowerCase())).map(p=>p.name).sort().slice(0,20);
+    const s = players.filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
+                     .map(p=>p.name).sort().slice(0,20);
     const u = [...filteredSuggestions]; u[index]=s; setFilteredSuggestions(u); setHighlightIndex(-1);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
@@ -349,9 +360,13 @@ const GameComponent: React.FC = () => {
   const handleGuess = (index: number, value: string) => {
     if (guesses[index]) return;
     const correctPath = dailyPaths[index]?.path.join('>');
-    const matched = players.find(p => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath);
+    const matched = players.find(
+      p => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath
+    );
 
-    const updated = [...guesses]; updated[index] = { guess: value, correct: !!matched }; setGuesses(updated);
+    const updated = [...guesses];
+    updated[index] = { guess: value, correct: !!matched };
+    setGuesses(updated);
 
     const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[index] ?? MAX_BASE_POINTS));
     const multiplier = index + 1;
@@ -360,7 +375,7 @@ const GameComponent: React.FC = () => {
     setAwardedPoints(prev => { const n=[...prev]; n[index]=awarded; return n; });
     if (matched) {
       setScore(prev => prev + awarded);
-      // per-level confetti (near input)
+      // per-level confetti near the input
       const el = inputRefs.current[index];
       let x = 0.5, y = 0.5;
       if (el) { const r = el.getBoundingClientRect(); x = (r.left + r.right)/2 / window.innerWidth; y = r.bottom / window.innerHeight; }
@@ -396,7 +411,10 @@ const GameComponent: React.FC = () => {
   const handleStartGame = () => {
     setStarted(true); setStartedFor(gameDate, true); setShowRules(false); setRulesOpenedManually(false);
     setActiveLevel(-1);
-    setTimeout(() => { setActiveLevel(0); setTimeout(() => { const el=inputRefs.current[0]; if (el){ try{ (el as any).focus({preventScroll:true}); }catch{ el.focus(); window.scrollTo(0,0);} } }, 120); }, 420);
+    setTimeout(() => {
+      setActiveLevel(0);
+      setTimeout(() => { const el=inputRefs.current[0]; if (el){ try{ (el as any).focus({preventScroll:true}); }catch{ el.focus(); window.scrollTo(0,0);} } }, 120);
+    }, 420);
   };
 
   const getEmojiSummary = () => guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('');
@@ -409,9 +427,8 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
-        {/* date for the *current game* */}
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
@@ -523,7 +540,8 @@ const GameComponent: React.FC = () => {
                     </>
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                      {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
+                      {/* SHOW THE USER'S GUESS WHEN CORRECT */}
+                      {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
                       {(!gameOver || isFeedback) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
                           {`+${awardedPoints[idx] || 0} pts`}
@@ -556,8 +574,8 @@ const GameComponent: React.FC = () => {
             <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
-              {getLastNDatesET(30).map((date) => {
-                const isToday = date === todayET;
+              {getLastNDatesPT(30).map((date) => {
+                const isToday = date === todayPT;
                 return (
                   <button
                     key={date}
@@ -605,7 +623,7 @@ const GameComponent: React.FC = () => {
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
 
-            {/* High-level summary (bold) */}
+            {/* High-level summary (bold, a bit bigger) */}
             <ul className="rules-list football-bullets rules-main">
               <li><strong>Guess a player that fits the career path of the helmets</strong></li>
               <li><strong>5 levels, each more difficult and worth more points</strong></li>
@@ -614,7 +632,7 @@ const GameComponent: React.FC = () => {
               <li><strong>Skipping a level will give you 0 points</strong></li>
             </ul>
 
-            {/* Fine print (smaller, not bold) */}
+            {/* Fine print (smaller) */}
             <h4 className="fine-print-title">Fine Print:</h4>
             <ul className="rules-list football-bullets rules-fineprint">
               <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
@@ -675,6 +693,13 @@ www.helmets-game.com`;
           </div>
         </div>
       )}
+
+      {/* tiny disclosure footer */}
+      <footer className="site-disclosure">
+        Please note: helmets-game.com does not own any of the team, league or event logos depicted within this site.
+        All sports logos contained within this site are properties of their respective leagues, teams, ownership groups
+        and/or organizations.
+      </footer>
     </div>
   );
 };
