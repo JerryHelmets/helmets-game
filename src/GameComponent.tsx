@@ -39,7 +39,11 @@ function getETDateParts(date: Date = new Date()) {
 }
 function toETISO(date: Date) { const { y, m, d } = getETDateParts(date); return `${y}-${m}-${d}`; }
 function todayETISO() { return toETISO(new Date()); }
-function todayET_MMDDYY() { const { y, m, d } = getETDateParts(); return `${m}/${d}/${y.slice(-2)}`; }
+
+/* header/final display for any game date (including history) */
+function isoToMDYYYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y}`; }
+function isoToMDYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y.slice(-2)}`; }
+
 function getLastNDatesET(n: number) {
   const base = new Date(); const arr: string[] = [];
   for (let i = 0; i < n; i++) { const d = new Date(base); d.setDate(base.getDate() - i); arr.push(toETISO(d)); }
@@ -89,8 +93,9 @@ const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
   const todayET = todayETISO();
-  const gameDate = dateParam || todayET;
-  const shareDateMMDDYY = todayET_MMDDYY();
+  const gameDate = dateParam || todayET;                 // YYYY-MM-DD (ET)
+  const gameDateHeader = isoToMDYYYY(gameDate);          // e.g., 8/13/2025
+  const gameDateMMDDYY = isoToMDYY(gameDate);            // e.g., 8/13/25
 
   /* state */
   const [players, setPlayers] = useState<PlayerPath[]>([]);
@@ -219,7 +224,7 @@ const GameComponent: React.FC = () => {
     setPopupDismissed(false);
     setConfettiFired(false);
 
-    // make header score start at current score (prevents “0” sticking)
+    // header animated score starts at current score for this day
     setDisplayScore(s);
     prevScoreRef.current = s;
   }, [dailyPaths, gameDate, dateParam]);
@@ -344,6 +349,7 @@ const GameComponent: React.FC = () => {
   const handleGuess = (index: number, value: string) => {
     if (guesses[index]) return;
     const correctPath = dailyPaths[index]?.path.join('>');
+    the:
     const matched = players.find(p => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath);
 
     const updated = [...guesses]; updated[index] = { guess: value, correct: !!matched }; setGuesses(updated);
@@ -406,7 +412,8 @@ const GameComponent: React.FC = () => {
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
           <h1 className="game-title">HELMETS</h1>
         </div>
-        <div className="date-line">{new Date().toLocaleDateString()}</div>
+        {/* date for the *current game* */}
+        <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
       </header>
@@ -598,17 +605,25 @@ const GameComponent: React.FC = () => {
             <h2>WELCOME TO HELMETS!</h2>
             <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
-            <ul className="rules-list football-bullets">
-              <li>Guess a player that fits the career path of the helmets</li>
-              <li>5 levels, each level gets more difficult</li>
-              <li>Only one guess per level</li>
-              <li>If you skip a level, it will mark the level as incorrect and award 0 points</li>
-              <li>Each level is worth 100 points but you lose points as time passes so BE FAST!</li>
+
+            {/* High-level summary (bold) */}
+            <ul className="rules-list football-bullets rules-main">
+              <li><strong>Guess a player that fits the career path of the helmets</strong></li>
+              <li><strong>5 levels, each more difficult and worth more points</strong></li>
+              <li><strong>Only one guess per level</strong></li>
+              <li><strong>The faster you answer, the more points you get!</strong></li>
+              <li><strong>Skipping a level will give you 0 points</strong></li>
+            </ul>
+
+            {/* Fine print (smaller, not bold) */}
+            <h4 className="fine-print-title">Fine Print:</h4>
+            <ul className="rules-list football-bullets rules-fineprint">
               <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
               <li>All active or retired NFL players drafted in 2000 or later are eligible</li>
               <li>College helmet is the player's draft college</li>
               <li>Some paths may have multiple possible answers</li>
             </ul>
+
             {!started && !gameOver && (
               <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
                 Start Game!
@@ -633,12 +648,12 @@ const GameComponent: React.FC = () => {
           <div className="popup-content popup-final">
             <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
             <h3 className="popup-title">🎉 Game Complete!</h3>
-            <p className="popup-date">{shareDateMMDDYY}</p>
+            <p className="popup-date">{gameDateMMDDYY}</p>
             <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
             <p>{getEmojiSummary()}</p>
             <button
               onClick={() => {
-                const title = `🏈 Helmets – ${shareDateMMDDYY}`;
+                const title = `🏈 Helmets – ${gameDateMMDDYY}`;
                 const emojiSquares = getEmojiSummary();
                 const emojiForScore = scoreEmojis(score);
                 const text =
