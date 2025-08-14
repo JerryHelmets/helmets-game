@@ -26,7 +26,7 @@ html, body { overscroll-behavior: none; }
 
 /* New header lines */
 .date-line { color: #fff; font-size: 1rem; margin-top: 4px; }
-.score-line { color: #fff; font-size: clamp(1.15rem, 3.6vw, 1.6rem); font-weight: 800; margin-top: 2px; }
+.score-line { color: #fff; font-size: clamp(1.25rem, 4.2vw, 1.9rem); font-weight: 800; margin-top: 2px; }
 .score-number { display: inline-block; min-width: 2ch; text-align: right; }
 
 .rules-button { margin-top: 8px; }
@@ -65,7 +65,7 @@ html, body { overscroll-behavior: none; }
 .arrow { font-size: 0.85rem; font-weight: 700; margin: 0 2px; line-height: 1; vertical-align: middle; }
 @media (max-width: 480px) { .arrow { font-size: 0.75rem; } }
 
-/* Popups — above active card; final popup narrower/shorter/bigger font */
+/* Popups — above active card; final popup smaller with bigger title/score */
 .popup-modal {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.65);
@@ -87,15 +87,21 @@ html, body { overscroll-behavior: none; }
 /* Rules popup: tall so list fits without scrolling on most phones */
 .popup-rules { max-width: 600px; min-height: 520px; }
 
+/* Final popup — smaller overall, bigger title, much bigger score, score spaced down */
 .popup-final {
-  max-width: 400px;        /* narrower */
-  font-size: 1.16rem;      /* bigger font */
-  padding: 2rem 1.25rem;   /* slightly less padding */
-  min-height: 340px;       /* a bit shorter */
+  max-width: 360px;        /* smaller overall */
+  font-size: 1.12rem;
+  padding: 1.5rem 1.1rem;
+  min-height: 320px;
 }
-.popup-final h3 { font-size: 1.5rem; }
-.popup-date { margin: 6px 0 8px; font-weight: 700; color: #333; }
-.popup-score { margin: 4px 0 10px; font-weight: 800; }
+.popup-title { font-size: 2rem; margin-bottom: 6px; } /* bigger “Game Complete” */
+.popup-date { margin: 4px 0 12px; font-weight: 700; color: #333; }
+.popup-score {
+  margin: 10px 0 12px;      /* moved down a bit */
+  font-weight: 900;
+  font-size: clamp(1.6rem, 6vw, 2.6rem); /* much bigger */
+}
+.popup-final .score-number { display: inline-block; min-width: 3ch; }
 
 /* Buttons */
 .close-button { position: absolute; top: 12px; right: 12px; background: transparent; font-size: 18px; border: none; cursor: pointer; }
@@ -142,7 +148,7 @@ html, body { overscroll-behavior: none; }
   transform: translateX(-50%);
   width: min(92vw, calc(var(--card-w) + 24px));
   max-height: min(420px, calc(var(--app-height, 100svh) - var(--active-top) - 80px));
-  min-height: 260px;   /* taller active card for comfort */
+  min-height: 260px;
   overflow-y: auto;
   z-index: 1105;
   border: 2px solid #e5e7eb;
@@ -175,7 +181,7 @@ html, body { overscroll-behavior: none; }
 /* Game-complete: slightly wider and a touch shorter */
 .is-complete .level-card {
   width: min(92vw, calc(var(--card-w) + 36px));
-  min-height: 82px; /* shorter */
+  min-height: 82px;
 }
 
 /* Cover layer + label */
