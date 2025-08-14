@@ -349,7 +349,6 @@ const GameComponent: React.FC = () => {
   const handleGuess = (index: number, value: string) => {
     if (guesses[index]) return;
     const correctPath = dailyPaths[index]?.path.join('>');
-    the:
     const matched = players.find(p => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath);
 
     const updated = [...guesses]; updated[index] = { guess: value, correct: !!matched }; setGuesses(updated);
