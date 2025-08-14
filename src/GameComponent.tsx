@@ -71,7 +71,7 @@ function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTE
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---------- score-range emojis (updated) ---------- */
+/* ---------- score-range emojis (latest) ---------- */
 function scoreEmojis(total: number): string {
   if (total < 100) return '🫵🤣🫵';
   if (total < 200) return '💩';
@@ -547,7 +547,7 @@ www.helmets-game.com`;
 
                       {inputEnabled && (
                         <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
-                          Skip (0 points)
+                          Give Up (0 points)
                         </button>
                       )}
                     </>
@@ -640,7 +640,7 @@ www.helmets-game.com`;
               <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
               <li><strong>Only one guess per level</strong></li>
               <li><strong>The faster you answer, the more points you get!</strong></li>
-              <li><strong>Skipping a level will give you 0 points</strong></li>
+              <li><strong>If you give up a level, you get 0 points</strong></li>
             </ul>
 
             <h4 className="fine-print-title">Fine Print:</h4>
