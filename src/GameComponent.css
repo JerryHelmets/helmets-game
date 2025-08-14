@@ -162,6 +162,13 @@ html, body { overscroll-behavior: none; }
 /* Space card contents away from badges */
 .card-body { margin-top: 42px; }
 
+/* Per-card hint in game complete mode */
+.click-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: -2px 0 6px;
+}
+
 /* -------------------------------
    Helmets + arrows
 -------------------------------- */
@@ -220,12 +227,16 @@ html, body { overscroll-behavior: none; }
 .points-bar-fill { height: 100%; width: var(--fill, 100%); background: #2e6bff; transition: width 1s linear; }
 
 /* -------------------------------
-   Skip button
+   Buttons
 -------------------------------- */
 .primary-button, .share-score-button {
   background: #2e6bff; color: #fff; padding: 10px 18px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer;
 }
 .primary-button:hover, .share-score-button:hover { filter: brightness(1.06); }
+.secondary-button {
+  background: #ffffff; color: #111; padding: 8px 14px; border: 1.5px solid #cfcfcf; border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+}
+.secondary-button.small { font-size: 0.88rem; padding: 7px 12px; }
 .skip-button { margin-top: 18px; }
 
 /* -------------------------------
@@ -248,15 +259,25 @@ html, body { overscroll-behavior: none; }
    History popup contents
 -------------------------------- */
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 1rem; }
-.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1px solid #ccc; border-radius: 6px; background: #f2f2f2; }
+.calendar-grid-button { padding: 6px; font-size: 0.75rem; border: 1.5px solid #ccc; border-radius: 6px; background: #f2f2f2; }
 .calendar-grid-button.today { background: #e0ecff; border-color: #2e6bff; }
 
 /* -------------------------------
-   Completed banner
+   Completed banner (top)
 -------------------------------- */
-.complete-banner { text-align: center; padding: 12px; margin-bottom: 12px; background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; border-radius: 6px; }
+.complete-banner {
+  text-align: center;
+  padding: 12px;
+  margin: 10px auto 14px;
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #badbcc;
+  border-radius: 10px;
+  width: min(96%, 700px);
+}
 .complete-banner h3 { margin: 0; }
-.complete-banner p { margin: 6px 0 8px; font-size: 0.92rem; }
+.complete-banner p { margin: 6px 0 10px; font-size: 0.95rem; }
+.complete-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 /* -------------------------------
    Popups (rules / final / history / feedback)
@@ -306,8 +327,8 @@ html, body { overscroll-behavior: none; }
 .rules-main li { font-weight: 800; font-size: 1.15rem; }
 .rules-main { margin-bottom: 10px; }
 
-/* Fine print (smaller) with small spacing above */
-.fine-print-title { margin: 12px 0 4px; font-size: 1rem; font-weight: 800; }
+/* Fine print (smaller) — title not bold now */
+.fine-print-title { margin: 12px 0 4px; font-size: 1rem; font-weight: 400; }
 .rules-fineprint li { font-weight: 400; font-size: 0.9rem; opacity: 0.95; }
 
 /* -------------------------------
