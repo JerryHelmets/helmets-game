@@ -71,15 +71,15 @@ function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTE
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---------- score-range emoji (updated) ---------- */
+/* ---------- score-range emojis (updated) ---------- */
 function scoreEmojis(total: number): string {
   if (total < 100) return '🫵🤣🫵';
   if (total < 200) return '💩';
   if (total < 300) return '🤡';
   if (total < 400) return '😐';
   if (total < 500) return '🤢';
-  if (total < 600) return '🙂';   // changed
-  if (total < 700) return '🫵';   // changed
+  if (total < 600) return '😌';  // relieved
+  if (total < 700) return '👊';  // oncoming fist
   if (total < 800) return '👀';
   if (total < 900) return '👏';
   if (total < 1000) return '📈';
@@ -425,14 +425,13 @@ www.helmets-game.com`;
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-        <h1 className="game-title">HELMETS</h1>
+          <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
       </header>
 
-      {/* Game Complete banner at top */}
       {gameOver && (
         <div className="complete-banner">
           <h3>🎯 Game Complete</h3>
@@ -473,7 +472,6 @@ www.helmets-game.com`;
             className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
             onClick={() => { if (gameOver) { const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u); } }}
           >
-            {/* Show Level tag when active OR in game-complete mode */}
             {(isActive || gameOver) && <div className="level-tag">Level {idx + 1}</div>}
             <div className={badgeClass} aria-hidden="true">{badgeText}</div>
 
@@ -558,7 +556,7 @@ www.helmets-game.com`;
                       {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
                       {(!gameOver || isFeedback) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
-                          {`+${awardedPoints[idx] || 0} pts`}
+                          {`+${awardedPoints[idx] || 0}`}
                         </div>
                       )}
                     </div>
@@ -579,7 +577,6 @@ www.helmets-game.com`;
         );
       })}
 
-      {/* Hide History FAB when active or complete */}
       {!duringActive && !gameOver && (
         <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       )}
