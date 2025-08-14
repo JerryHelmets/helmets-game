@@ -21,8 +21,8 @@ const LS_HISTORY = 'helmets-history';
 const LS_STARTED = 'helmets-started';
 const LS_BASE_PREFIX = 'helmets-basepoints-';
 
-const REVEAL_HOLD_MS = 2000;
-const FINAL_REVEAL_HOLD_MS = 500; // last level
+const REVEAL_HOLD_MS = 2000;      // non-final levels
+const FINAL_REVEAL_HOLD_MS = 500; // last level (shorter)
 const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
@@ -421,20 +421,21 @@ const GameComponent: React.FC = () => {
 
   const appFixed = started && !gameOver && !showPopup ? 'app-fixed' : '';
   const prestartClass = !started ? 'is-prestart' : '';
+  const duringActive = started && !gameOver && !showPopup;
 
   return (
     <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-        <h1 className="game-title">HELMETS</h1>
+          <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
       </header>
 
-      {started && !gameOver && !showPopup && <div className="level-backdrop" aria-hidden="true" />}
+      {duringActive && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
         const isDone = !!guesses[idx];
@@ -540,7 +541,7 @@ const GameComponent: React.FC = () => {
                     </>
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                      {/* SHOW THE USER'S GUESS WHEN CORRECT */}
+                      {/* Show the user's actual guess when correct */}
                       {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
                       {(!gameOver || isFeedback) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
@@ -565,8 +566,10 @@ const GameComponent: React.FC = () => {
         );
       })}
 
-      <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
-      <button onClick={() => setShowFeedback(true)} className="fab-button fab-feedback">💬 Feedback</button>
+      {/* Hide FABs when a level is active */}
+      {!duringActive && (
+        <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
+      )}
 
       {showHistory && (
         <div className="popup-modal">
@@ -620,13 +623,12 @@ const GameComponent: React.FC = () => {
               </button>
             )}
             <h2>WELCOME TO HELMETS!</h2>
-            <p><em>Match each helmet path to an NFL player</em></p>
             <h3>HOW TO PLAY</h3>
 
-            {/* High-level summary (bold, a bit bigger) */}
+            {/* High-level summary (bold, updated wording) */}
             <ul className="rules-list football-bullets rules-main">
-              <li><strong>Guess a player that fits the career path of the helmets</strong></li>
-              <li><strong>5 levels, each more difficult and worth more points</strong></li>
+              <li><strong>Match each helmet path to an NFL player</strong></li>
+              <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
               <li><strong>Only one guess per level</strong></li>
               <li><strong>The faster you answer, the more points you get!</strong></li>
               <li><strong>Skipping a level will give you 0 points</strong></li>
@@ -676,8 +678,9 @@ const GameComponent: React.FC = () => {
                 const text =
 `${title}
 
-Score: ${score} ${emojiForScore}
 ${emojiSquares}
+Score: ${score} ${emojiForScore}
+
 www.helmets-game.com`;
                 if (navigator.share) {
                   navigator.share({ title: 'Helmets', text }).catch(() => navigator.clipboard.writeText(text));
@@ -691,6 +694,15 @@ www.helmets-game.com`;
               Share Score!
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Feedback button at bottom when not in active level */}
+      {!duringActive && (
+        <div className="footer-actions">
+          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
+            💬 Feedback
+          </button>
         </div>
       )}
 
