@@ -71,15 +71,15 @@ function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTE
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---------- score-range emojis (latest) ---------- */
+/* ---------- score-range emojis ---------- */
 function scoreEmojis(total: number): string {
   if (total < 100) return '🫵🤣🫵';
   if (total < 200) return '💩';
   if (total < 300) return '🤡';
   if (total < 400) return '😐';
   if (total < 500) return '🤢';
-  if (total < 600) return '😌';  // relieved
-  if (total < 700) return '👊';  // oncoming fist
+  if (total < 600) return '😌';
+  if (total < 700) return '👊';
   if (total < 800) return '👀';
   if (total < 900) return '👏';
   if (total < 1000) return '📈';
@@ -375,7 +375,9 @@ const GameComponent: React.FC = () => {
 
   const handleSkip = (index: number) => {
     if (guesses[index]) return;
-    const updated = [...guesses]; updated[index] = { guess: 'Skipped', correct: false }; setGuesses(updated);
+    const updated = [...guesses];
+    updated[index] = { guess: 'No Answer', correct: false };   // ← changed
+    setGuesses(updated);
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
@@ -553,7 +555,7 @@ www.helmets-game.com`;
                     </>
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                      {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
+                      {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
                       {(!gameOver || isFeedback) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
                           {`+${awardedPoints[idx] || 0}`}
@@ -640,7 +642,7 @@ www.helmets-game.com`;
               <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
               <li><strong>Only one guess per level</strong></li>
               <li><strong>The faster you answer, the more points you get!</strong></li>
-              <li><strong>If you give up a level, you get 0 points</strong></li>
+              <li><strong>You get 0 points if you give up a level</strong></li>
             </ul>
 
             <h4 className="fine-print-title">Fine Print:</h4>
