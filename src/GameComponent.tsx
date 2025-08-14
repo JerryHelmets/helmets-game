@@ -25,6 +25,7 @@ type StoredGuesses = {
   date: string;
   guesses: (Guess | null)[];
   score: number;
+  awardedPoints: number[];
 };
 
 const LS_GUESSES = 'helmets-guesses';
@@ -36,7 +37,7 @@ const REVEAL_HOLD_MS = 2000;       // feedback hold on normal levels
 const FINAL_REVEAL_HOLD_MS = 500;  // last level immediate feedback (short)
 const MAX_BASE_POINTS = 100;       // per-level starting points
 const TICK_MS = 1000;              // 1s tick
-const COUNTDOWN_START_DELAY_MS = 500; // ↓ shorter delay before per-level countdown starts
+const COUNTDOWN_START_DELAY_MS = 500; // shorter delay before per-level countdown starts
 
 /* ---------------- Eastern Time helpers ---------------- */
 function getETDateParts(date: Date = new Date()) {
@@ -229,12 +230,17 @@ const GameComponent: React.FC = () => {
 
     let g: (Guess | null)[] = Array(dailyPaths.length).fill(null);
     let s = 0;
+    let ap: number[] = Array(dailyPaths.length).fill(0);
 
     if (dateParam) {
       const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
       const data = history[gameDate];
-      if (data) { g = data.guesses || g; s = data.score || 0; }
-      setGuesses(g); setScore(s);
+      if (data) {
+        g = data.guesses || g;
+        s = data.score || 0;
+        ap = Array.isArray(data.awardedPoints) ? data.awardedPoints : ap;
+      }
+      setGuesses(g); setScore(s); setAwardedPoints(ap);
 
       const any = g.some(Boolean);
       const startedFlag = getStartedFor(gameDate) || any;
@@ -254,11 +260,13 @@ const GameComponent: React.FC = () => {
         try {
           const parsed = JSON.parse(raw) as Partial<StoredGuesses>;
           if (parsed.date === gameDate && Array.isArray(parsed.guesses) && parsed.guesses.length === dailyPaths.length) {
-            g = parsed.guesses as (Guess | null)[]; s = parsed.score ?? 0;
+            g = parsed.guesses as (Guess | null)[];
+            s = parsed.score ?? 0;
+            ap = Array.isArray(parsed.awardedPoints) ? parsed.awardedPoints : ap;
           }
         } catch {}
       }
-      setGuesses(g); setScore(s);
+      setGuesses(g); setScore(s); setAwardedPoints(ap);
 
       const any = g.some(Boolean);
       const startedFlag = any || getStartedFor(gameDate);
@@ -292,22 +300,21 @@ const GameComponent: React.FC = () => {
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
-    setAwardedPoints(Array(dailyPaths.length).fill(0));
     setPopupDismissed(false);
     setConfettiFired(false);
   }, [dailyPaths, gameDate, dateParam]);
 
-  /* Persist archive (score + guesses) */
+  /* Persist archive (score + guesses + awardedPoints) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
-    history[gameDate] = { guesses, score };
+    history[gameDate] = { guesses, score, awardedPoints };
     localStorage.setItem(LS_HISTORY, JSON.stringify(history));
     if (!dateParam) {
-      const payload: StoredGuesses = { date: gameDate, guesses, score };
+      const payload: StoredGuesses = { date: gameDate, guesses, score, awardedPoints };
       localStorage.setItem(LS_GUESSES, JSON.stringify(payload));
     }
-  }, [guesses, score, gameDate, dailyPaths.length, dateParam]);
+  }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
   /* Persist per-level countdown */
   useEffect(() => {
@@ -347,13 +354,13 @@ const GameComponent: React.FC = () => {
     return () => cancelAnimationFrame(raf);
   }, [score]);
 
-  /* Final popup score count-up (from 0 to total when popup opens) */
+  /* Final popup score count-up (slower) */
   useEffect(() => {
     if (!showPopup) { setFinalDisplayScore(0); return; }
     let raf = 0;
     const start = 0;
     const end = score;
-    const duration = 900;
+    const duration = 1800; // slower
     const t0 = performance.now();
     const ease = (p: number) => (p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p);
     const step = (t: number) => {
@@ -434,12 +441,10 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* Confetti on final popup */
+  /* Confetti on final popup — single big blast */
   useEffect(() => {
     if (showPopup && !confettiFired) {
-      confetti({ particleCount: 1200, spread: 160, origin: { y: 0.5 } });
-      setTimeout(() => confetti({ particleCount: 800, spread: 120, origin: { x: 0.2, y: 0.45 } }), 150);
-      setTimeout(() => confetti({ particleCount: 800, spread: 120, origin: { x: 0.8, y: 0.45 } }), 300);
+      confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
       setConfettiFired(true);
     }
   }, [showPopup, confettiFired]);
@@ -513,18 +518,7 @@ const GameComponent: React.FC = () => {
       return next;
     });
 
-    if (matched) {
-      setScore((prev) => prev + awarded);
-
-      const inputBox = inputRefs.current[index];
-      if (inputBox) {
-        const rect = inputBox.getBoundingClientRect();
-        const x = (rect.left + rect.right) / 2 / window.innerWidth;
-        const y = rect.bottom / window.innerHeight;
-        confetti({ particleCount: 160, spread: 110, startVelocity: 50, origin: { x, y } });
-        confetti({ particleCount: 120, spread: 80, startVelocity: 60, origin: { x: Math.min(0.95, x + 0.08), y } });
-      }
-    }
+    // (Removed per-level confetti — only final popup confetti now)
 
     const sugg = [...filteredSuggestions];
     sugg[index] = [];
@@ -635,7 +629,7 @@ const GameComponent: React.FC = () => {
 
         const multiplier = idx + 1;
         const wonPoints = awardedPoints[idx] || 0;
-        const showPointsNow = gameOver; // at game complete show +points badge ONLY
+        const showPointsNow = gameOver; // at game complete show +points badge ONLY (top-left)
         const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
         const badgeClass =
           showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
@@ -657,13 +651,12 @@ const GameComponent: React.FC = () => {
             {/* Top-left "Level X" tag for the ACTIVE card */}
             {isActive && <div className="level-tag">Level {idx + 1}</div>}
 
-            {/* Multiplier/points badge (moves to top-right on active; top-left otherwise)
-                On game complete, ONLY +points is shown */}
+            {/* Multiplier/points badge */}
             <div className={badgeClass} aria-hidden="true">{badgeText}</div>
 
             {/* Cover for hidden/unguessed cards */}
             <div className="level-cover" aria-hidden={!isCovered}>
-              {/* No label shown pre-start (stays blank) */}
+              {/* No labels pre-start */}
               {started && <span className="level-cover-label">Level {idx + 1}</span>}
             </div>
 
@@ -698,7 +691,6 @@ const GameComponent: React.FC = () => {
                         disabled={!inputEnabled}
                       />
 
-                      {/* Suggestions */}
                       {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                         <div className="suggestion-box fade-in-fast">
                           {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
@@ -723,7 +715,6 @@ const GameComponent: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Points row + progress bar (CSS-based; width via CSS var) */}
                       {isActive && (
                         <div className="points-wrap">
                           <div className="points-row">
@@ -739,7 +730,6 @@ const GameComponent: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Skip button */}
                       {inputEnabled && (
                         <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
                           Skip (0 points)
@@ -749,7 +739,7 @@ const GameComponent: React.FC = () => {
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
                       {guesses[idx]!.correct ? `✅ ${path.name}` : `❌ ${guesses[idx]!.guess || 'Skipped'}`}
-                      {/* Show +points text only during immediate feedback, not in game-complete */}
+                      {/* During immediate feedback only, show points text below guess */}
                       {(!gameOver || isFeedback) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
                           {`+${awardedPoints[idx] || 0} pts`}
@@ -858,7 +848,7 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* Complete banner (add previous-days button here) */}
+      {/* Complete banner (with previous-days button) */}
       {gameOver && (
         <div className="complete-banner">
           <h3>🎯 Game Complete</h3>
@@ -879,7 +869,7 @@ const GameComponent: React.FC = () => {
             >
               ✖
             </button>
-            <h3>🎉 Game Complete!</h3>
+            <h3 className="popup-title">🎉 Game Complete!</h3>
             <p className="popup-date">{shareDateMMDDYY}</p>
             <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
             <p>{getEmojiSummary()}</p>
