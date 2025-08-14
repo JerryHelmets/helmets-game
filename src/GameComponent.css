@@ -50,11 +50,11 @@ html, body { overscroll-behavior: none; }
 .level-card.is-covered .card-body,.level-card.is-covered .helmet-sequence,.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
 
-/* Game complete sizing: shorter + badges left */
-.is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:66px}
+/* Game-complete: even shorter + points badge on right */
+.is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:56px}
 .is-complete .card-body{margin-top:34px}
 .is-complete .level-tag{font-size:.8rem;padding:4px 8px}
-.is-complete .level-badge{left:100px;right:auto}
+.is-complete .level-badge{right:8px;left:auto}   /* points badge top-right */
 
 /* Overlays/badges */
 .level-cover{position:absolute;inset:0;display:grid;place-items:center;background:transparent;color:#fff;font-weight:700;opacity:0;pointer-events:none;transition:opacity 180ms ease;z-index:2}
@@ -68,8 +68,6 @@ html, body { overscroll-behavior: none; }
 
 /* Content spacing */
 .card-body{margin-top:42px}
-
-/* Per-card hint on complete */
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
 /* Helmets + arrows */
