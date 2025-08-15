@@ -19,9 +19,11 @@ type Props = {
   communityPct: number;
   suggestions: string[];
   highlightIndex: number;
+  typedValue: string;                      // NEW: current input value for highlight
   onToggleReveal: (idx: number) => void;
   onInputChange: (idx: number, value: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => void;
+  onBlurInput: (idx: number) => void;      // NEW: hide suggestions on blur
   onGuess: (idx: number, value: string) => void;
   onSkip: (idx: number) => void;
   inputRef: (el: HTMLInputElement | null) => void;
@@ -31,7 +33,8 @@ type Props = {
 const LevelCard: React.FC<Props> = ({
   idx, path, started, gameOver, isActive, isCovered, isFeedback,
   guess, revealed, multiplier, awarded, baseLeft, communityPct,
-  suggestions, highlightIndex, onToggleReveal, onInputChange, onKeyDown, onGuess, onSkip,
+  suggestions, highlightIndex, typedValue,
+  onToggleReveal, onInputChange, onKeyDown, onBlurInput, onGuess, onSkip,
   inputRef, sanitizeImageName
 }) => {
   const isDone = !!guess;
@@ -89,25 +92,29 @@ const LevelCard: React.FC<Props> = ({
                   autoComplete="off"
                   onChange={(e) => inputEnabled && onInputChange(idx, e.target.value)}
                   onKeyDown={(e) => inputEnabled && onKeyDown(e, idx)}
+                  onBlur={() => onBlurInput(idx)}                 {/* NEW: hide on blur */}
                   className="guess-input-field guess-input-mobile font-mobile"
                   disabled={!inputEnabled}
                 />
 
                 {inputEnabled && suggestions?.length > 0 && (
                   <div className="suggestion-box fade-in-fast">
-                    {suggestions.slice(0, 3).map((name, i) => {
-                      // highlight typed substring
-                      const typed = (document.activeElement as HTMLInputElement)?.value ?? '';
-                      const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                    {suggestions.slice(0, 5).map((name, i) => {        {/* show up to 5 */}
+                      const typed = typedValue || '';
+                      const lo = name.toLowerCase();
+                      const q = typed.toLowerCase();
+                      const at = lo.indexOf(q);
                       return (
                         <div
                           key={i}
                           className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                          onMouseDown={() => onGuess(idx, name)}
+                          onMouseDown={() => onGuess(idx, name)}       // onMouseDown beats blur
                         >
-                          {match >= 0 ? (
+                          {q && at >= 0 ? (
                             <>
-                              {name.slice(0, match)}<strong>{name.slice(match, match + typed.length)}</strong>{name.slice(match + typed.length)}
+                              {name.slice(0, at)}
+                              <strong>{name.slice(at, at + q.length)}</strong>
+                              {name.slice(at + q.length)}
                             </>
                           ) : name}
                         </div>
@@ -163,7 +170,7 @@ const LevelCard: React.FC<Props> = ({
           <div className="possible-answers">
             <strong>Possible Answers:</strong>
             <ul className="possible-answers-list">
-              {path && /* names are provided by parent via revealedAnswers + answerLists */ null}
+              {path && null}
             </ul>
           </div>
         )}
