@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 136px;
+  --active-top: 148px;            /* moved active card down a touch */
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -75,11 +75,11 @@ html, body { overscroll-behavior: none; }
 .helmet-icon{width:68px;height:68px;object-fit:contain}
 @media (max-width:480px){.helmet-icon{width:56px;height:56px}}
 
-/* ACTIVE: slightly smaller than normal */
-.level-card--active .helmet-icon{width:64px;height:64px}
+/* ACTIVE: a touch smaller again */
+.level-card--active .helmet-icon{width:60px;height:60px}
 @media (max-width:480px){
-  .level-card--active .helmet-icon{width:60px;height:60px}
-  .level-card--active .arrow{font-size:.8rem}
+  .level-card--active .helmet-icon{width:56px;height:56px}
+  .level-card--active .arrow{font-size:.78rem}
 }
 
 .arrow{font-size:.85rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
@@ -179,9 +179,8 @@ html, body { overscroll-behavior: none; }
 
 /* Footer */
 .footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
-.feedback-bottom{margin-bottom:4px}
 
-/* NEW: small text link for feedback */
+/* small text link for feedback */
 .feedback-link{
   font-size:.9rem;
   color:#8ab4ff;
