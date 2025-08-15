@@ -18,8 +18,8 @@ html, body { overscroll-behavior: none; }
 
 /* Header — bigger logo/title */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
-.game-logo{height:2.4em;width:auto;display:block}           /* a bit bigger */
-.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)} /* a bit bigger */
+.game-logo{height:2.4em;width:auto;display:block}
+.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
 .game-header{position:relative;z-index:1200;text-align:center;margin:12px 0;color:#fff}
 .date-line{color:#fff;font-size:1rem;margin-top:4px}
 .score-line{color:#fff;font-size:clamp(1.45rem,5.4vw,2.35rem);font-weight:900;margin-top:2px}
@@ -74,11 +74,14 @@ html, body { overscroll-behavior: none; }
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
 .helmet-icon{width:68px;height:68px;object-fit:contain}
 @media (max-width:480px){.helmet-icon{width:56px;height:56px}}
-/* a bit larger on mobile WHEN ACTIVE */
+
+/* ACTIVE: slightly smaller than normal */
+.level-card--active .helmet-icon{width:64px;height:64px}
 @media (max-width:480px){
-  .level-card--active .helmet-icon{width:64px;height:64px}
-  .level-card--active .arrow{font-size:.85rem}
+  .level-card--active .helmet-icon{width:60px;height:60px}
+  .level-card--active .arrow{font-size:.8rem}
 }
+
 .arrow{font-size:.85rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
 @media (max-width:480px){.arrow{font-size:.75rem}}
 
@@ -177,6 +180,18 @@ html, body { overscroll-behavior: none; }
 /* Footer */
 .footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
 .feedback-bottom{margin-bottom:4px}
+
+/* NEW: small text link for feedback */
+.feedback-link{
+  font-size:.9rem;
+  color:#8ab4ff;
+  text-decoration:underline;
+  font-weight:600;
+  cursor:pointer;
+  padding:4px 6px;
+}
+.feedback-link:hover{ filter:brightness(1.12); }
+
 .site-disclosure{margin:18px auto 10px;max-width:800px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
 
 /* Reduce motion */
