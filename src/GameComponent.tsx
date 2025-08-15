@@ -90,7 +90,7 @@ function scoreEmojis(total: number): string {
   return '🏆';
 }
 
-/* ---------- Anonymous device id helper (NEW) ---------- */
+/* ---------- Anonymous device id helper ---------- */
 function getAnonId() {
   const k = 'helmets-uid';
   let id = localStorage.getItem(k);
@@ -136,7 +136,7 @@ const GameComponent: React.FC = () => {
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
 
-  const [communityPct, setCommunityPct] = useState<number[]>([]); // (already present)
+  const [communityPct, setCommunityPct] = useState<number[]>([]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
@@ -251,6 +251,14 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
+  /* NEW: persist per-level base points so timer survives refresh */
+  useEffect(() => {
+    if (!dailyPaths.length) return;
+    try {
+      localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
+    } catch {}
+  }, [basePointsLeft, dailyPaths.length, gameDate]);
+
   /* score flash + count-up (header) */
   useEffect(() => {
     const el = document.querySelector('.score-number'); if (!el) return;
@@ -329,7 +337,7 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  /* ---------- LIVE Universal Results polling (NEW) ---------- */
+  /* LIVE Universal Results polling */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -423,14 +431,14 @@ const GameComponent: React.FC = () => {
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
-    /* ---------- POST finalize result (NEW) ---------- */
+    /* POST finalize result */
     try {
       fetch('/api/guess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           date: gameDate,
-          level: index,            // 0-based
+          level: index,
           correct: !!matched,
           uid: getAnonId(),
         }),
@@ -454,7 +462,7 @@ const GameComponent: React.FC = () => {
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
-    /* ---------- POST give up result (NEW) ---------- */
+    /* POST give up result */
     try {
       fetch('/api/guess', {
         method: 'POST',
@@ -776,9 +784,13 @@ www.helmets-game.com`;
 
       {!duringActive && (
         <div className="footer-actions">
-          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
+          <a
+            href="#"
+            className="feedback-link"
+            onClick={(e) => { e.preventDefault(); setShowFeedback(true); }}
+          >
             💬 Feedback
-          </button>
+          </a>
         </div>
       )}
 
