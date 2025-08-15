@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import Papa from 'papaparse';
 import './GameComponent.css';
@@ -39,11 +39,28 @@ function getLastNDatesPT(n: number) {
   return out;
 }
 
+/* ---------- RNG (robust seed) ---------- */
+function hash32(str: string) {
+  // very small 32-bit hash (FNV-1a like)
+  let h = 0x811c9dc5 | 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0) || 0xCAFEBABE;
+}
+function xorshift32(seed: number) {
+  let x = seed || 0xDEADBEEF;
+  return () => {
+    x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+    // 0..1
+    return ((x >>> 0) / 0xFFFFFFFF);
+  };
+}
+
 /* ---------- daily selection ---------- */
-function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
-  const seed = parseInt(dateISO.replace(/-/g, ''), 10);
-  const rng = seededRandom(seed);
+  const rng = xorshift32(hash32(dateISO));
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
   players.forEach(p => {
     if (p.path_level>=1 && p.path_level<=5) {
@@ -101,6 +118,40 @@ function getAnonId() {
   return id;
 }
 
+/* ---------- Focus trap for modals (basic) ---------- */
+const FocusTrap: React.FC<{ onClose?: () => void; labelledBy?: string; children: React.ReactNode; }> = ({ onClose, labelledBy, children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const focusables = Array.from(
+      el.querySelectorAll<HTMLElement>('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')
+    ).filter(n => !n.hasAttribute('disabled') && n.tabIndex !== -1);
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const prev = document.activeElement as HTMLElement | null;
+    first?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) { e.stopPropagation(); onClose(); }
+      if (e.key === 'Tab') {
+        if (!first || !last) { e.preventDefault(); return; }
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('keydown', onKey); prev?.focus?.(); };
+  }, [onClose]);
+
+  return (
+    <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={labelledBy}>
+      {children}
+    </div>
+  );
+};
+
+/* ---------- Component ---------- */
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
@@ -142,6 +193,8 @@ const GameComponent: React.FC = () => {
   const levelTimerRef = useRef<number | null>(null);
   const levelDelayRef = useRef<number | null>(null);
 
+  const searchDebounceRef = useRef<number | null>(null);
+
   /* viewport / scroll lock */
   useEffect(() => {
     const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
@@ -181,6 +234,17 @@ const GameComponent: React.FC = () => {
 
   const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
+
+  /* preload helmet images for this day's paths */
+  useEffect(() => {
+    if (!dailyPaths.length) return;
+    const urls = new Set<string>();
+    const sanitize = (n: string) => n.trim().replace(/\s+/g, '_');
+    dailyPaths.forEach(p => p.path.forEach(team => urls.add(`/images/${sanitize(team)}.png`)));
+    const imgs: HTMLImageElement[] = [];
+    urls.forEach(src => { const img = new Image(); img.src = src; imgs.push(img); });
+    return () => { imgs.forEach(i => { (i as any).onload = null; }); };
+  }, [dailyPaths]);
 
   /* init for day */
   useEffect(() => {
@@ -251,7 +315,7 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  /* NEW: persist per-level base points so timer survives refresh */
+  /* persist per-level base points so timer survives refresh */
   useEffect(() => {
     if (!dailyPaths.length) return;
     try {
@@ -357,7 +421,6 @@ const GameComponent: React.FC = () => {
     };
 
     let stop = false;
-
     async function load() {
       try {
         const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
@@ -373,17 +436,16 @@ const GameComponent: React.FC = () => {
         if (!stop) computeLocal();
       }
     }
-
     load();
     const id = window.setInterval(load, 15000);
     const onVis = () => { if (!document.hidden) load(); };
     document.addEventListener('visibilitychange', onVis);
-
     return () => { stop = true; window.clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, [dailyPaths.length, gameDate]);
 
   /* helpers */
-  const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
+  const sanitizeImageName = useCallback((name: string) => name.trim().replace(/\s+/g, '_'), []);
+
   const stopLevelTimer = () => {
     if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
     if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
@@ -394,16 +456,23 @@ const GameComponent: React.FC = () => {
   };
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
+  /* debounced suggestions */
   const handleInputChange = (index: number, value: string) => {
-    const s = players.filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
-                     .map(p=>p.name).sort().slice(0,20);
-    const u = [...filteredSuggestions]; u[index]=s; setFilteredSuggestions(u); setHighlightIndex(-1);
+    if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = window.setTimeout(() => {
+      const v = value.trim().toLowerCase();
+      const s = players.filter(p => p.name.toLowerCase().includes(v))
+                       .map(p=>p.name).sort().slice(0,20);
+      setFilteredSuggestions(prev => { const u = [...prev]; u[index] = s; return u; });
+      setHighlightIndex(-1);
+    }, 150);
   };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     const max = filteredSuggestions[idx]?.length || 0; if (!max) return;
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
     else if (e.key==='ArrowUp'){ setHighlightIndex(p=>(p-1+max)%max); e.preventDefault(); }
-    else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
+    else if (e.key==='Enter' && highlightIndex>=0){ e.preventDefault(); handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
   };
 
   const handleGuess = (index: number, value: string) => {
@@ -509,7 +578,7 @@ www.helmets-game.com`;
     setTimeout(() => {
       setActiveLevel(0);
       setTimeout(() => { const el=inputRefs.current[0]; if (el){ try{ (el as any).focus({preventScroll:true}); }catch{ el.focus(); window.scrollTo(0,0);} } }, 120);
-    }, 420);
+    }, 500); // a touch more delay
   };
 
   const duringActive = started && !gameOver && !showPopup;
@@ -650,7 +719,7 @@ www.helmets-game.com`;
                   ) : (
                     <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
                       {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
-                      {(!gameOver || isFeedback) && (
+                      {(!gameOver || freezeActiveAfterAnswer === idx) && (
                         <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
                           {`+${awardedPoints[idx] || 0}`}
                         </div>
@@ -691,94 +760,102 @@ www.helmets-game.com`;
       )}
 
       {showHistory && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-            <h3>📆 Game History (Last 30 days)</h3>
-            <div className="calendar-grid">
-              {getLastNDatesPT(30).map((date) => {
-                const isToday = date === todayPT;
-                return (
-                  <button
-                    key={date}
-                    className={`calendar-grid-button${isToday ? ' today' : ''}`}
-                    onClick={() => (window.location.href = `/?date=${date}`)}
-                  >
-                    {date.slice(5)}
-                  </button>
-                );
-              })}
+        <div className="popup-modal" aria-hidden={false}>
+          <FocusTrap onClose={() => setShowHistory(false)} labelledBy="history-title">
+            <div className="popup-content" role="document">
+              <button className="close-button" onClick={() => setShowHistory(false)} aria-label="Close">✖</button>
+              <h3 id="history-title">📆 Game History (Last 30 days)</h3>
+              <div className="calendar-grid">
+                {getLastNDatesPT(30).map((date) => {
+                  const isToday = date === todayPT;
+                  return (
+                    <button
+                      key={date}
+                      className={`calendar-grid-button${isToday ? ' today' : ''}`}
+                      onClick={() => (window.location.href = `/?date=${date}`)}
+                    >
+                      {date.slice(5)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </FocusTrap>
         </div>
       )}
 
       {showFeedback && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-            <h3>Thoughts for Jerry?</h3>
-            <div className="email-row">
-              <span className="email-emoji">📧</span>
-              <span className="email-text">jerry.helmetsgame@gmail.com</span>
+        <div className="popup-modal" aria-hidden={false}>
+          <FocusTrap onClose={() => setShowFeedback(false)} labelledBy="feedback-title">
+            <div className="popup-content" role="document">
+              <button className="close-button" onClick={() => setShowFeedback(false)} aria-label="Close">✖</button>
+              <h3 id="feedback-title">Thoughts for Jerry?</h3>
+              <div className="email-row">
+                <span className="email-emoji">📧</span>
+                <span className="email-text">jerry.helmetsgame@gmail.com</span>
+              </div>
+              <button
+                onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
+                className="primary-button"
+              >
+                Copy Email
+              </button>
+              {copied && <p className="copied-msg">Email copied!</p>}
             </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
-              className="primary-button"
-            >
-              Copy Email
-            </button>
-            {copied && <p className="copied-msg">Email copied!</p>}
-          </div>
+          </FocusTrap>
         </div>
       )}
 
       {showRules && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content popup-rules">
-            {rulesOpenedManually && (
-              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
-                ✖
-              </button>
-            )}
-            <h2>WELCOME TO HELMETS!</h2>
-            <h3>HOW TO PLAY</h3>
+        <div className="popup-modal fade-in" aria-hidden={false}>
+          <FocusTrap onClose={rulesOpenedManually ? () => { setShowRules(false); setRulesOpenedManually(false); } : undefined} labelledBy="rules-title">
+            <div className="popup-content popup-rules" role="document">
+              {rulesOpenedManually && (
+                <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }} aria-label="Close">
+                  ✖
+                </button>
+              )}
+              <h2 id="rules-title">WELCOME TO HELMETS!</h2>
+              <h3>HOW TO PLAY</h3>
 
-            <ul className="rules-list football-bullets rules-main">
-              <li><strong>Match each helmet path to an NFL player</strong></li>
-              <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
-              <li><strong>Only one guess per level</strong></li>
-              <li><strong>The faster you answer, the more points you get!</strong></li>
-              <li><strong>You get 0 points if you give up a level</strong></li>
-            </ul>
+              <ul className="rules-list football-bullets rules-main">
+                <li><strong>Match each helmet path to an NFL player</strong></li>
+                <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
+                <li><strong>Only one guess per level</strong></li>
+                <li><strong>The faster you answer, the more points you get!</strong></li>
+                <li><strong>You get 0 points if you give up a level</strong></li>
+              </ul>
 
-            <h4 className="fine-print-title">Fine Print:</h4>
-            <ul className="rules-list football-bullets rules-fineprint">
-              <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
-              <li>All active or retired NFL players drafted in 2000 or later are eligible</li>
-              <li>College helmet is the player's draft college</li>
-              <li>Some paths may have multiple possible answers</li>
-            </ul>
+              <h4 className="fine-print-title">Fine Print:</h4>
+              <ul className="rules-list football-bullets rules-fineprint">
+                <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+                <li>All active or retired NFL players drafted in 2000 or later are eligible</li>
+                <li>College helmet is the player's draft college</li>
+                <li>Some paths may have multiple possible answers</li>
+              </ul>
 
-            {!started && !gameOver && (
-              <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
-                Start Game!
-              </button>
-            )}
-          </div>
+              {!started && !gameOver && (
+                <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
+                  Start Game!
+                </button>
+              )}
+            </div>
+          </FocusTrap>
         </div>
       )}
 
       {showPopup && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content popup-final">
-            <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
-            <h3 className="popup-title">🎉 Game Complete!</h3>
-            <p className="popup-date">{gameDateMMDDYY}</p>
-            <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
-            <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
-            <button onClick={shareNow} className="primary-button">Share Score!</button>
-          </div>
+        <div className="popup-modal fade-in" aria-hidden={false}>
+          <FocusTrap onClose={() => { setShowPopup(false); setPopupDismissed(true); }} labelledBy="final-title">
+            <div className="popup-content popup-final" role="document">
+              <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }} aria-label="Close">✖</button>
+              <h3 id="final-title" className="popup-title">🎉 Game Complete!</h3>
+              <p className="popup-date">{gameDateMMDDYY}</p>
+              <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
+              <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
+              <button onClick={shareNow} className="primary-button">Share Score!</button>
+            </div>
+          </FocusTrap>
         </div>
       )}
 
