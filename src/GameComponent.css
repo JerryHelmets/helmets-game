@@ -18,8 +18,8 @@ html, body { overscroll-behavior: none; }
 
 /* Header — bigger logo/title */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
-.game-logo{height:2.2em;width:auto;display:block}           /* ↑ was 1.9em */
-.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2rem,5.8vw,3.4rem)} /* ↑ larger */
+.game-logo{height:2.4em;width:auto;display:block}           /* a bit bigger */
+.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)} /* a bit bigger */
 .game-header{position:relative;z-index:1200;text-align:center;margin:12px 0;color:#fff}
 .date-line{color:#fff;font-size:1rem;margin-top:4px}
 .score-line{color:#fff;font-size:clamp(1.45rem,5.4vw,2.35rem);font-weight:900;margin-top:2px}
@@ -50,7 +50,7 @@ html, body { overscroll-behavior: none; }
 .level-card.is-covered .card-body,.level-card.is-covered .helmet-sequence,.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
 
-/* Game-complete: very short cards; keep normal helmet/arrow size (reverted) */
+/* Game-complete: short cards & matching widths */
 .is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:44px;padding:8px}
 .is-complete .card-body{margin-top:26px}
 .is-complete .level-tag{font-size:.78rem;padding:4px 8px}
@@ -70,10 +70,15 @@ html, body { overscroll-behavior: none; }
 .card-body{margin-top:42px}
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
-/* Helmets + arrows (normal sizes) */
+/* Helmets + arrows (normal) */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
 .helmet-icon{width:68px;height:68px;object-fit:contain}
 @media (max-width:480px){.helmet-icon{width:56px;height:56px}}
+/* a bit larger on mobile WHEN ACTIVE */
+@media (max-width:480px){
+  .level-card--active .helmet-icon{width:64px;height:64px}
+  .level-card--active .arrow{font-size:.85rem}
+}
 .arrow{font-size:.85rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
 @media (max-width:480px){.arrow{font-size:.75rem}}
 
@@ -103,6 +108,13 @@ html, body { overscroll-behavior: none; }
 .points-bar{width:min(92%,320px);height:10px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:4px}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
 
+/* Community % bar (game complete) */
+.community-wrap{width:100%;margin-top:8px;display:flex;flex-direction:column;align-items:center}
+.community-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:12px;color:#111}
+.community-bar{width:min(92%,360px);height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:4px}
+.community-bar-fill{height:100%;background:#6366f1;transform-origin:left;transform:scaleX(0);transition:transform .9s ease}
+.is-complete .community-bar-fill{transform:scaleX(calc(var(--pct, 0)/100))}
+
 /* Buttons */
 .primary-button,.share-score-button{background:#2e6bff;color:#fff;padding:10px 18px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer}
 .primary-button:hover,.share-score-button:hover{filter:brightness(1.06)}
@@ -126,7 +138,7 @@ html, body { overscroll-behavior: none; }
 .calendar-grid-button{padding:6px;font-size:.75rem;border:1.5px solid #ccc;border-radius:6px;background:#f2f2f2}
 .calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
 
-/* Completed banner — same width as game-complete cards */
+/* Completed banner — width matches cards */
 .complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(92vw,calc(var(--card-w) + 36px))}
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
