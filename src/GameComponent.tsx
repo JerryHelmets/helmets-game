@@ -90,6 +90,17 @@ function scoreEmojis(total: number): string {
   return '🏆';
 }
 
+/* ---------- Anonymous device id helper (NEW) ---------- */
+function getAnonId() {
+  const k = 'helmets-uid';
+  let id = localStorage.getItem(k);
+  if (!id) {
+    id = self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    localStorage.setItem(k, id);
+  }
+  return id;
+}
+
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
@@ -125,7 +136,7 @@ const GameComponent: React.FC = () => {
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
 
-  const [communityPct, setCommunityPct] = useState<number[]>([]); // new
+  const [communityPct, setCommunityPct] = useState<number[]>([]); // (already present)
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
@@ -318,7 +329,7 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  /* community % correct (remote fallback -> local history) */
+  /* ---------- LIVE Universal Results polling (NEW) ---------- */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -337,22 +348,30 @@ const GameComponent: React.FC = () => {
       setCommunityPct(pct);
     };
 
-    (async () => {
+    let stop = false;
+
+    async function load() {
       try {
-        const res = await fetch(`/data/stats.json?date=${gameDate}`);
+        const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
         if (!res.ok) { computeLocal(); return; }
         const data = await res.json();
-        const arr = (Array.isArray(data?.[gameDate]) ? data[gameDate]
-                    : (Array.isArray(data?.levels) ? data.levels : null)) as number[] | null;
-        if (arr && arr.length >= dailyPaths.length) {
+        const arr = (Array.isArray(data?.levels) ? data.levels : null) as number[] | null;
+        if (!stop && arr && arr.length >= dailyPaths.length) {
           setCommunityPct(arr.slice(0, dailyPaths.length).map(v => Math.max(0, Math.min(100, Math.round(v)))));
-        } else {
+        } else if (!stop) {
           computeLocal();
         }
       } catch {
-        computeLocal();
+        if (!stop) computeLocal();
       }
-    })();
+    }
+
+    load();
+    const id = window.setInterval(load, 15000);
+    const onVis = () => { if (!document.hidden) load(); };
+    document.addEventListener('visibilitychange', onVis);
+
+    return () => { stop = true; window.clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, [dailyPaths.length, gameDate]);
 
   /* helpers */
@@ -404,6 +423,20 @@ const GameComponent: React.FC = () => {
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
+    /* ---------- POST finalize result (NEW) ---------- */
+    try {
+      fetch('/api/guess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: gameDate,
+          level: index,            // 0-based
+          correct: !!matched,
+          uid: getAnonId(),
+        }),
+      }).catch(() => {});
+    } catch {}
+
     const willComplete = updated.every(Boolean);
     if (willComplete) {
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
@@ -420,6 +453,20 @@ const GameComponent: React.FC = () => {
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
+
+    /* ---------- POST give up result (NEW) ---------- */
+    try {
+      fetch('/api/guess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: gameDate,
+          level: index,
+          correct: false,
+          uid: getAnonId(),
+        }),
+      }).catch(() => {});
+    } catch {}
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
