@@ -125,6 +125,8 @@ const GameComponent: React.FC = () => {
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
 
+  const [communityPct, setCommunityPct] = useState<number[]>([]); // new
+
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
   const levelDelayRef = useRef<number | null>(null);
@@ -316,6 +318,43 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
+  /* community % correct (remote fallback -> local history) */
+  useEffect(() => {
+    if (!dailyPaths.length) return;
+
+    const computeLocal = () => {
+      const totals = new Array(dailyPaths.length).fill(0);
+      const rights = new Array(dailyPaths.length).fill(0);
+      const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
+      Object.values(history).forEach((rec: any) => {
+        if (!rec?.guesses || !Array.isArray(rec.guesses)) return;
+        if (rec.guesses.length !== dailyPaths.length) return;
+        rec.guesses.forEach((g: Guess | null, i: number) => {
+          if (g) { totals[i] += 1; if (g.correct) rights[i] += 1; }
+        });
+      });
+      const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
+      setCommunityPct(pct);
+    };
+
+    (async () => {
+      try {
+        const res = await fetch(`/data/stats.json?date=${gameDate}`);
+        if (!res.ok) { computeLocal(); return; }
+        const data = await res.json();
+        const arr = (Array.isArray(data?.[gameDate]) ? data[gameDate]
+                    : (Array.isArray(data?.levels) ? data.levels : null)) as number[] | null;
+        if (arr && arr.length >= dailyPaths.length) {
+          setCommunityPct(arr.slice(0, dailyPaths.length).map(v => Math.max(0, Math.min(100, Math.round(v)))));
+        } else {
+          computeLocal();
+        }
+      } catch {
+        computeLocal();
+      }
+    })();
+  }, [dailyPaths.length, gameDate]);
+
   /* helpers */
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
   const stopLevelTimer = () => {
@@ -376,7 +415,7 @@ const GameComponent: React.FC = () => {
   const handleSkip = (index: number) => {
     if (guesses[index]) return;
     const updated = [...guesses];
-    updated[index] = { guess: 'No Answer', correct: false };   // ← changed
+    updated[index] = { guess: 'No Answer', correct: false };
     setGuesses(updated);
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
 
@@ -566,6 +605,19 @@ www.helmets-game.com`;
                 </div>
               </div>
 
+              {/* Community % bar in game-complete */}
+              {gameOver && (
+                <div className="community-wrap">
+                  <div className="community-row">
+                    <span>Users Correct</span>
+                    <span>{(communityPct[idx] ?? 0)}%</span>
+                  </div>
+                  <div className="community-bar">
+                    <div className="community-bar-fill" style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }} />
+                  </div>
+                </div>
+              )}
+
               {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
                 <div className="possible-answers">
                   <strong>Possible Answers:</strong>
@@ -684,7 +736,7 @@ www.helmets-game.com`;
       )}
 
       <footer className="site-disclosure">
-        Please note: helmets-game.com does not own any of the team, league or event logos depicted within this site.
+        Please note: www.helmets-game.com does not own any of the team, league or event logos depicted within this site.
         All sports logos contained within this site are properties of their respective leagues, teams, ownership groups
         and/or organizations.
       </footer>
