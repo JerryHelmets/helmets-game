@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 158px;            /* moved active card down a touch more */
+  --active-top: 136px;         /* position of active card */
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -13,7 +13,12 @@
 html, body { overscroll-behavior: none; }
 
 /* Score flash */
-@keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
+@keyframes scoreFlash {
+  0%{background:transparent;color:#fff;}
+  25%{background:rgba(255,221,0,.9);color:#000;}
+  60%{background:rgba(255,221,0,.75);color:#000;}
+  100%{background:transparent;color:#fff;}
+}
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
 /* Header — bigger logo/title */
@@ -43,7 +48,14 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
 /* Active card */
-.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 24px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:260px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
+.level-card--active{
+  position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);
+  width:min(92vw,calc(var(--card-w) + 24px));
+  max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
+  min-height:260px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;
+  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
+  text-align:center;background:#f7f7f7;
+}
 
 /* Covered cards */
 .level-card.is-covered{position:static;width:min(86vw,var(--card-w));min-height:var(--card-min-h);max-height:var(--card-min-h);overflow:hidden;background:#1b2838!important;border-color:#25354a!important}
@@ -70,15 +82,16 @@ html, body { overscroll-behavior: none; }
 .card-body{margin-top:42px}
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
-/* Helmets + arrows */
+/* Helmets + arrows (normal) */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
 .helmet-icon{width:68px;height:68px;object-fit:contain}
-@media (max-width:480px){.helmet-icon{width:56px;height:56px}}
 
-/* ACTIVE: smaller (touch more) */
-.level-card--active .helmet-icon{width:58px;height:58px}
+/* ACTIVE: slightly larger helmets */
+.level-card--active .helmet-icon{width:72px;height:72px}
+
 @media (max-width:480px){
-  .level-card--active .helmet-icon{width:54px;height:54px}
+  .helmet-icon{width:56px;height:56px}
+  .level-card--active .helmet-icon{width:60px;height:60px}
   .level-card--active .arrow{font-size:.76rem}
 }
 
@@ -179,18 +192,7 @@ html, body { overscroll-behavior: none; }
 
 /* Footer */
 .footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
-
-/* feedback link smaller, not a button */
-.feedback-link{
-  font-size:.9rem;
-  color:#8ab4ff;
-  text-decoration:underline;
-  font-weight:600;
-  cursor:pointer;
-  padding:4px 6px;
-}
-.feedback-link:hover{ filter:brightness(1.12); }
-
+.feedback-bottom{margin-bottom:4px}
 .site-disclosure{margin:18px auto 10px;max-width:800px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
 
 /* Reduce motion */
