@@ -1,16 +1,16 @@
-// src/components/GameComponent.tsx
+// src/GameComponent.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import Papa from 'papaparse';
 import './GameComponent.css';
 
-import Header from './Header';
-import LevelCard from './LevelCard';
-import Modals from './Modals';
+import Header from './components/Header';
+import LevelCard from './components/LevelCard';
+import Modals from './components/Modals';
 
-import { todayPTISO, isoToMDYYYY, isoToMDYY, getLastNDatesPT } from './utils/time';
-import { seededRandom } from './utils/random';
-import { buildShareText, scoreEmojis } from './utils/share';
+import { todayPTISO, isoToMDYYYY, isoToMDYY, getLastNDatesPT } from './components/utils/time';
+import { seededRandom } from './components/utils/random';
+import { buildShareText, scoreEmojis } from './components/utils/share';
 import {
   LS_GUESSES,
   LS_HISTORY,
@@ -18,7 +18,7 @@ import {
   LS_BASE_PREFIX,
   getStartedFor,
   setStartedFor,
-} from './utils/storage';
+} from './components/utils/storage';
 
 /* ---------- Types (shared shape with LevelCard) ---------- */
 export interface PlayerPath { name: string; path: string[]; path_level: number; }
@@ -382,7 +382,7 @@ const GameComponent: React.FC = () => {
       score,
       emojiForScore,
       url: 'www.helmets-game.com',
-      firstEmojiLine: true,   // matches your latest format
+      firstEmojiLine: true,
     });
     if (navigator.share) {
       navigator.share({ title: 'Helmets', text }).catch(() => navigator.clipboard.writeText(text));
