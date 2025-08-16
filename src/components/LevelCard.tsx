@@ -92,7 +92,7 @@ const LevelCard: React.FC<Props> = ({
                   autoComplete="off"
                   onChange={(e) => inputEnabled && onInputChange(idx, e.target.value)}
                   onKeyDown={(e) => inputEnabled && onKeyDown(e, idx)}
-                  onBlur={() => onBlurInput(idx)}                 {/* NEW: hide on blur */}
+                  onBlur={() => onBlurInput(idx)}               
                   className="guess-input-field guess-input-mobile font-mobile"
                   disabled={!inputEnabled}
                 />
