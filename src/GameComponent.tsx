@@ -124,10 +124,10 @@ Score: ${score} ${emojiForScore}
 ${url}`;
 }
 
-/* ---------- Component ---------- */
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
+  const debug = params.get('debug') === '1'; // show source of stats when ?debug=1
   const todayPT = todayPTISO();
   const gameDate = dateParam || todayPT;
   const gameDateHeader = isoToMDYYYY(gameDate);
@@ -159,6 +159,7 @@ const GameComponent: React.FC = () => {
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
   const [communityPct, setCommunityPct] = useState<number[]>([]);
+  const [communitySource, setCommunitySource] = useState<'api'|'json'|'local'>('local');
   const [hintShown, setHintShown] = useState<boolean[]>([]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -180,7 +181,7 @@ const GameComponent: React.FC = () => {
     return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
-  /* load players.csv (with position + difficulty) */
+  /* load players.csv (position + difficulty) */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -371,7 +372,7 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* auto-reveal hint when <= 50 on active level */
+  /* auto-reveal hint at 50 */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -385,7 +386,7 @@ const GameComponent: React.FC = () => {
     }
   }, [basePointsLeft, activeLevel, guesses, started, gameOver, freezeActiveAfterAnswer, dailyPaths.length, hintShown]);
 
-  /* community % (remote -> local json -> local history) */
+  /* community % (API -> static -> local) */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -400,15 +401,18 @@ const GameComponent: React.FC = () => {
       });
       const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
       setCommunityPct(pct);
+      setCommunitySource('local');
     };
 
     (async () => {
       try {
-        // primary: API using all-user data (e.g. Vercel KV / DB)
+        let used = 'api' as 'api'|'json'|'local';
+        // primary: API (global data)
         let res = await fetch(`/api/stats?date=${gameDate}`);
         if (!res.ok) {
-          // fallback to static json if provided
+          // fallback: static json (optional)
           res = await fetch(`/data/stats.json?date=${gameDate}`);
+          used = 'json';
         }
         if (!res.ok) { computeLocal(); return; }
         const data = await res.json();
@@ -416,6 +420,7 @@ const GameComponent: React.FC = () => {
                     : (Array.isArray(data?.levels) ? data.levels : null)) as number[] | null;
         if (arr && arr.length >= dailyPaths.length) {
           setCommunityPct(arr.slice(0, dailyPaths.length).map(v => Math.max(0, Math.min(100, Math.round(v)))));
+          setCommunitySource(used);
         } else {
           computeLocal();
         }
@@ -496,11 +501,11 @@ const GameComponent: React.FC = () => {
         body: JSON.stringify({ date: gameDate, level: idx + 1, correct })
       });
     } catch {
-      /* ignore network/API errors; local fallback remains */
+      /* ignore network/API errors */
     }
   };
 
-  /* only dropdown/Give Up can answer */
+  /* keyboard: only dropdown select or Give Up */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     const max = filteredSuggestions[idx]?.length || 0;
     if (e.key === 'ArrowDown' && max) { setHighlightIndex(p => (p + 1) % max); e.preventDefault(); return; }
@@ -528,7 +533,6 @@ const GameComponent: React.FC = () => {
     const awarded = matched ? baseLeft * multiplier : 0;
 
     setAwardedPoints(prev => { const n=[...prev]; n[index]=awarded; return n; });
-
     postLevelResult(index, !!matched);
 
     if (matched) {
@@ -609,7 +613,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
@@ -772,14 +776,16 @@ const GameComponent: React.FC = () => {
               </div>
 
               {gameOver && (
-                <div className="community-wrap">
+                <div className="community-wrap" data-source={communitySource}>
                   <div className="community-row">
                     <span>Users Correct</span>
                     <span>{(communityPct[idx] ?? 0)}%</span>
                   </div>
                   <div className="community-bar">
-                    <div className="community-bar-fill" style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }} />
+                    {/* IMPORTANT: pass NUMBER, not "50%" */}
+                    <div className="community-bar-fill" style={{ ['--pct' as any]: (communityPct[idx] ?? 0) }} />
                   </div>
+                  {debug && <div className="community-source">source: {communitySource}</div>}
                 </div>
               )}
 
