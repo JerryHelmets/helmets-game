@@ -1,9 +1,10 @@
 :root{
-  --active-top: 154px;           /* moved card a touch lower */
+  --active-top: 154px;
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
   --card-min-h: 110px;
+  --hint-color: #f59e0b; /* unified amber hint color */
 }
 
 html, body { overscroll-behavior: none; }
@@ -66,7 +67,7 @@ html, body { overscroll-behavior: none; }
 .card-body{margin-top:42px}
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
-/* Helmets — a touch larger (active too) */
+/* Helmets */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
 .helmet-icon{width:82px;height:82px;object-fit:contain}
 @media (max-width:480px){.helmet-icon{width:68px;height:68px}}
@@ -95,20 +96,20 @@ html, body { overscroll-behavior: none; }
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
 .guess-input-field{width:98%;max-width:360px;padding:6px 8px;font-size:16px;border-radius:8px;border:1px solid #ccc;-webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto}
 
-/* Points bar — larger + hint line */
+/* Points bar — unified hint color */
 .points-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
 .points-row{display:flex;justify-content:space-between;width:min(96%,420px);font-size:15px;color:#111}
 .points-label,.points-value{font-weight:800}
 .points-bar{position:relative;width:min(96%,420px);height:18px;background:#e7efff;border-radius:999px;overflow:hidden;border:1.5px solid #c9d6ff;margin-top:6px}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
-.points-bar-mark{position:absolute;top:-2px;bottom:-2px;left:50%;width:2px;background:#93c5fd;opacity:.9}
-.points-bar-mark::after{content:'HINT';position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.68rem;color:#3b82f6;background:transparent}
-.points-bar.hint-on .points-bar-mark{background:#2563eb}
-.hint-text{margin-top:6px;font-size:.95rem;color:#0b5ed7;font-weight:700}
-.hint-button{margin-top:6px;background:#e8f0ff;border:1px solid #bcd0ff;color:#1e40af;padding:6px 10px;border-radius:8px;font-weight:800;font-size:.9rem;cursor:pointer}
+.points-bar-mark{position:absolute;top:-2px;bottom:-2px;left:50%;width:2px;background:var(--hint-color);opacity:.95}
+.points-bar-mark::after{content:'HINT';position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.68rem;color:var(--hint-color);background:transparent;font-weight:800}
+.points-bar.hint-on .points-bar-mark{background:var(--hint-color)}
+.hint-text{margin-top:6px;font-size:.95rem;color:var(--hint-color);font-weight:800}
+.hint-button{margin-top:6px;background:#fff7ed;border:1.5px solid #fed7aa;color:#9a3412;padding:6px 10px;border-radius:8px;font-weight:800;font-size:.9rem;cursor:pointer}
 .hint-button:hover{filter:brightness(1.04)}
 
-/* Universal Results — bigger */
+/* Universal Results — fills on game complete */
 .community-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
 .community-row{display:flex;justify-content:space-between;width:min(92%,400px);font-size:15px;color:#111}
 .community-bar{width:min(92%,400px);height:16px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1.5px solid #c7cffd;margin-top:6px}
@@ -175,7 +176,7 @@ html, body { overscroll-behavior: none; }
 .fine-print-title{margin:12px 0 4px;font-size:1rem;font-weight:400}
 .rules-fineprint li{font-weight:400;font-size:.92rem;opacity:.95}
 
-/* Possible answers formatting */
+/* Possible answers */
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
 .possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.9rem}
 .answer-pos{color:#6b7280;margin-left:6px}
