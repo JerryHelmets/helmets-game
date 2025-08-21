@@ -32,6 +32,7 @@ const FINAL_REVEAL_HOLD_MS = 500;
 const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
+const HINT_THRESHOLD = 50;
 
 /* ---------- PACIFIC TIME ---------- */
 function getPTDateParts(date: Date = new Date()) {
@@ -78,7 +79,11 @@ function buildAnswerListsDetailed(players: PlayerPath[], targets: PlayerPath[]):
   return targets.map(t => {
     const arr = players
       .filter(p => p.path.join('>')===t.path.join('>'))
-      .map(p => ({ name: p.name, position: p.position, difficulty: typeof p.difficulty==='number' ? p.difficulty : undefined }));
+      .map(p => ({
+        name: p.name,
+        position: p.position,
+        difficulty: typeof p.difficulty==='number' ? p.difficulty : undefined
+      }));
     arr.sort((a,b) => ( (a.difficulty ?? 999) - (b.difficulty ?? 999) || a.name.localeCompare(b.name) ));
     return arr;
   });
@@ -154,6 +159,7 @@ const GameComponent: React.FC = () => {
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
   const [communityPct, setCommunityPct] = useState<number[]>([]);
+  const [hintShown, setHintShown] = useState<boolean[]>([]);          // NEW
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
@@ -174,7 +180,7 @@ const GameComponent: React.FC = () => {
     return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
-  /* load players.csv (now pulls position + difficulty) */
+  /* load players.csv (with position + difficulty) */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -205,7 +211,7 @@ const GameComponent: React.FC = () => {
     return () => { cancelled = true; };
   }, []);
 
-  /* name -> meta (position) */
+  /* name -> meta (position) for suggestions */
   const nameMeta = useMemo(() => {
     const m = new Map<string, { position?: string }>();
     players.forEach(p => {
@@ -267,6 +273,7 @@ const GameComponent: React.FC = () => {
     setBasePointsLeft(base);
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
+    setHintShown(Array(dailyPaths.length).fill(false));                  // NEW
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
     setPopupDismissed(false);
     setConfettiFired(false);
@@ -364,7 +371,21 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* community % */
+  /* auto-reveal hint when <= 50 on active level */
+  useEffect(() => {
+    if (!started || gameOver) return;
+    const idx = activeLevel;
+    if (idx < 0 || idx >= dailyPaths.length) return;
+    if (guesses[idx]) return;
+    if (freezeActiveAfterAnswer !== null) return;
+
+    const base = basePointsLeft[idx];
+    if (typeof base === 'number' && base <= HINT_THRESHOLD && !hintShown[idx]) {
+      setHintShown(prev => { const n=[...prev]; n[idx]=true; return n; });
+    }
+  }, [basePointsLeft, activeLevel, guesses, started, gameOver, freezeActiveAfterAnswer, dailyPaths.length, hintShown]);
+
+  /* community % (local fallback) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const computeLocal = () => {
@@ -520,6 +541,16 @@ const GameComponent: React.FC = () => {
     }
   };
 
+  const revealHintNow = (idx: number) => {
+    setHintShown(prev => { if (prev[idx]) return prev; const n=[...prev]; n[idx]=true; return n; });
+    setBasePointsLeft(prev => {
+      const n=[...prev];
+      const cur = typeof n[idx] === 'number' ? n[idx]! : MAX_BASE_POINTS;
+      if (cur > HINT_THRESHOLD) n[idx] = HINT_THRESHOLD;
+      return n;
+    });
+  };
+
   const shareNow = () => {
     const title = `🏈 Helmets – ${gameDateMMDDYY}`;
     const emojiSquares = guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('');
@@ -551,7 +582,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-        <h1 className="game-title">HELMETS</h1>
+          <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
@@ -591,6 +622,11 @@ const GameComponent: React.FC = () => {
         const badgeClass = showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
 
         const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
+        const hintVisible = (!!hintShown[idx]) || (baseLeft <= HINT_THRESHOLD);
+
+        // pick lowest-difficulty answer's position (if any)
+        const minAns = answerLists[idx]?.[0];
+        const hintPos = minAns?.position;
 
         return (
           <div
@@ -644,7 +680,7 @@ const GameComponent: React.FC = () => {
 
                       {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                         <div className="suggestion-box fade-in-fast">
-                          {filteredSuggestions[idx].slice(0, 6).map((name, i) => {
+                          {filteredSuggestions[idx].slice(0, 8).map((name, i) => {
                             const typed = inputRefs.current[idx]?.value || '';
                             const match = name.toLowerCase().indexOf(typed.toLowerCase());
                             const pos = nameMeta.get(name.toLowerCase())?.position;
@@ -670,9 +706,28 @@ const GameComponent: React.FC = () => {
                             <span className="points-label">Points</span>
                             <span className="points-value">{baseLeft}</span>
                           </div>
-                          <div className="points-bar">
+                          <div className={`points-bar ${hintVisible ? 'hint-on' : ''}`}>
                             <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
+                            <div className="points-bar-mark" aria-hidden="true" />
                           </div>
+
+                          {/* hint text when visible */}
+                          {hintVisible && hintPos && (
+                            <div className="hint-text">
+                              Hint: Position = <strong>{hintPos}</strong>
+                            </div>
+                          )}
+
+                          {/* manual hint button */}
+                          {!hintVisible && (
+                            <button
+                              type="button"
+                              className="hint-button"
+                              onClick={() => revealHintNow(idx)}
+                            >
+                              HINT
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -708,7 +763,7 @@ const GameComponent: React.FC = () => {
                 </div>
               )}
 
-              {/* Possible answers (sorted by difficulty asc) */}
+              {/* Possible answers (sorted by difficulty asc) — position shown, difficulty hidden */}
               {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
                 <div className="possible-answers">
                   <strong>Possible Answers:</strong>
@@ -717,7 +772,6 @@ const GameComponent: React.FC = () => {
                       <li key={i}>
                         👤 {ai.name}
                         {ai.position && <span className="answer-pos"> {ai.position}</span>}
-                        {typeof ai.difficulty==='number' && <span className="answer-diff" title="Difficulty"> • {ai.difficulty}</span>}
                       </li>
                     ))}
                   </ul>
