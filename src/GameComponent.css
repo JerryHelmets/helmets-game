@@ -1,5 +1,5 @@
 :root{
-  --active-top: 144px;
+  --active-top: 154px;           /* moved card a touch lower */
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -68,9 +68,9 @@ html, body { overscroll-behavior: none; }
 
 /* Helmets — a touch larger (active too) */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
-.helmet-icon{width:78px;height:78px;object-fit:contain}
-@media (max-width:480px){.helmet-icon{width:64px;height:64px}}
-@media (max-width:480px){ .level-card--active .helmet-icon{width:72px;height:72px} }
+.helmet-icon{width:82px;height:82px;object-fit:contain}
+@media (max-width:480px){.helmet-icon{width:68px;height:68px}}
+@media (max-width:480px){ .level-card--active .helmet-icon{width:76px;height:76px} }
 .arrow{font-size:.82rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
 @media (max-width:480px){.arrow{font-size:.74rem}}
 
@@ -83,24 +83,30 @@ html, body { overscroll-behavior: none; }
 /* Card enter */
 @keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-/* Suggestions + input */
-.suggestion-box{max-height:150px;overflow-y:auto;border:1.5px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
-.suggestion-item{padding:9px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
+/* Suggestions + input (wider) */
+.suggestion-box{max-height:180px;overflow-y:auto;border:1.5px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(96%,calc(var(--card-w) + 60px));text-align:left}
+.suggestion-item{padding:10px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .suggestion-item:hover,.suggestion-item.highlighted{background:#f0f0f0}
-.suggestion-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%}
-.suggestion-pos{margin-left:auto;color:#9aa3af;font-size:.9rem}
+.suggestion-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72%}
+.suggestion-pos{margin-left:auto;color:#9aa3af;font-size:.95rem}
 .fade-in-fast{animation:fadeIn .3s ease-out}
 @keyframes fadeIn{to{opacity:1}}
 
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
-.guess-input-field{width:98%;max-width:300px;padding:4px 6px;font-size:16px;border-radius:8px;border:1px solid #ccc;-webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto}
+.guess-input-field{width:98%;max-width:360px;padding:6px 8px;font-size:16px;border-radius:8px;border:1px solid #ccc;-webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto}
 
-/* Points bar — a bit bigger */
+/* Points bar — larger + hint line */
 .points-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
-.points-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:15px;color:#111}
+.points-row{display:flex;justify-content:space-between;width:min(96%,420px);font-size:15px;color:#111}
 .points-label,.points-value{font-weight:800}
-.points-bar{width:min(92%,360px);height:16px;background:#e7efff;border-radius:999px;overflow:hidden;border:1.5px solid #c9d6ff;margin-top:6px}
+.points-bar{position:relative;width:min(96%,420px);height:18px;background:#e7efff;border-radius:999px;overflow:hidden;border:1.5px solid #c9d6ff;margin-top:6px}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
+.points-bar-mark{position:absolute;top:-2px;bottom:-2px;left:50%;width:2px;background:#93c5fd;opacity:.9}
+.points-bar-mark::after{content:'HINT';position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:.68rem;color:#3b82f6;background:transparent}
+.points-bar.hint-on .points-bar-mark{background:#2563eb}
+.hint-text{margin-top:6px;font-size:.95rem;color:#0b5ed7;font-weight:700}
+.hint-button{margin-top:6px;background:#e8f0ff;border:1px solid #bcd0ff;color:#1e40af;padding:6px 10px;border-radius:8px;font-weight:800;font-size:.9rem;cursor:pointer}
+.hint-button:hover{filter:brightness(1.04)}
 
 /* Universal Results — bigger */
 .community-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
@@ -114,7 +120,7 @@ html, body { overscroll-behavior: none; }
 .primary-button:hover,.share-score-button:hover{filter:brightness(1.06)}
 .secondary-button{background:#fff;color:#111;padding:8px 14px;border:1.5px solid #cfcfcf;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer}
 .secondary-button.small{font-size:.88rem;padding:7px 12px}
-.skip-button{margin-top:18px}
+.skip-button{margin-top:14px}
 
 /* Locked answers */
 .locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.9rem;text-align:center}
@@ -149,7 +155,7 @@ html, body { overscroll-behavior: none; }
 .popup-final .score-number{display:inline-block;min-width:3ch}
 .close-button{position:absolute;top:12px;right:12px;background:transparent;font-size:18px;border:none;cursor:pointer}
 
-/* Feedback link (small, not a button) */
+/* Feedback link (small) */
 .footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
 .feedback-link{background:none;border:none;padding:0;font-size:.95rem;color:#8ab4ff;text-decoration:underline;cursor:pointer}
 .feedback-link:hover{filter:brightness(1.08)}
@@ -173,7 +179,6 @@ html, body { overscroll-behavior: none; }
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
 .possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.9rem}
 .answer-pos{color:#6b7280;margin-left:6px}
-.answer-diff{color:#9aa3af;margin-left:6px;font-size:.85rem}
 
 /* Disclosure */
 .site-disclosure{margin:18px auto 10px;max-width:800px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
