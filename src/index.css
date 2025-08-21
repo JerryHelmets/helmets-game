@@ -2,12 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Let the page grow with content */
 html, body, #root {
-  height: 100%;
+  min-height: 100%;
+  height: auto;       /* override the 100% rule */
   margin: 0;
   padding: 0;
 }
 
-body {
-background: linear-gradient(135deg, rgba(53, 39, 112, 1) 0%, rgba(35, 39, 105, 1) 30%, rgba(38, 40, 90, 1) 65%, rgba(53, 39, 112, 1) 100%);
+/* Put the gradient on html (or body) */
+html {
+  background: linear-gradient(135deg,
+    rgba(53,39,112,1) 0%,
+    rgba(35,39,105,1) 30%,
+    rgba(38,40,90,1) 65%,
+    rgba(53,39,112,1) 100%);
+  background-repeat: no-repeat;  /* defensive */
+  background-size: cover;        /* fill viewport */
+  /* optional: keep it stationary as you scroll */
+  /* background-attachment: fixed; */
 }
