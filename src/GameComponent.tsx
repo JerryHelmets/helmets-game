@@ -1,21 +1,31 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import confetti from 'canvas-confetti';
 import Papa from 'papaparse';
 import './GameComponent.css';
 
-/* ===============================
-   Types
-   =============================== */
-interface PlayerPath { name: string; path: string[]; path_level: number; position?: string; difficulty?: number; }
-interface RawPlayerRow { name: string; college: string; position: string; teams: string; difficulty: string; path: string; path_level: string; }
+interface PlayerPath { name: string; path: string[]; path_level: number; }
+interface RawPlayerRow {
+  name: string;
+  college: string;
+  position: string;
+  teams: string;
+  difficulty: string;
+  path: string;
+  path_level: string;
+}
 interface Guess { guess: string; correct: boolean; }
-type StoredGuesses = { date: string; guesses: (Guess | null)[]; score: number; awardedPoints: number[]; };
+type StoredGuesses = {
+  date: string;
+  guesses: (Guess | null)[];
+  score: number;
+  awardedPoints: number[];
+};
 
 const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_STARTED = 'helmets-started';
 const LS_BASE_PREFIX = 'helmets-basepoints-';
-const LS_ANON = 'helmets-anon-id';
 
 const REVEAL_HOLD_MS = 2000;
 const FINAL_REVEAL_HOLD_MS = 500;
@@ -23,19 +33,23 @@ const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
-/* ===============================
-   Pacific Time helpers
-   =============================== */
+/* ---------- PACIFIC TIME helpers ---------- */
 function getPTDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit'
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).formatToParts(date);
-  const y = parts.find(p => p.type === 'year')!.value;
-  const m = parts.find(p => p.type === 'month')!.value;
-  const d = parts.find(p => p.type === 'day')!.value;
+  const y = parts.find((p) => p.type === 'year')!.value;
+  const m = parts.find((p) => p.type === 'month')!.value;
+  const d = parts.find((p) => p.type === 'day')!.value;
   return { y, m, d };
 }
-function toPTISO(date: Date) { const { y, m, d } = getPTDateParts(date); return `${y}-${m}-${d}`; }
+function toPTISO(date: Date) {
+  const { y, m, d } = getPTDateParts(date);
+  return `${y}-${m}-${d}`;
+}
 function todayPTISO() { return toPTISO(new Date()); }
 function isoToMDYYYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y}`; }
 function isoToMDYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y.slice(-2)}`; }
@@ -45,9 +59,7 @@ function getLastNDatesPT(n: number) {
   return out;
 }
 
-/* ===============================
-   Daily selection
-   =============================== */
+/* ---------- daily selection ---------- */
 function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   const seed = parseInt(dateISO.replace(/-/g, ''), 10);
@@ -66,27 +78,15 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   }
   return sel;
 }
-function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
-  return targets.map(t => {
-    // sort by difficulty if present
-    const samePath = players.filter(p => p.path.join('>')===t.path.join('>'));
-    samePath.sort((a,b) => (a.difficulty ?? 99999) - (b.difficulty ?? 99999));
-    return samePath.map(p=>({ name: p.name, position: p.position, difficulty: p.difficulty }));
-  });
-}
 const isComplete = (guesses: (Guess | null)[], total: number) =>
   guesses.length===total && guesses.every(Boolean);
 
-/* ===============================
-   Started flags
-   =============================== */
+/* ---------- started flags ---------- */
 function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTED) || '{}'); } catch { return {}; } }
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ===============================
-   Score emojis
-   =============================== */
+/* ---------- score-range emojis ---------- */
 function scoreEmojis(total: number): string {
   if (total < 100) return '🫵🤣🫵';
   if (total < 200) return '💩';
@@ -105,28 +105,13 @@ function scoreEmojis(total: number): string {
   return '🏆';
 }
 
-/* ===============================
-   Live stats API helpers
-   =============================== */
-function anonId(): string {
-  let v = localStorage.getItem(LS_ANON);
-  if (!v) { v = (crypto as any).randomUUID ? (crypto as any).randomUUID() : ('id-' + Math.random().toString(36).slice(2)); localStorage.setItem(LS_ANON, v); }
-  return v;
-}
-async function postResult(dateISO: string, level: number, correct: boolean) {
-  try {
-    await fetch('/api/results', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: dateISO, level, correct, user: anonId() }),
-      cache: 'no-store',
-    });
-  } catch {}
-}
+/* ---------- Backdrop portal ---------- */
+const Backdrop: React.FC<{ show: boolean }> = ({ show }) => {
+  if (!show) return null;
+  const node = <div className="level-backdrop" aria-hidden="true" />;
+  return ReactDOM.createPortal(node, document.body);
+};
 
-/* ===============================
-   Component
-   =============================== */
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
@@ -164,19 +149,24 @@ const GameComponent: React.FC = () => {
 
   const [communityPct, setCommunityPct] = useState<number[]>([]);
 
+  // NEW: position & difficulty maps for dropdown + hint + sorting
+  const [posByName, setPosByName] = useState<Record<string, string>>({});
+  const [diffByName, setDiffByName] = useState<Record<string, number>>({});
+
+  // Hint state (per-level)
+  const [hintShown, setHintShown] = useState<boolean[]>([]);
+
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
   const levelDelayRef = useRef<number | null>(null);
 
-  /* viewport height var */
+  /* viewport / scroll lock */
   useEffect(() => {
     const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     setH(); const onOri = () => setTimeout(setH, 250);
     window.addEventListener('orientationchange', onOri);
     return () => window.removeEventListener('orientationchange', onOri);
   }, []);
-
-  /* scroll lock during overlays or active card */
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const oh = document.documentElement.style.overflow, ob = document.body.style.overflow;
@@ -185,7 +175,7 @@ const GameComponent: React.FC = () => {
     return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
-  /* load players (with position & difficulty) */
+  /* load players (+ position & difficulty) */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -194,29 +184,48 @@ const GameComponent: React.FC = () => {
         const text = await res.text();
         const parsed = Papa.parse(text, { header: true });
         const rows = parsed.data as RawPlayerRow[];
+
         const arr: PlayerPath[] = [];
+        const posMap: Record<string, string> = {};
+        const diffMap: Record<string, number> = {};
+
         rows.forEach(r => {
           const name = r.name?.trim(), pathStr = r.path?.trim(), lvl = r.path_level?.trim();
           if (!name || !pathStr || !lvl) return;
           const level = parseInt(lvl, 10); if (Number.isNaN(level)) return;
-          const difficulty = r.difficulty ? parseInt(r.difficulty, 10) : undefined;
-          const position = r.position?.trim() || undefined;
-          arr.push({
-            name,
-            path: pathStr.split(',').map(s=>s.trim()),
-            path_level: level,
-            position,
-            difficulty
-          });
+          arr.push({ name, path: pathStr.split(',').map(s=>s.trim()), path_level: level });
+
+          const pos = (r.position || '').trim();
+          if (pos) posMap[name] = pos;
+
+          const d = parseInt((r.difficulty || '').trim(), 10);
+          if (!Number.isNaN(d)) diffMap[name] = d;
         });
-        if (!cancelled) setPlayers(arr);
+
+        if (!cancelled) {
+          setPlayers(arr);
+          setPosByName(posMap);
+          setDiffByName(diffMap);
+        }
       } catch (e) { console.error('❌ CSV load', e); }
     })();
     return () => { cancelled = true; };
   }, []);
 
   const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
-  const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
+
+  // Sorted answer names by difficulty (ascending)
+  const answerLists = useMemo(() => {
+    return dailyPaths.map(t => {
+      const candidates = players.filter(p => p.path.join('>')===t.path.join('>'));
+      candidates.sort((a,b) => {
+        const da = diffByName[a.name] ?? Number.POSITIVE_INFINITY;
+        const db = diffByName[b.name] ?? Number.POSITIVE_INFINITY;
+        return da - db;
+      });
+      return candidates.map(c => c.name);
+    });
+  }, [players, dailyPaths, diffByName]);
 
   /* init for day */
   useEffect(() => {
@@ -266,6 +275,9 @@ const GameComponent: React.FC = () => {
     }
     setBasePointsLeft(base);
 
+    // restore hint shown flags to false (fresh day view) — reveal occurs at <=50 or via button
+    setHintShown(Array(dailyPaths.length).fill(false));
+
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
     setPopupDismissed(false);
@@ -287,11 +299,11 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  /* persist the per-level base points on change so refresh doesn't reset */
+  /* persist base points (per-level timer) so refresh keeps countdown */
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
-  }, [basePointsLeft, gameDate, dailyPaths.length]);
+  }, [basePointsLeft, dailyPaths.length, gameDate]);
 
   /* score flash + count-up (header) */
   useEffect(() => {
@@ -336,7 +348,7 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* per-level countdown (persisted, no reset on refresh) */
+  /* per-level countdown (persisted) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -352,7 +364,14 @@ const GameComponent: React.FC = () => {
     levelDelayRef.current = window.setTimeout(() => {
       levelTimerRef.current = window.setInterval(() => {
         setBasePointsLeft(prev => {
-          const n=[...prev]; const cur=n[idx] ?? MAX_BASE_POINTS; n[idx] = Math.max(0, cur-1); return n;
+          const n=[...prev]; const cur=n[idx] ?? MAX_BASE_POINTS;
+          n[idx] = Math.max(0, cur-1);
+
+          // auto-reveal hint when it drops to 50
+          if ((n[idx] ?? 0) <= 50 && !hintShown[idx]) {
+            const h = [...hintShown]; h[idx] = true; setHintShown(h);
+          }
+          return n;
         });
       }, TICK_MS);
     }, COUNTDOWN_START_DELAY_MS);
@@ -361,9 +380,9 @@ const GameComponent: React.FC = () => {
       if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current = null; }
       if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current = null; }
     };
-  }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
+  }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length, hintShown]);
 
-  /* one big confetti on final popup */
+  /* single big confetti on final popup */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
@@ -371,7 +390,7 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  /* community % correct (remote -> fallback local) */
+  /* community % correct (remote fallback -> local history) */
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -386,17 +405,16 @@ const GameComponent: React.FC = () => {
           if (g) { totals[i] += 1; if (g.correct) rights[i] += 1; }
         });
       });
-      const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 0));
+      const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
       setCommunityPct(pct);
     };
 
     (async () => {
       try {
-        const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
+        const res = await fetch(`/api/stats?date=${gameDate}`);
         if (!res.ok) { computeLocal(); return; }
         const data = await res.json();
-        const arr = (Array.isArray(data?.[gameDate]) ? data[gameDate]
-                    : (Array.isArray(data?.levels) ? data.levels : null)) as number[] | null;
+        const arr = (Array.isArray(data?.levels) ? data.levels : null) as number[] | null;
         if (arr && arr.length >= dailyPaths.length) {
           setCommunityPct(arr.slice(0, dailyPaths.length).map(v => Math.max(0, Math.min(100, Math.round(v)))));
         } else {
@@ -420,26 +438,39 @@ const GameComponent: React.FC = () => {
   };
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
-  /* smarter suggestions: prefix-first, then substring, dedup */
-  const getSmartSuggestions = (typed: string) => {
-    const q = typed.trim().toLowerCase();
-    if (!q) return [];
-    const names = players.map(p => p.name);
-    const prefix = new Set(names.filter(n => n.toLowerCase().startsWith(q)));
-    const contains = names.filter(n => !prefix.has(n) && n.toLowerCase().includes(q));
-    return [...prefix, ...contains].slice(0, 20);
+  const sortedSuggestions = (value: string) => {
+    const v = value.trim().toLowerCase();
+    if (!v) return [];
+    // smarter sort: startsWith > word-boundary match > includes
+    const seen = new Set<string>();
+    const allNames = players.map(p => p.name);
+    const buckets = [[], [], []] as string[][];
+    for (const name of allNames) {
+      const low = name.toLowerCase();
+      if (seen.has(name)) continue;
+      if (low.startsWith(v)) { buckets[0].push(name); seen.add(name); continue; }
+      if (new RegExp(`\\b${v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(low)) { buckets[1].push(name); seen.add(name); continue; }
+      if (low.includes(v)) { buckets[2].push(name); seen.add(name); }
+    }
+    return [...buckets[0], ...buckets[1], ...buckets[2]].slice(0, 20);
   };
 
   const handleInputChange = (index: number, value: string) => {
-    const s = getSmartSuggestions(value);
-    const u = [...filteredSuggestions]; u[index]=s; setFilteredSuggestions(u); setHighlightIndex(-1);
+    const s = sortedSuggestions(value);
+    const u = [...filteredSuggestions]; u[index]=s; setFilteredSuggestions(u); setHighlightIndex(s.length ? 0 : -1);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
-    const max = filteredSuggestions[idx]?.length || 0; if (!max) return;
+    const max = filteredSuggestions[idx]?.length || 0;
+    if (!max) {
+      if (e.key === 'Enter') e.preventDefault(); // cannot submit free text
+      return;
+    }
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
     else if (e.key==='ArrowUp'){ setHighlightIndex(p=>(p-1+max)%max); e.preventDefault(); }
-    else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
-    else if (e.key==='Escape'){ const u=[...filteredSuggestions]; u[idx]=[]; setFilteredSuggestions(u); }
+    else if (e.key==='Enter' && highlightIndex>=0){
+      e.preventDefault();
+      handleGuess(idx, filteredSuggestions[idx][highlightIndex]);
+    }
   };
 
   const handleGuess = (index: number, value: string) => {
@@ -465,11 +496,7 @@ const GameComponent: React.FC = () => {
       confetti({ particleCount: 100, spread: 70, startVelocity: 65, origin: { x: Math.min(0.95, x+0.08), y } });
     }
 
-    // collapse suggestions upon choosing
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
-
-    // post live result
-    postResult(gameDate, index + 1, !!matched);
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
@@ -487,9 +514,6 @@ const GameComponent: React.FC = () => {
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
-
-    // post live result
-    postResult(gameDate, index + 1, false);
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
@@ -527,17 +551,41 @@ www.helmets-game.com`;
     }, 420);
   };
 
+  const hintPositionForLevel = (idx: number): string | null => {
+    const path = dailyPaths[idx];
+    if (!path) return null;
+    const candidates = players.filter(p => p.path.join('>') === path.path.join('>'));
+    if (!candidates.length) return null;
+    candidates.sort((a,b) => {
+      const da = diffByName[a.name] ?? Number.POSITIVE_INFINITY;
+      const db = diffByName[b.name] ?? Number.POSITIVE_INFINITY;
+      return da - db;
+    });
+    const first = candidates[0];
+    return posByName[first.name] || null;
+  };
+
+  const revealHintEarly = (idx: number) => {
+    // drop to 50 if above; mark hint shown
+    setBasePointsLeft(prev => {
+      const n=[...prev];
+      const cur = n[idx] ?? MAX_BASE_POINTS;
+      n[idx] = Math.min(cur, 50);
+      return n;
+    });
+    setHintShown(prev => { const n=[...prev]; n[idx]=true; return n; });
+  };
+
   const duringActive = started && !gameOver && !showPopup;
   const appFixed = duringActive ? 'app-fixed' : '';
   const prestartClass = !started ? 'is-prestart' : '';
 
   return (
-    <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
-      {/* FULL-PAGE DIM for active card */}
-      {duringActive && <div className="level-backdrop" aria-hidden="true" />}
+    <>
+      {/* Full-viewport dim via portal (independent of transforms) */}
+      <Backdrop show={duringActive} />
 
-      {/* All scaled/game content lives inside app-inner (no transform on app-container) */}
-      <div className="app-inner">
+      <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
         <header className="game-header">
           <div className="title-row">
             <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
@@ -579,6 +627,8 @@ www.helmets-game.com`;
           const badgeClass = showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
 
           const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
+          const hintAvailable = baseLeft <= 50 || hintShown[idx];
+          const hintPos = hintPositionForLevel(idx);
 
           return (
             <div
@@ -625,7 +675,14 @@ www.helmets-game.com`;
                           autoComplete="off"
                           onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
                           onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
-                          onBlur={() => { const u=[...filteredSuggestions]; u[idx]=[]; setFilteredSuggestions(u); }}
+                          onBlur={() => {
+                            // hide suggestions after slight delay to allow click
+                            setTimeout(() => {
+                              setFilteredSuggestions(prev => {
+                                const n=[...prev]; n[idx]=[]; return n;
+                              });
+                            }, 120);
+                          }}
                           className="guess-input-field guess-input-mobile font-mobile"
                           disabled={!inputEnabled}
                         />
@@ -635,17 +692,23 @@ www.helmets-game.com`;
                             {filteredSuggestions[idx].slice(0, 6).map((name, i) => {
                               const typed = inputRefs.current[idx]?.value || '';
                               const match = name.toLowerCase().indexOf(typed.toLowerCase());
-                              const pos = players.find(p => p.name === name)?.position || '';
+                              const pos = posByName[name] || '';
                               return (
                                 <div
                                   key={i}
                                   className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
                                   onMouseDown={() => handleGuess(idx, name)}
                                 >
-                                  <span className="s-item-name">
-                                    {match >= 0 ? (<>{name.slice(0, match)}<strong>{name.slice(match, match + typed.length)}</strong>{name.slice(match + typed.length)}</>) : name}
+                                  <span className="suggestion-name">
+                                    {match >= 0 ? (
+                                      <>
+                                        {name.slice(0, match)}
+                                        <strong>{name.slice(match, match + typed.length)}</strong>
+                                        {name.slice(match + typed.length)}
+                                      </>
+                                    ) : name}
                                   </span>
-                                  {pos && <span className="s-item-pos">{pos}</span>}
+                                  {pos && <span className="suggestion-pos">{pos}</span>}
                                 </div>
                               );
                             })}
@@ -653,21 +716,40 @@ www.helmets-game.com`;
                         )}
 
                         {isActive && (
-                          <div className="points-wrap">
+                          <div className={`points-wrap ${hintAvailable ? 'hint-available' : ''}`}>
                             <div className="points-row">
                               <span className="points-label">Points</span>
                               <span className="points-value">{baseLeft}</span>
                             </div>
                             <div className="points-bar">
-                              <div className="points-bar-hint-mark" />
                               <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
+                              <div className="half-line" />
                             </div>
+
+                            {/* Hint UI */}
+                            <div className="hint-row">
+                              {hintAvailable && hintPos ? (
+                                <span className="hint-text">Hint: {hintPos}</span>
+                              ) : (
+                                <span className="hint-text pending">Hint at 50</span>
+                              )}
+                            </div>
+
+                            {!hintAvailable && (
+                              <button
+                                className="secondary-button hint-button"
+                                type="button"
+                                onClick={() => revealHintEarly(idx)}
+                              >
+                                HINT
+                              </button>
+                            )}
                           </div>
                         )}
 
                         {inputEnabled && (
                           <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
-                            Give Up (0 points)
+                            Give Up
                           </button>
                         )}
                       </>
@@ -675,7 +757,7 @@ www.helmets-game.com`;
                       <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
                         {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
                         {(!gameOver || isFeedback) && (
-                          <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
+                          <div style={{ marginTop: 6, fontSize: '0.9rem', fontWeight: 700 }}>
                             {`+${awardedPoints[idx] || 0}`}
                           </div>
                         )}
@@ -692,7 +774,10 @@ www.helmets-game.com`;
                       <span>{(communityPct[idx] ?? 0)}%</span>
                     </div>
                     <div className="community-bar">
-                      <div className="community-bar-fill" style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }} />
+                      <div
+                        className="community-bar-fill"
+                        style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }}
+                      />
                     </div>
                   </div>
                 )}
@@ -701,8 +786,8 @@ www.helmets-game.com`;
                   <div className="possible-answers">
                     <strong>Possible Answers:</strong>
                     <ul className="possible-answers-list">
-                      {answerLists[idx].map((item, i) => (
-                        <li key={i}>👤 {item.name}{item.position ? <span className="ans-pos"> · {item.position}</span> : null}</li>
+                      {answerLists[idx].map((name, i) => (
+                        <li key={i}>👤 {name}{posByName[name] ? ` — ${posByName[name]}` : ''}</li>
                       ))}
                     </ul>
                   </div>
@@ -712,10 +797,106 @@ www.helmets-game.com`;
           );
         })}
 
-        {/* Footer actions (hide when active to avoid distraction) */}
-        {!((started && !gameOver && !showPopup)) && (
+        {!duringActive && !gameOver && (
+          <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
+        )}
+
+        {showHistory && (
+          <div className="popup-modal">
+            <div className="popup-content">
+              <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+              <h3>📆 Game History (Last 30 days)</h3>
+              <div className="calendar-grid">
+                {getLastNDatesPT(30).map((date) => {
+                  const isToday = date === todayPT;
+                  return (
+                    <button
+                      key={date}
+                      className={`calendar-grid-button${isToday ? ' today' : ''}`}
+                      onClick={() => (window.location.href = `/?date=${date}`)}
+                    >
+                      {date.slice(5)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showFeedback && (
+          <div className="popup-modal">
+            <div className="popup-content">
+              <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
+              <h3>Thoughts for Jerry?</h3>
+              <div className="email-row">
+                <span className="email-emoji">📧</span>
+                <span className="email-text">jerry.helmetsgame@gmail.com</span>
+              </div>
+              <button
+                onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
+                className="primary-button"
+              >
+                Copy Email
+              </button>
+              {copied && <p className="copied-msg">Email copied!</p>}
+            </div>
+          </div>
+        )}
+
+        {showRules && (
+          <div className="popup-modal fade-in">
+            <div className="popup-content popup-rules">
+              {rulesOpenedManually && (
+                <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+                  ✖
+                </button>
+              )}
+              <h2>WELCOME TO HELMETS!</h2>
+              <h3>HOW TO PLAY</h3>
+
+              <ul className="rules-list football-bullets rules-main">
+                <li><strong>Match each helmet path to an NFL player</strong></li>
+                <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
+                <li><strong>Only one guess per level</strong></li>
+                <li><strong>The faster you answer, the more points you get!</strong></li>
+                <li><strong>You get 0 points if you give up a level</strong></li>
+                <li><strong>Hint when points bar hits 50, can automatically skip to hint</strong></li>
+              </ul>
+
+              <h4 className="fine-print-title">Fine Print:</h4>
+              <ul className="rules-list football-bullets rules-fineprint">
+                <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+                <li>Player must have played in the year 2000 or later</li>
+                <li>College helmet is the player's draft college</li>
+                <li>Some paths may have multiple possible answers</li>
+              </ul>
+
+              {!started && !gameOver && (
+                <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
+                  Start Game!
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showPopup && (
+          <div className="popup-modal fade-in">
+            <div className="popup-content popup-final">
+              <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
+              <h3 className="popup-title">🎉 Game Complete!</h3>
+              <p className="popup-date">{gameDateMMDDYY}</p>
+              <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
+              <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
+              <button onClick={shareNow} className="primary-button">Share Score!</button>
+            </div>
+          </div>
+        )}
+
+        {!duringActive && (
           <div className="footer-actions">
-            <button onClick={() => setShowFeedback(true)} className="linkish feedback-bottom">
+            <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
               💬 Feedback
             </button>
           </div>
@@ -726,107 +907,8 @@ www.helmets-game.com`;
           All sports logos contained within this site are properties of their respective leagues, teams, ownership groups
           and/or organizations.
         </footer>
-      </div>{/* /app-inner */}
-
-      {/* POPUPS live outside the scaled inner to ensure full-viewport coverage */}
-      {!((started && !gameOver && !showPopup)) && (
-        <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
-      )}
-
-      {showHistory && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-            <h3>📆 Game History (Last 30 days)</h3>
-            <div className="calendar-grid">
-              {getLastNDatesPT(30).map((date) => {
-                const isToday = date === todayPT;
-                return (
-                  <button
-                    key={date}
-                    className={`calendar-grid-button${isToday ? ' today' : ''}`}
-                    onClick={() => (window.location.href = `/?date=${date}`)}
-                  >
-                    {date.slice(5)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showFeedback && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-            <h3>Thoughts for Jerry?</h3>
-            <div className="email-row">
-              <span className="email-emoji">📧</span>
-              <span className="email-text">jerry.helmetsgame@gmail.com</span>
-            </div>
-            <button
-              onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
-              className="primary-button"
-            >
-              Copy Email
-            </button>
-            {copied && <p className="copied-msg">Email copied!</p>}
-          </div>
-        </div>
-      )}
-
-      {showRules && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content popup-rules wider">
-            {rulesOpenedManually && (
-              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
-                ✖
-              </button>
-            )}
-            <h2>WELCOME TO HELMETS!</h2>
-            <h3>HOW TO PLAY</h3>
-
-            {/* HIGH-LEVEL, bold list */}
-            <ul className="rules-list football-bullets rules-main">
-              <li><strong>Match each helmet path to an NFL player</strong></li>
-              <li><strong>5 levels: one guess per level</strong></li>
-              <li><strong>Faster response = more points</strong></li>
-              <li><strong>Hint drops your points bar to 50</strong></li>
-              <li><strong>0 points if you give up a level</strong></li>
-            </ul>
-
-            <h4 className="fine-print-title">Fine Print:</h4>
-            <ul className="rules-list football-bullets rules-fineprint">
-              <li>Levels increase in difficulty and are worth more points via multipliers</li>
-              <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
-              <li>Player must have played in the year 2000 or later</li>
-              <li>College helmet is the player's draft college</li>
-              <li>Some paths may have multiple possible answers</li>
-            </ul>
-
-            {!started && !gameOver && (
-              <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
-                Start Game!
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {showPopup && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content popup-final">
-            <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
-            <h3 className="popup-title">🎉 Game Complete!</h3>
-            <p className="popup-date">{gameDateMMDDYY}</p>
-            <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
-            <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
-            <button onClick={shareNow} className="primary-button">Share Score!</button>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
 
