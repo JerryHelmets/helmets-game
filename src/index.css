@@ -12,10 +12,17 @@ html, body, #root {
 
 /* Put the gradient on html (or body) */
 html {
-  background: linear-gradient(135deg,
+  background: linear-gradient(100deg,
     rgba(53,39,112,1) 0%,
+    rgba(35,39,105,1) 10%,
+    rgba(35,39,105,1) 20%,                          
     rgba(35,39,105,1) 30%,
-    rgba(38,40,90,1) 65%,
+    rgba(35,39,105,1) 40%,
+    rgba(35,39,105,1) 50%,                          
+    rgba(38,40,90,1) 60%,
+    rgba(35,39,105,1) 70%,
+    rgba(35,39,105,1) 80%,
+    rgba(35,39,105,1) 90%,
     rgba(53,39,112,1) 100%);
   background-repeat: no-repeat;  /* defensive */
   background-size: cover;        /* fill viewport */
