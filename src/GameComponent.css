@@ -1,9 +1,5 @@
-/* ===============================
-   GameComponent.css
-   =============================== */
-
 :root{
-  --active-top: 136px;         /* position of active card */
+  --active-top: 144px;
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -13,15 +9,10 @@
 html, body { overscroll-behavior: none; }
 
 /* Score flash */
-@keyframes scoreFlash {
-  0%{background:transparent;color:#fff;}
-  25%{background:rgba(255,221,0,.9);color:#000;}
-  60%{background:rgba(255,221,0,.75);color:#000;}
-  100%{background:transparent;color:#fff;}
-}
+@keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
-/* Header — bigger logo/title */
+/* Header */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
 .game-logo{height:2.4em;width:auto;display:block}
 .game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
@@ -31,7 +22,7 @@ html, body { overscroll-behavior: none; }
 .score-number{display:inline-block;min-width:2ch;text-align:right}
 .rules-button{margin-top:8px}
 
-/* App shell */
+/* App */
 .app-container{width:100%;max-width:820px;margin:0 auto;padding:16px 8px 32px;overflow-x:hidden;min-height:var(--app-height,100svh);transform:scale(var(--scale));transform-origin:top center}
 .app-container.app-fixed{position:fixed;inset:0;height:var(--app-height,100svh);overflow:hidden;background:transparent}
 @media (max-width:430px){:root{--scale:.86;--card-w:300px}}
@@ -48,27 +39,20 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
 /* Active card */
-.level-card--active{
-  position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);
-  width:min(92vw,calc(var(--card-w) + 24px));
-  max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
-  min-height:260px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;
-  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
-  text-align:center;background:#f7f7f7;
-}
+.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 24px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:260px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
 
 /* Covered cards */
 .level-card.is-covered{position:static;width:min(86vw,var(--card-w));min-height:var(--card-min-h);max-height:var(--card-min-h);overflow:hidden;background:#1b2838!important;border-color:#25354a!important}
 .level-card.is-covered .card-body,.level-card.is-covered .helmet-sequence,.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
 
-/* Game-complete: short cards & matching widths */
+/* Game complete cards */
 .is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:44px;padding:8px}
 .is-complete .card-body{margin-top:26px}
 .is-complete .level-tag{font-size:.78rem;padding:4px 8px}
 .is-complete .level-badge{right:8px;left:auto}
 
-/* Overlays/badges */
+/* Overlays / badges */
 .level-cover{position:absolute;inset:0;display:grid;place-items:center;background:transparent;color:#fff;font-weight:700;opacity:0;pointer-events:none;transition:opacity 180ms ease;z-index:2}
 .level-card.is-covered .level-cover{opacity:1}
 .level-cover-label{font-size:clamp(.95rem,3vw,1.1rem);border:2px solid rgba(255,255,255,.75);padding:6px 10px;border-radius:8px;backdrop-filter:blur(2px)}
@@ -78,27 +62,19 @@ html, body { overscroll-behavior: none; }
 .level-badge.zero{background:#6b7280}
 .level-card--active .level-badge{left:auto;right:8px}
 
-/* Content spacing */
+/* Content */
 .card-body{margin-top:42px}
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
-/* Helmets + arrows (normal) */
+/* Helmets — a touch larger (active too) */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
-.helmet-icon{width:68px;height:68px;object-fit:contain}
+.helmet-icon{width:78px;height:78px;object-fit:contain}
+@media (max-width:480px){.helmet-icon{width:64px;height:64px}}
+@media (max-width:480px){ .level-card--active .helmet-icon{width:72px;height:72px} }
+.arrow{font-size:.82rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
+@media (max-width:480px){.arrow{font-size:.74rem}}
 
-/* ACTIVE: slightly larger helmets */
-.level-card--active .helmet-icon{width:72px;height:72px}
-
-@media (max-width:480px){
-  .helmet-icon{width:56px;height:56px}
-  .level-card--active .helmet-icon{width:60px;height:60px}
-  .level-card--active .arrow{font-size:.76rem}
-}
-
-.arrow{font-size:.85rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
-@media (max-width:480px){.arrow{font-size:.75rem}}
-
-/* Helmet appear animation */
+/* Appear anim */
 @keyframes spin-fade-in{0%{opacity:0;transform:rotate(-210deg) scale(.86)}100%{opacity:1;transform:rotate(0) scale(1)}}
 .level-card--active .helmet-sequence img{opacity:0;animation:spin-fade-in 640ms cubic-bezier(.2,.8,.2,1) calc(var(--i,0ms) + 140ms) both}
 @keyframes arrow-fade-in{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
@@ -108,26 +84,28 @@ html, body { overscroll-behavior: none; }
 @keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
 /* Suggestions + input */
-.suggestion-box{max-height:150px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
-.suggestion-item{padding:8px 10px;cursor:pointer}
+.suggestion-box{max-height:150px;overflow-y:auto;border:1.5px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
+.suggestion-item{padding:9px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .suggestion-item:hover,.suggestion-item.highlighted{background:#f0f0f0}
+.suggestion-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%}
+.suggestion-pos{margin-left:auto;color:#9aa3af;font-size:.9rem}
 .fade-in-fast{animation:fadeIn .3s ease-out}
 @keyframes fadeIn{to{opacity:1}}
 
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
 .guess-input-field{width:98%;max-width:300px;padding:4px 6px;font-size:16px;border-radius:8px;border:1px solid #ccc;-webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto}
 
-/* Points bar */
-.points-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
-.points-row{display:flex;justify-content:space-between;width:min(92%,320px);font-size:12px;color:#111}
-.points-label,.points-value{font-weight:700}
-.points-bar{width:min(92%,320px);height:10px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:4px}
+/* Points bar — a bit bigger */
+.points-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
+.points-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:15px;color:#111}
+.points-label,.points-value{font-weight:800}
+.points-bar{width:min(92%,360px);height:16px;background:#e7efff;border-radius:999px;overflow:hidden;border:1.5px solid #c9d6ff;margin-top:6px}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
 
-/* Community % bar (game complete) */
-.community-wrap{width:100%;margin-top:8px;display:flex;flex-direction:column;align-items:center}
-.community-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:12px;color:#111}
-.community-bar{width:min(92%,360px);height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:4px}
+/* Universal Results — bigger */
+.community-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
+.community-row{display:flex;justify-content:space-between;width:min(92%,400px);font-size:15px;color:#111}
+.community-bar{width:min(92%,400px);height:16px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1.5px solid #c7cffd;margin-top:6px}
 .community-bar-fill{height:100%;background:#6366f1;transform-origin:left;transform:scaleX(0);transition:transform .9s ease}
 .is-complete .community-bar-fill{transform:scaleX(calc(var(--pct, 0)/100))}
 
@@ -139,7 +117,7 @@ html, body { overscroll-behavior: none; }
 .skip-button{margin-top:18px}
 
 /* Locked answers */
-.locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.85rem;text-align:center}
+.locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.9rem;text-align:center}
 .answer-correct{background:#28a745;animation:fadeIn .25s ease-in-out}
 .answer-incorrect{background:#dc3545}
 @keyframes blinkRed{0%{background-color:#dc3545}50%{background-color:#ff6b6b}100%{background-color:#dc3545}}
@@ -154,7 +132,7 @@ html, body { overscroll-behavior: none; }
 .calendar-grid-button{padding:6px;font-size:.75rem;border:1.5px solid #ccc;border-radius:6px;background:#f2f2f2}
 .calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
 
-/* Completed banner — width matches cards */
+/* Completed banner */
 .complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(92vw,calc(var(--card-w) + 36px))}
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
@@ -171,28 +149,33 @@ html, body { overscroll-behavior: none; }
 .popup-final .score-number{display:inline-block;min-width:3ch}
 .close-button{position:absolute;top:12px;right:12px;background:transparent;font-size:18px;border:none;cursor:pointer}
 
+/* Feedback link (small, not a button) */
+.footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
+.feedback-link{background:none;border:none;padding:0;font-size:.95rem;color:#8ab4ff;text-decoration:underline;cursor:pointer}
+.feedback-link:hover{filter:brightness(1.08)}
+
 /* Feedback popup bits */
 .email-row{display:flex;align-items:center;justify-content:center;margin-top:1em;gap:8px}
 .email-emoji{font-size:1.2rem}
 .email-text{font-size:.95rem}
 .copied-msg{margin-top:.5em;color:green;font-size:.8rem}
 
-/* Rules lists */
+/* Rules */
 .rules-list{list-style:none;padding-left:0;margin-top:8px;text-align:left}
 .rules-list.football-bullets li{position:relative;padding-left:1.6rem;margin:6px 0}
 .rules-list.football-bullets li::before{content:"🏈";position:absolute;left:0;top:0;transform:translateY(2px);font-size:1rem}
-.rules-main li{font-weight:800;font-size:1.15rem}
+.rules-main li{font-weight:800;font-size:1.18rem}
 .rules-main{margin-bottom:10px}
 .fine-print-title{margin:12px 0 4px;font-size:1rem;font-weight:400}
-.rules-fineprint li{font-weight:400;font-size:.9rem;opacity:.95}
+.rules-fineprint li{font-weight:400;font-size:.92rem;opacity:.95}
 
-/* Possible answers */
+/* Possible answers formatting */
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
 .possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.9rem}
+.answer-pos{color:#6b7280;margin-left:6px}
+.answer-diff{color:#9aa3af;margin-left:6px;font-size:.85rem}
 
-/* Footer */
-.footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
-.feedback-bottom{margin-bottom:4px}
+/* Disclosure */
 .site-disclosure{margin:18px auto 10px;max-width:800px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
 
 /* Reduce motion */
