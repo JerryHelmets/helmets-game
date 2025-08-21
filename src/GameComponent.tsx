@@ -1,11 +1,24 @@
-// src/GameComponent.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import Papa from 'papaparse';
 import './GameComponent.css';
 
-interface PlayerPath { name: string; path: string[]; path_level: number; }
-interface RawPlayerRow { name: string; college: string; position: string; teams: string; difficulty: string; path: string; path_level: string; }
+interface PlayerPath {
+  name: string;
+  path: string[];
+  path_level: number;
+  position?: string;
+  difficulty?: number;
+}
+interface RawPlayerRow {
+  name: string;
+  college: string;
+  position: string;
+  teams: string;
+  difficulty: string;
+  path: string;
+  path_level: string;
+}
 interface Guess { guess: string; correct: boolean; }
 type StoredGuesses = { date: string; guesses: (Guess | null)[]; score: number; awardedPoints: number[]; };
 
@@ -20,7 +33,7 @@ const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
-/* ---- Pacific Time helpers ---- */
+/* ---------- PACIFIC TIME ---------- */
 function getPTDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -40,7 +53,7 @@ function getLastNDatesPT(n: number) {
   return out;
 }
 
-/* ---- daily selection ---- */
+/* ---------- daily selection ---------- */
 function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   const seed = parseInt(dateISO.replace(/-/g, ''), 10);
@@ -53,26 +66,32 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
     }
   });
   const sel: PlayerPath[] = [];
-  for (let level=1; level<=5; level++) {
-    const values = Array.from(buckets[level].values());
-    if (values.length) sel.push(values[Math.floor(rng()*values.length)]);
+  for (let lvl=1; lvl<=5; lvl++) {
+    const a = Array.from(buckets[lvl].values());
+    if (a.length) sel.push(a[Math.floor(rng()*a.length)]);
   }
   return sel;
 }
-function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
-  return targets.map(t =>
-    players.filter(p => p.path.join('>')===t.path.join('>')).map(p=>p.name).sort()
-  );
+
+type AnswerItem = { name: string; position?: string; difficulty?: number };
+function buildAnswerListsDetailed(players: PlayerPath[], targets: PlayerPath[]): AnswerItem[][] {
+  return targets.map(t => {
+    const arr = players
+      .filter(p => p.path.join('>')===t.path.join('>'))
+      .map(p => ({ name: p.name, position: p.position, difficulty: typeof p.difficulty==='number' ? p.difficulty : undefined }));
+    arr.sort((a,b) => ( (a.difficulty ?? 999) - (b.difficulty ?? 999) || a.name.localeCompare(b.name) ));
+    return arr;
+  });
 }
 const isComplete = (guesses: (Guess | null)[], total: number) =>
   guesses.length===total && guesses.every(Boolean);
 
-/* ---- started flags ---- */
+/* ---------- started flags ---------- */
 function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTED) || '{}'); } catch { return {}; } }
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---- share helpers ---- */
+/* ---------- share helpers ---------- */
 function scoreEmojis(total: number): string {
   if (total < 100) return '🫵🤣🫵';
   if (total < 200) return '💩';
@@ -100,6 +119,7 @@ Score: ${score} ${emojiForScore}
 ${url}`;
 }
 
+/* ---------- Component ---------- */
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
@@ -139,7 +159,7 @@ const GameComponent: React.FC = () => {
   const levelTimerRef = useRef<number | null>(null);
   const levelDelayRef = useRef<number | null>(null);
 
-  /* viewport height + lock scroll during modals/active */
+  /* viewport + lock */
   useEffect(() => {
     const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
     setH(); const onOri = () => setTimeout(setH, 250);
@@ -154,7 +174,7 @@ const GameComponent: React.FC = () => {
     return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
-  /* load CSV */
+  /* load players.csv (now pulls position + difficulty) */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -168,7 +188,16 @@ const GameComponent: React.FC = () => {
           const name = r.name?.trim(), pathStr = r.path?.trim(), lvl = r.path_level?.trim();
           if (!name || !pathStr || !lvl) return;
           const level = parseInt(lvl, 10); if (Number.isNaN(level)) return;
-          arr.push({ name, path: pathStr.split(',').map(s=>s.trim()), path_level: level });
+          const position = r.position?.trim() || undefined;
+          const diffRaw = r.difficulty?.trim();
+          const difficulty = diffRaw ? parseInt(diffRaw, 10) : undefined;
+          arr.push({
+            name,
+            path: pathStr.split(',').map(s=>s.trim()),
+            path_level: level,
+            position,
+            difficulty: Number.isNaN(difficulty!) ? undefined : difficulty
+          });
         });
         if (!cancelled) setPlayers(arr);
       } catch (e) { console.error('CSV load failed', e); }
@@ -176,10 +205,20 @@ const GameComponent: React.FC = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
-  const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
+  /* name -> meta (position) */
+  const nameMeta = useMemo(() => {
+    const m = new Map<string, { position?: string }>();
+    players.forEach(p => {
+      const k = p.name.toLowerCase();
+      if (!m.has(k) && p.position) m.set(k, { position: p.position });
+    });
+    return m;
+  }, [players]);
 
-  /* init per-day state */
+  const dailyPaths = useMemo(() => pickDailyPaths(players, gameDate), [players, gameDate]);
+  const answerLists = useMemo(() => buildAnswerListsDetailed(players, dailyPaths), [players, dailyPaths]);
+
+  /* init per day */
   useEffect(() => {
     if (!dailyPaths.length) return;
     let g: (Guess | null)[] = Array(dailyPaths.length).fill(null);
@@ -248,13 +287,13 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  /* persist countdown for refresh-resume */
+  /* persist countdown */
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
   }, [basePointsLeft, dailyPaths.length, gameDate]);
 
-  /* score flash + count-up */
+  /* score flash + count up */
   useEffect(() => {
     const el = document.querySelector('.score-number'); if (!el) return;
     el.classList.add('score-flash'); const t = window.setTimeout(() => el.classList.remove('score-flash'), 600);
@@ -279,7 +318,7 @@ const GameComponent: React.FC = () => {
     return ()=> cancelAnimationFrame(raf);
   }, [showPopup, score, confettiFired]);
 
-  /* completion respecting immediate feedback */
+  /* completion respecting immediate feedback hold */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
@@ -297,7 +336,7 @@ const GameComponent: React.FC = () => {
     if (el) { try { (el as any).focus({ preventScroll: true }); } catch { el.focus(); window.scrollTo(0,0); } }
   }, [activeLevel, started, gameOver]);
 
-  /* per-level countdown */
+  /* countdown per level */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -325,7 +364,7 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* community % correct */
+  /* community % */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const computeLocal = () => {
@@ -340,7 +379,6 @@ const GameComponent: React.FC = () => {
       const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
       setCommunityPct(pct);
     };
-
     (async () => {
       try {
         const res = await fetch(`/data/stats.json?date=${gameDate}`);
@@ -355,7 +393,7 @@ const GameComponent: React.FC = () => {
     })();
   }, [dailyPaths.length, gameDate]);
 
-  /* ---- UI helpers ---- */
+  /* helpers */
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
   const stopLevelTimer = () => {
     if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
@@ -367,7 +405,7 @@ const GameComponent: React.FC = () => {
   };
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
-  /* smarter suggestions (prefix > word-start > substring) */
+  /* smarter suggestions: prefix > word-start > substring — deduped */
   const getSmartSuggestions = (value: string): string[] => {
     const q = value.trim().toLowerCase();
     if (!q) return [];
@@ -385,15 +423,24 @@ const GameComponent: React.FC = () => {
         return { name, rank, pos, len: name.length };
       });
     scored.sort((a,b) => a.rank - b.rank || a.pos - b.pos || a.len - b.len || a.name.localeCompare(b.name));
-    return scored.map(s => s.name);
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const s of scored) {
+      const k = s.name.toLowerCase();
+      if (seen.has(k)) continue;
+      out.push(s.name);
+      seen.add(k);
+      if (out.length >= 20) break;
+    }
+    return out;
   };
 
   const handleInputChange = (index: number, value: string) => {
-    const suggestions = getSmartSuggestions(value).slice(0, 20);
+    const suggestions = getSmartSuggestions(value);
     const updated = [...filteredSuggestions];
     updated[index] = suggestions;
     setFilteredSuggestions(updated);
-    setHighlightIndex(-1); // nothing selected by default
+    setHighlightIndex(-1);
   };
 
   const getOriginFromInput = (idx: number) => {
@@ -403,7 +450,7 @@ const GameComponent: React.FC = () => {
     return { x, y };
   };
 
-  /* ONLY allow answer via dropdown selection or Give Up */
+  /* only dropdown/Give Up can answer */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     const max = filteredSuggestions[idx]?.length || 0;
     if (e.key === 'ArrowDown' && max) { setHighlightIndex(p => (p + 1) % max); e.preventDefault(); return; }
@@ -413,7 +460,7 @@ const GameComponent: React.FC = () => {
         const choice = filteredSuggestions[idx][highlightIndex];
         handleGuess(idx, choice, getOriginFromInput(idx));
       }
-      e.preventDefault(); // never submit arbitrary text
+      e.preventDefault();
     }
   };
 
@@ -504,7 +551,7 @@ const GameComponent: React.FC = () => {
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
@@ -597,16 +644,20 @@ const GameComponent: React.FC = () => {
 
                       {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                         <div className="suggestion-box fade-in-fast">
-                          {filteredSuggestions[idx].slice(0, 5).map((name, i) => {
+                          {filteredSuggestions[idx].slice(0, 6).map((name, i) => {
                             const typed = inputRefs.current[idx]?.value || '';
                             const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                            const pos = nameMeta.get(name.toLowerCase())?.position;
                             return (
                               <div
                                 key={i}
                                 className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
                                 onMouseDown={() => handleGuess(idx, name, getOriginFromInput(idx))}
                               >
-                                {match >= 0 ? (<>{name.slice(0, match)}<strong>{name.slice(match, match + typed.length)}</strong>{name.slice(match + typed.length)}</>) : name}
+                                <span className="suggestion-name">
+                                  {match >= 0 ? (<>{name.slice(0, match)}<strong>{name.slice(match, match + typed.length)}</strong>{name.slice(match + typed.length)}</>) : name}
+                                </span>
+                                {pos && <span className="suggestion-pos">{pos}</span>}
                               </div>
                             );
                           })}
@@ -644,6 +695,7 @@ const GameComponent: React.FC = () => {
                 </div>
               </div>
 
+              {/* Universal Results */}
               {gameOver && (
                 <div className="community-wrap">
                   <div className="community-row">
@@ -656,11 +708,18 @@ const GameComponent: React.FC = () => {
                 </div>
               )}
 
+              {/* Possible answers (sorted by difficulty asc) */}
               {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
                 <div className="possible-answers">
                   <strong>Possible Answers:</strong>
                   <ul className="possible-answers-list">
-                    {answerLists[idx].map((name, i) => (<li key={i}>👤 {name}</li>))}
+                    {answerLists[idx].map((ai, i) => (
+                      <li key={i}>
+                        👤 {ai.name}
+                        {ai.position && <span className="answer-pos"> {ai.position}</span>}
+                        {typeof ai.difficulty==='number' && <span className="answer-diff" title="Difficulty"> • {ai.difficulty}</span>}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
@@ -762,6 +821,13 @@ const GameComponent: React.FC = () => {
             <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
             <button onClick={shareNow} className="primary-button">Share Score!</button>
           </div>
+        </div>
+      )}
+
+      {/* small feedback link above disclosure when not actively on a level */}
+      {!duringActive && (
+        <div className="footer-actions">
+          <button onClick={() => setShowFeedback(true)} className="feedback-link">💬 Feedback</button>
         </div>
       )}
 
