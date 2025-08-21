@@ -3,11 +3,13 @@
    =============================== */
 
 :root{
-  --active-top: 136px;
-  --popup-offset: 110px;        /* moved popups up a bit */
+  --active-top: 140px;           /* bring active card slightly down */
+  --popup-offset: 110px;
   --scale: 0.88;
-  --card-w: 310px;
+  --card-w: 340px;               /* wider cards */
   --card-min-h: 110px;
+
+  --hint-color: #0ea5e9;         /* cyan-ish for revealed hint + bar line */
 }
 
 html, body { overscroll-behavior: none; }
@@ -21,27 +23,27 @@ html, body { overscroll-behavior: none; }
 }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
-/* Header — always above dim backdrop */
+/* Header — keep above backdrop */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
-.game-logo{height:2.4em;width:auto;display:block}
-.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
+.game-logo{height:2.6em;width:auto;display:block}
+.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.15rem,6.2vw,3.7rem)}
 .game-header{
   position: relative;
-  z-index: 3000;           /* ensure above level-backdrop */
+  z-index: 3000;
   text-align:center;
   margin:12px 0;
   color:#fff;
 }
 .date-line{color:#fff;font-size:1rem;margin-top:4px}
-.score-line{color:#fff;font-size:clamp(1.45rem,5.4vw,2.35rem);font-weight:900;margin-top:2px}
+.score-line{color:#fff;font-size:clamp(1.5rem,5.6vw,2.45rem);font-weight:900;margin-top:2px}
 .score-number{display:inline-block;min-width:2ch;text-align:right}
 .rules-button{margin-top:8px}
 
-/* App shell */
+/* App shell: fully centered */
 .app-container{
   width:100%;
-  max-width:820px;
-  margin:0 auto;
+  max-width:860px;               /* slightly wider shell */
+  margin:0 auto;                 /* center horizontally */
   padding:16px 8px 32px;
   overflow-x:hidden;
   min-height:var(--app-height,100svh);
@@ -54,10 +56,10 @@ html, body { overscroll-behavior: none; }
   overflow:hidden;
   background:transparent;
 }
-@media (max-width:430px){:root{--scale:.86;--card-w:300px}}
-@media (max-width:380px){:root{--scale:.84;--card-w:290px}}
+@media (max-width:430px){:root{--scale:.86;--card-w:320px}}
+@media (max-width:380px){:root{--scale:.84;--card-w:305px}}
 
-/* Dim backdrop during active level — stays UNDER header & active card */
+/* Full-viewport dim backdrop (rendered in a portal) */
 .level-backdrop{
   position:fixed;
   inset:0;
@@ -72,10 +74,10 @@ html, body { overscroll-behavior: none; }
   position:relative;
   border:2px solid;
   border-radius:14px;
-  padding:10px;
+  padding:12px;                            /* slightly more padding for width */
   margin-bottom:12px;
   box-shadow:0 1px 1px rgba(0,0,0,.06);
-  width:min(86vw,var(--card-w));
+  width:min(90vw,var(--card-w));           /* wider */
   margin-left:auto;margin-right:auto;
   text-align:center;
   transition:background-color .25s,border-color .25s;
@@ -86,20 +88,20 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect{background-color:#ffe6e6;border-color:#dc3545}
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
-/* Active card — above dim backdrop */
+/* Active card — above backdrop */
 .level-card--active{
   position:fixed;
   left:50%;
   top:var(--active-top);
   transform:translateX(-50%);
-  width:min(92vw,calc(var(--card-w) + 24px));
-  max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
-  min-height:260px;
+  width:min(94vw,calc(var(--card-w) + 32px));        /* a touch wider when active */
+  max-height:min(440px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
+  min-height:270px;
   overflow-y:auto;
-  z-index:2600;             /* above backdrop */
+  z-index:2600;
   border:2px solid #e5e7eb;
   border-radius:18px;
-  padding:14px;
+  padding:16px;
   box-shadow:0 22px 60px rgba(0,0,0,.42);
   animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
   text-align:center;
@@ -108,7 +110,7 @@ html, body { overscroll-behavior: none; }
 /* Covered cards */
 .level-card.is-covered{
   position:static;
-  width:min(86vw,var(--card-w));
+  width:min(90vw,var(--card-w));
   min-height:var(--card-min-h);
   max-height:var(--card-min-h);
   overflow:hidden;
@@ -120,9 +122,9 @@ html, body { overscroll-behavior: none; }
 .level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
 
-/* Game-complete: short cards & matching widths */
-.is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:44px;padding:8px}
-.is-complete .card-body{margin-top:26px}
+/* Game-complete sizes */
+.is-complete .level-card{width:min(94vw,calc(var(--card-w) + 40px));min-height:44px;padding:10px}
+.is-complete .card-body{margin-top:24px}
 .is-complete .level-tag{font-size:.78rem;padding:4px 8px}
 .is-complete .level-badge{right:8px;left:auto}
 
@@ -157,12 +159,12 @@ html, body { overscroll-behavior: none; }
 .card-body{margin-top:42px}
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
-/* Helmets + arrows */
-.helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
-.helmet-icon{width:68px;height:68px;object-fit:contain}
-@media (max-width:480px){.helmet-icon{width:56px;height:56px}}
+/* Helmets + arrows (active a touch larger) */
+.helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 10px 0;text-align:center}
+.helmet-icon{width:70px;height:70px;object-fit:contain}
+@media (max-width:480px){.helmet-icon{width:58px;height:58px}}
 @media (max-width:480px){
-  .level-card--active .helmet-icon{width:64px;height:64px}
+  .level-card--active .helmet-icon{width:66px;height:66px}
   .level-card--active .arrow{font-size:.85rem}
 }
 .arrow{font-size:.85rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
@@ -179,34 +181,65 @@ html, body { overscroll-behavior: none; }
 
 /* Suggestions + input */
 .suggestion-box{
-  max-height:150px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;
-  background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left
+  max-height:180px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;
+  background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);
+  width:min(96%,calc(var(--card-w) + 4px));             /* wider so name + position fit */
+  text-align:left
 }
-.suggestion-item{padding:8px 10px;cursor:pointer}
+.suggestion-item{
+  padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px
+}
 .suggestion-item:hover,.suggestion-item.highlighted{background:#f0f0f0}
+.suggestion-name{flex:1 1 auto;min-width:0}
+.suggestion-pos{flex:0 0 auto;color:#9aa3af;font-size:.85em;margin-left:8px}
 .fade-in-fast{animation:fadeIn .3s ease-out}
 @keyframes fadeIn{to{opacity:1}}
 
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
 .guess-input-field{
-  width:98%;max-width:300px;padding:4px 6px;font-size:16px;border-radius:8px;border:1px solid #ccc;
-  -webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto
+  width:98%;
+  max-width:360px;                         /* a touch wider */
+  padding:6px 8px;
+  font-size:16px;
+  border-radius:8px;border:1px solid #ccc;
+  -webkit-text-size-adjust:100%;
+  margin-left:auto;margin-right:auto
 }
 
-/* Points bar */
+/* Points bar — slightly bigger */
 .points-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
-.points-row{display:flex;justify-content:space-between;width:min(92%,320px);font-size:12px;color:#111}
+.points-row{display:flex;justify-content:space-between;width:min(96%,360px);font-size:13px;color:#111}
 .points-label,.points-value{font-weight:700}
-.points-bar{width:min(92%,320px);height:10px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:4px;position:relative}
+.points-bar{
+  width:min(96%,360px);
+  height:14px;                               /* bigger */
+  background:#e7efff;border-radius:999px;overflow:hidden;
+  border:1px solid #c9d6ff;margin-top:6px;position:relative
+}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
-.points-bar .half-line{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#6b7280;opacity:.35}
+.points-bar .half-line{
+  position:absolute;left:50%;top:0;bottom:0;width:2px;
+  background:var(--hint-color);opacity:.6
+}
+.hint-row{margin-top:6px;font-size:.92rem}
+.hint-text{font-weight:800;color:var(--hint-color)}
+.hint-text.pending{color:#9aa3af}
 
-/* Community % bar (game complete) */
-.community-wrap{width:100%;margin-top:8px;display:flex;flex-direction:column;align-items:center}
-.community-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:12px;color:#111}
-.community-bar{width:min(92%,360px);height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:4px}
-.community-bar-fill{height:100%;background:#6366f1;transform-origin:left;transform:scaleX(0);transition:transform .9s ease}
-.is-complete .community-bar-fill{transform:scaleX(calc(var(--pct, 0)/100))}
+/* Community % bar (game complete) — width-based fill */
+.community-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
+.community-row{display:flex;justify-content:space-between;width:min(96%,400px);font-size:13px;color:#111}
+.community-bar{
+  width:min(96%,400px);
+  height:14px;                               /* a touch bigger */
+  background:#eef2ff;border-radius:999px;overflow:hidden;
+  border:1px solid #c7cffd;margin-top:6px
+}
+.community-bar-fill{
+  height:100%;
+  width:var(--pct, 0);
+  background:#6366f1;
+  transition:width .9s ease
+}
 
 /* Buttons */
 .primary-button,.share-score-button{
@@ -215,10 +248,11 @@ html, body { overscroll-behavior: none; }
 .primary-button:hover,.share-score-button:hover{filter:brightness(1.06)}
 .secondary-button{background:#fff;color:#111;padding:8px 14px;border:1.5px solid #cfcfcf;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer}
 .secondary-button.small{font-size:.88rem;padding:7px 12px}
-.skip-button{margin-top:18px}
+.hint-button{margin-top:6px}
+.skip-button{margin-top:16px}
 
 /* Locked answers */
-.locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.85rem;text-align:center}
+.locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.9rem;text-align:center}
 .answer-correct{background:#28a745;animation:fadeIn .25s ease-in-out}
 .answer-incorrect{background:#dc3545}
 @keyframes blinkRed{0%{background-color:#dc3545}50%{background-color:#ff6b6b}100%{background-color:#dc3545}}
@@ -236,7 +270,7 @@ html, body { overscroll-behavior: none; }
 /* Completed banner — width matches cards */
 .complete-banner{
   text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;
-  border:1px solid #badbcc;border-radius:10px;width:min(92vw,calc(var(--card-w) + 36px))
+  border:1px solid #badbcc;border-radius:10px;width:min(94vw,calc(var(--card-w) + 40px))
 }
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
@@ -248,7 +282,7 @@ html, body { overscroll-behavior: none; }
   background:rgba(0,0,0,.65);
   display:flex;align-items:flex-start;justify-content:center;
   padding-top:var(--popup-offset);
-  z-index:4000;                    /* above header & active card */
+  z-index:4000;
 }
 .popup-content{
   background:#fff;padding:2rem;border-radius:12px;text-align:center;
@@ -270,14 +304,14 @@ html, body { overscroll-behavior: none; }
 .email-text{font-size:.95rem}
 .copied-msg{margin-top:.5em;color:green;font-size:.8rem}
 
-/* Rules lists — slightly smaller now */
+/* Rules lists */
 .rules-list{list-style:none;padding-left:0;margin-top:8px;text-align:left}
 .rules-list.football-bullets li{position:relative;padding-left:1.6rem;margin:6px 0}
 .rules-list.football-bullets li::before{content:"🏈";position:absolute;left:0;top:0;transform:translateY(2px);font-size:1rem}
-.rules-main li{font-weight:800;font-size:1.05rem}   /* smaller */
+.rules-main li{font-weight:800;font-size:1.05rem}
 .rules-main{margin-bottom:10px}
-.fine-print-title{margin:12px 0 4px;font-size:.95rem;font-weight:400} /* un-bold already; slightly smaller */
-.rules-fineprint li{font-weight:400;font-size:.85rem;opacity:.95}     /* smaller */
+.fine-print-title{margin:12px 0 4px;font-size:.95rem;font-weight:400}
+.rules-fineprint li{font-weight:400;font-size:.85rem;opacity:.95}
 
 /* Possible answers */
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
