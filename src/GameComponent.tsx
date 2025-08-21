@@ -159,7 +159,7 @@ const GameComponent: React.FC = () => {
   const [basePointsLeft, setBasePointsLeft] = useState<number[]>([]);
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
   const [communityPct, setCommunityPct] = useState<number[]>([]);
-  const [hintShown, setHintShown] = useState<boolean[]>([]);          // NEW
+  const [hintShown, setHintShown] = useState<boolean[]>([]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
@@ -273,7 +273,7 @@ const GameComponent: React.FC = () => {
     setBasePointsLeft(base);
 
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
-    setHintShown(Array(dailyPaths.length).fill(false));                  // NEW
+    setHintShown(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
     setPopupDismissed(false);
     setConfettiFired(false);
@@ -282,7 +282,7 @@ const GameComponent: React.FC = () => {
     prevScoreRef.current = s;
   }, [dailyPaths, gameDate, dateParam]);
 
-  /* persist */
+  /* persist guesses/score/points */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
@@ -294,7 +294,7 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  /* persist countdown */
+  /* persist countdown per level */
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
@@ -385,9 +385,10 @@ const GameComponent: React.FC = () => {
     }
   }, [basePointsLeft, activeLevel, guesses, started, gameOver, freezeActiveAfterAnswer, dailyPaths.length, hintShown]);
 
-  /* community % (local fallback) */
+  /* community % (remote -> local json -> local history) */
   useEffect(() => {
     if (!dailyPaths.length) return;
+
     const computeLocal = () => {
       const totals = new Array(dailyPaths.length).fill(0);
       const rights = new Array(dailyPaths.length).fill(0);
@@ -400,17 +401,27 @@ const GameComponent: React.FC = () => {
       const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
       setCommunityPct(pct);
     };
+
     (async () => {
       try {
-        const res = await fetch(`/data/stats.json?date=${gameDate}`);
+        // primary: API using all-user data (e.g. Vercel KV / DB)
+        let res = await fetch(`/api/stats?date=${gameDate}`);
+        if (!res.ok) {
+          // fallback to static json if provided
+          res = await fetch(`/data/stats.json?date=${gameDate}`);
+        }
         if (!res.ok) { computeLocal(); return; }
         const data = await res.json();
         const arr = (Array.isArray(data?.[gameDate]) ? data[gameDate]
                     : (Array.isArray(data?.levels) ? data.levels : null)) as number[] | null;
         if (arr && arr.length >= dailyPaths.length) {
           setCommunityPct(arr.slice(0, dailyPaths.length).map(v => Math.max(0, Math.min(100, Math.round(v)))));
-        } else { computeLocal(); }
-      } catch { computeLocal(); }
+        } else {
+          computeLocal();
+        }
+      } catch {
+        computeLocal();
+      }
     })();
   }, [dailyPaths.length, gameDate]);
 
@@ -426,7 +437,7 @@ const GameComponent: React.FC = () => {
   };
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
-  /* smarter suggestions: prefix > word-start > substring — deduped */
+  /* smarter suggestions */
   const getSmartSuggestions = (value: string): string[] => {
     const q = value.trim().toLowerCase();
     if (!q) return [];
@@ -471,6 +482,24 @@ const GameComponent: React.FC = () => {
     return { x, y };
   };
 
+  const clearSuggestionsSoon = (idx: number) => {
+    window.setTimeout(() => {
+      setFilteredSuggestions(prev => { const n=[...prev]; n[idx] = []; return n; });
+    }, 120);
+  };
+
+  const postLevelResult = async (idx: number, correct: boolean) => {
+    try {
+      await fetch('/api/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: gameDate, level: idx + 1, correct })
+      });
+    } catch {
+      /* ignore network/API errors; local fallback remains */
+    }
+  };
+
   /* only dropdown/Give Up can answer */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     const max = filteredSuggestions[idx]?.length || 0;
@@ -483,12 +512,6 @@ const GameComponent: React.FC = () => {
       }
       e.preventDefault();
     }
-  };
-
-  const clearSuggestionsSoon = (idx: number) => {
-    window.setTimeout(() => {
-      setFilteredSuggestions(prev => { const n=[...prev]; n[idx] = []; return n; });
-    }, 120);
   };
 
   const handleGuess = (index: number, value: string, origin?: { x: number; y: number }) => {
@@ -505,6 +528,8 @@ const GameComponent: React.FC = () => {
     const awarded = matched ? baseLeft * multiplier : 0;
 
     setAwardedPoints(prev => { const n=[...prev]; n[index]=awarded; return n; });
+
+    postLevelResult(index, !!matched);
 
     if (matched) {
       if (origin) {
@@ -530,6 +555,8 @@ const GameComponent: React.FC = () => {
     updated[index] = { guess: 'No Answer', correct: false };
     setGuesses(updated);
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
+
+    postLevelResult(index, false);
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
@@ -623,8 +650,6 @@ const GameComponent: React.FC = () => {
 
         const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
         const hintVisible = (!!hintShown[idx]) || (baseLeft <= HINT_THRESHOLD);
-
-        // pick lowest-difficulty answer's position (if any)
         const minAns = answerLists[idx]?.[0];
         const hintPos = minAns?.position;
 
@@ -711,14 +736,10 @@ const GameComponent: React.FC = () => {
                             <div className="points-bar-mark" aria-hidden="true" />
                           </div>
 
-                          {/* hint text when visible */}
                           {hintVisible && hintPos && (
-                            <div className="hint-text">
-                              Hint: Position = <strong>{hintPos}</strong>
-                            </div>
+                            <div className="hint-text">Hint: <strong>{hintPos}</strong></div>
                           )}
 
-                          {/* manual hint button */}
                           {!hintVisible && (
                             <button
                               type="button"
@@ -750,7 +771,6 @@ const GameComponent: React.FC = () => {
                 </div>
               </div>
 
-              {/* Universal Results */}
               {gameOver && (
                 <div className="community-wrap">
                   <div className="community-row">
@@ -763,7 +783,6 @@ const GameComponent: React.FC = () => {
                 </div>
               )}
 
-              {/* Possible answers (sorted by difficulty asc) — position shown, difficulty hidden */}
               {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
                 <div className="possible-answers">
                   <strong>Possible Answers:</strong>
@@ -845,6 +864,7 @@ const GameComponent: React.FC = () => {
               <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
               <li><strong>Only one guess per level</strong></li>
               <li><strong>The faster you answer, the more points you get!</strong></li>
+              <li><strong>Hint unlocks at 50 points (you can tap HINT to reveal early)</strong></li>
               <li><strong>You get 0 points if you give up a level</strong></li>
             </ul>
 
@@ -878,7 +898,6 @@ const GameComponent: React.FC = () => {
         </div>
       )}
 
-      {/* small feedback link above disclosure when not actively on a level */}
       {!duringActive && (
         <div className="footer-actions">
           <button onClick={() => setShowFeedback(true)} className="feedback-link">💬 Feedback</button>
