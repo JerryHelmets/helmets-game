@@ -3,60 +3,128 @@
    =============================== */
 
 :root{
-  --active-top: 148px;       /* bring active card down a touch */
+  --active-top: 148px;        /* bring active card slightly down */
   --popup-offset: 150px;
   --scale: 0.88;
-  --card-w: 310px;
+  --card-w: 360px;            /* widened cards */
   --card-min-h: 110px;
 }
 
 html, body { overscroll-behavior: none; }
 
+/* Ensure predictable centering */
+* { box-sizing: border-box; }
+
 /* Score flash */
-@keyframes scoreFlash {
-  0%{background:transparent;color:#fff;}
-  25%{background:rgba(255,221,0,.9);color:#000;}
-  60%{background:rgba(255,221,0,.75);color:#000;}
-  100%{background:transparent;color:#fff;}
-}
+@keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
 /* Header — bigger logo/title */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
-.game-logo{height:2.4em;width:auto;display:block}
-.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
+.game-logo{height:3.0em;width:auto;display:block}           /* bigger logo */
+.game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.2rem,6.4vw,3.8rem)} /* slightly bigger */
 .game-header{position:relative;z-index:1200;text-align:center;margin:12px 0;color:#fff}
-.date-line{color:#fff;font-size:1rem;margin-top:4px}
-.score-line{color:#fff;font-size:clamp(1.5rem,5.6vw,2.45rem);font-weight:900;margin-top:2px}
+.date-line{color:#fff;font-size:1.02rem;margin-top:6px}
+.score-line{color:#fff;font-size:clamp(1.55rem,5.8vw,2.5rem);font-weight:900;margin-top:2px}
 .score-number{display:inline-block;min-width:2ch;text-align:right}
 .rules-button{margin-top:8px}
 
-/* App shell */
-.app-container{width:100%;max-width:820px;margin:0 auto;padding:16px 8px 32px;overflow-x:hidden;min-height:var(--app-height,100svh);transform:scale(var(--scale));transform-origin:top center}
-.app-container.app-fixed{position:fixed;inset:0;height:var(--app-height,100svh);overflow:hidden;background:transparent}
-@media (max-width:430px){:root{--scale:.86;--card-w:300px}}
-@media (max-width:380px){:root{--scale:.84;--card-w:290px}}
+/* App shell (no transform here anymore) */
+.app-container{
+  width:100%;
+  max-width:900px;          /* a hair wider wrapper */
+  margin:0 auto;
+  padding:16px 0 32px;      /* symmetric padding keeps true centering */
+  overflow-x:hidden;
+  min-height:var(--app-height,100svh);
+  position:relative;
+}
 
-/* Dim backdrop during active level */
-.level-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px);z-index:1005;pointer-events:none}
+/* Scaled inner so overlays can cover whole viewport */
+.app-inner{
+  transform:scale(var(--scale));
+  transform-origin:top center;
+  width:100%;
+}
+
+/* Lock page during active level */
+.app-container.app-fixed{
+  position:fixed;
+  inset:0;
+  height:var(--app-height,100svh);
+  overflow:hidden;
+  background:transparent;
+}
+
+@media (max-width:430px){:root{--scale:.86;--card-w:340px}}
+@media (max-width:380px){:root{--scale:.84;--card-w:320px}}
+
+/* Dim backdrop during active level — full viewport now */
+.level-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.68);
+  backdrop-filter:blur(3px);
+  z-index:1300;            /* above app-inner */
+  pointer-events:none;
+}
 
 /* Cards */
-.path-block{position:relative;border:2px solid;border-radius:14px;padding:10px;margin-bottom:12px;box-shadow:0 1px 1px rgba(0,0,0,.06);width:min(86vw,var(--card-w));margin-left:auto;margin-right:auto;text-align:center;transition:background-color .25s,border-color .25s;background:#f7f7f7}
+.path-block{
+  position:relative;
+  border:2px solid;
+  border-radius:14px;
+  padding:10px;
+  margin-bottom:12px;
+  box-shadow:0 1px 1px rgba(0,0,0,.06);
+  width:min(90vw,var(--card-w));     /* wider */
+  margin-left:auto;margin-right:auto;
+  text-align:center;
+  transition:background-color .25s,border-color .25s,box-shadow .25s;
+  background:#f7f7f7;
+}
 .path-block-default{border-color:#cfcfcf}
 .path-block-correct{background-color:#e6ffe6;border-color:#28a745}
 .path-block-incorrect{background-color:#ffe6e6;border-color:#dc3545}
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
 /* Active card */
-.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 26px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:272px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
+.level-card--active{
+  position:fixed;
+  left:50%;
+  top:var(--active-top); /* slightly lower than before */
+  transform:translateX(-50%);
+  width:min(96vw,calc(var(--card-w) + 32px));
+  max-height:min(440px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
+  min-height:260px;
+  overflow-y:auto;
+  z-index:1400;           /* above dim */
+  border:2px solid #e5e7eb;
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 22px 60px rgba(0,0,0,.42);
+  animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;
+  text-align:center;
+  background:#fff;        /* ensure opaque canvas */
+}
 
-/* Covered cards */
-.level-card.is-covered{position:static;width:min(86vw,var(--card-w));min-height:var(--card-min-h);max-height:var(--card-min-h);overflow:hidden;background:#1b2838!important;border-color:#25354a!important}
-.level-card.is-covered .card-body,.level-card.is-covered .helmet-sequence,.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
+/* Covered cards (prestart or locked) */
+.level-card.is-covered{
+  position:static;
+  width:min(90vw,var(--card-w));
+  min-height:var(--card-min-h);
+  max-height:var(--card-min-h);
+  overflow:hidden;
+  background:#1b2838!important;
+  border-color:#25354a!important;
+}
+.level-card.is-covered .card-body,
+.level-card.is-covered .helmet-sequence,
+.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
 
 /* Game-complete: short cards & matching widths */
-.is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:40px;padding:8px}
+.is-complete .level-card{width:min(96vw,calc(var(--card-w) + 40px));min-height:44px;padding:8px}
 .is-complete .card-body{margin-top:24px}
 .is-complete .level-tag{font-size:.78rem;padding:4px 8px}
 .is-complete .level-badge{right:8px;left:auto}
@@ -77,12 +145,12 @@ html, body { overscroll-behavior: none; }
 
 /* Helmets + arrows */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
-.helmet-icon{width:70px;height:70px;object-fit:contain}
-@media (max-width:480px){.helmet-icon{width:58px;height:58px}}
-/* slightly larger on mobile WHEN ACTIVE, but less than before */
+.helmet-icon{width:70px;height:70px;object-fit:contain}      /* slightly larger */
+@media (max-width:480px){.helmet-icon{width:60px;height:60px}}
+/* smaller when active (you asked “enlarge earlier”, now net = slightly larger than before but not huge) */
 @media (max-width:480px){
-  .level-card--active .helmet-icon{width:64px;height:64px}
-  .level-card--active .arrow{font-size:.84rem}
+  .level-card--active .helmet-icon{width:62px;height:62px}
+  .level-card--active .arrow{font-size:.85rem}
 }
 .arrow{font-size:.82rem;font-weight:700;margin:0 2px;line-height:1;vertical-align:middle}
 @media (max-width:480px){.arrow{font-size:.74rem}}
@@ -96,41 +164,52 @@ html, body { overscroll-behavior: none; }
 /* Card enter */
 @keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-/* Suggestions + input */
-.suggestion-box{max-height:186px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(96%,calc(var(--card-w) + 10px));text-align:left}
-.suggestion-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;cursor:pointer}
+/* Suggestions + input (wider items with right-aligned position) */
+.suggestion-box{
+  max-height:180px;
+  overflow-y:auto;
+  border:1px solid #ccc;
+  border-radius:6px;
+  margin:6px auto 0;
+  background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  width:min(96%,calc(var(--card-w) + 6px));
+  text-align:left
+}
+.suggestion-item{padding:8px 10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.s-item-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-item-pos{color:#9aa3af;font-size:.85rem;margin-left:8px;flex:0 0 auto}
 .suggestion-item:hover,.suggestion-item.highlighted{background:#f0f0f0}
-.suggestion-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.suggestion-pos{color:#9aa3af;font-size:.9em;flex:0 0 auto}
 .fade-in-fast{animation:fadeIn .3s ease-out}
 @keyframes fadeIn{to{opacity:1}}
 
+/* Guess input field (wider) */
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
-.guess-input-field{width:98%;max-width:340px;padding:4px 6px;font-size:16px;border-radius:8px;border:1px solid #ccc;-webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto}
+.guess-input-field{
+  width:98%;
+  max-width:360px;          /* wider to fit name + POS */
+  padding:4px 6px;
+  font-size:16px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  -webkit-text-size-adjust:100%;
+  margin-left:auto;margin-right:auto
+}
 
-/* Points bar */
-.points-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
+/* Points bar (bigger) */
+.points-wrap{width:100%;margin-top:12px;display:flex;flex-direction:column;align-items:center}
 .points-row{display:flex;justify-content:space-between;width:min(96%,360px);font-size:13px;color:#111}
 .points-label,.points-value{font-weight:700}
-.points-bar{position:relative;width:min(96%,360px);height:14px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:6px}
+.points-bar{position:relative;width:min(96%,360px);height:12px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:6px}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
-.points-bar-midline{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#6b8cff;opacity:.55;pointer-events:none}
+.points-bar-hint-mark{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#889cfb;opacity:.9}
 
-/* Hint row */
-.hint-row{display:flex;gap:8px;align-items:center;margin-top:6px}
-.hint-label{font-weight:800;color:#9aa3af}
-.hint-row.revealed .hint-label{color:#2e6bff}
-.hint-value{font-weight:700;color:#374151}
-.hint-button{margin-top:6px;background:transparent;border:1.5px dashed #a3b2ff;color:#2e6bff;border-radius:8px;padding:6px 10px;font-weight:800;cursor:pointer}
-.hint-button[disabled]{opacity:.45;cursor:not-allowed}
-
-/* Community % bar (game complete) */
+/* Community % bar (game complete) — bigger */
 .community-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
-.community-row{display:flex;justify-content:space-between;width:min(96%,380px);font-size:13px;color:#111}
-.community-bar{width:min(96%,380px);height:14px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:6px}
+.community-row{display:flex;justify-content:space-between;width:min(96%,420px);font-size:13px;color:#111}
+.community-bar{width:min(96%,420px);height:12px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:6px}
 .community-bar-fill{height:100%;background:#6366f1;transform-origin:left;transform:scaleX(0);transition:transform .9s ease}
-.is-complete .community-bar-fill{transform:scaleX(calc(var(--pct, 0) / 100))}
-.community-src{font-size:10px;color:#6b7280;margin-top:2px}
+.is-complete .community-bar-fill{transform:scaleX(calc(var(--pct, 0)/100))}
 
 /* Buttons */
 .primary-button,.share-score-button{background:#2e6bff;color:#fff;padding:10px 18px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer}
@@ -139,15 +218,25 @@ html, body { overscroll-behavior: none; }
 .secondary-button.small{font-size:.88rem;padding:7px 12px}
 .skip-button{margin-top:18px}
 
+/* Linkish feedback (not big button) */
+.linkish{
+  background:none;
+  border:none;
+  color:#2e6bff;
+  font-weight:700;
+  cursor:pointer;
+  padding:4px 6px;
+}
+
 /* Locked answers */
-.locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.9rem;text-align:center}
+.locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.85rem;text-align:center}
 .answer-correct{background:#28a745;animation:fadeIn .25s ease-in-out}
 .answer-incorrect{background:#dc3545}
 @keyframes blinkRed{0%{background-color:#dc3545}50%{background-color:#ff6b6b}100%{background-color:#dc3545}}
 .blink-red{animation:blinkRed .6s ease-in-out 1}
 
 /* FABs */
-.fab-button{position:fixed;padding:6px 10px;font-size:.8rem;z-index:1201}
+.fab-button{position:fixed;padding:6px 10px;font-size:.8rem;z-index:1500}
 .fab-history{top:12px;right:12px}
 
 /* History popup */
@@ -156,26 +245,34 @@ html, body { overscroll-behavior: none; }
 .calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
 
 /* Completed banner — width matches cards */
-.complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(92vw,calc(var(--card-w) + 36px))}
+.complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(96vw,calc(var(--card-w) + 40px))}
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
 .complete-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-/* Popups */
-.popup-modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:flex;align-items:flex-start;justify-content:center;padding-top:var(--popup-offset);z-index:1300}
-.popup-content{background:#fff;padding:2rem;border-radius:12px;text-align:center;max-width:520px;width:calc(100% - 32px);max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative}
-.popup-rules{max-width:600px;min-height:520px}
+/* Popups (wider rules popup) */
+.popup-modal{
+  position:fixed;left:0;top:0;width:100%;height:100%;
+  background:rgba(0,0,0,.65);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:var(--popup-offset);
+  z-index:1600
+}
+.popup-content{
+  background:#fff;padding:2rem;border-radius:12px;text-align:center;
+  max-width:640px; /* wider */
+  width:calc(100% - 32px);
+  max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);
+  overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative
+}
+.popup-rules{max-width:720px;min-height:520px}
+.popup-rules.wider{max-width:720px}
 .popup-final{max-width:300px;font-size:1.08rem;padding:1.25rem 1rem;min-height:280px}
 .popup-title{font-size:1.55rem;margin-bottom:6px}
 .popup-date{margin:6px 0 14px;font-weight:700;color:#333}
 .popup-score{margin:12px 0 10px;font-weight:900;font-size:clamp(1.6rem,6.2vw,2.7rem)}
 .popup-final .score-number{display:inline-block;min-width:3ch}
 .close-button{position:absolute;top:12px;right:12px;background:transparent;font-size:18px;border:none;cursor:pointer}
-
-/* Feedback link */
-.footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
-.feedback-link{background:transparent;border:none;color:#9aa3af;font-weight:700;cursor:pointer}
-.feedback-link:hover{color:#6b7280}
 
 /* Feedback popup bits */
 .email-row{display:flex;align-items:center;justify-content:center;margin-top:1em;gap:8px}
@@ -187,18 +284,20 @@ html, body { overscroll-behavior: none; }
 .rules-list{list-style:none;padding-left:0;margin-top:8px;text-align:left}
 .rules-list.football-bullets li{position:relative;padding-left:1.6rem;margin:6px 0}
 .rules-list.football-bullets li::before{content:"🏈";position:absolute;left:0;top:0;transform:translateY(2px);font-size:1rem}
-.rules-main li{font-weight:800;font-size:1.2rem}
+.rules-main li{font-weight:800;font-size:1.2rem} /* bigger bold list */
 .rules-main{margin-bottom:12px}
-.fine-print-title{margin:12px 0 4px;font-size:1rem;font-weight:400}
-.rules-fineprint li{font-weight:400;font-size:.9rem;opacity:.95}
+.fine-print-title{margin:12px 0 6px;font-size:1rem;font-weight:400}
+.rules-fineprint li{font-weight:400;font-size:.92rem;opacity:.95}
 
 /* Possible answers */
+.ans-pos{color:#9aa3af}
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
-.possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.95rem}
-.pa-pos{color:#6b7280}
+.possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.9rem}
 
 /* Footer */
-.site-disclosure{margin:18px auto 10px;max-width:800px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
+.footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
+.feedback-bottom{margin-bottom:4px}
+.site-disclosure{margin:18px auto 10px;max-width:820px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
 
 /* Reduce motion */
 @media (prefers-reduced-motion:reduce){
