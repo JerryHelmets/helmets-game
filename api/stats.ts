@@ -1,27 +1,37 @@
-import { NextResponse } from 'next/server';
+// api/stats.ts
 import { Redis } from '@upstash/redis';
-
-export const runtime = 'edge';
 
 const redis = Redis.fromEnv();
 
-export async function GET(req: Request) {
+export default async function handler(req: Request): Promise<Response> {
   try {
-    const { searchParams } = new URL(req.url);
-    const date = searchParams.get('date');
-    if (!date) return NextResponse.json({ error: 'date required' }, { status: 400 });
+    const url = new URL(req.url);
+    const date = url.searchParams.get('date');
+    if (!date) {
+      return new Response(JSON.stringify({ error: 'date required' }), {
+        status: 400,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
 
     const key = `results:${date}`;
-    const hash = await redis.hgetall<Record<string, number>>(key);
+    const hash = (await redis.hgetall<Record<string, string | number>>(key)) || {};
 
+    // Build 5 levels worth of % (0..100). Adjust length if you ever add more levels.
     const levels = Array.from({ length: 5 }, (_, i) => {
-      const t = Number(hash?.[`l${i}:total`] ?? 0);
-      const r = Number(hash?.[`l${i}:right`] ?? 0);
+      const t = Number(hash[`l${i}:total`] ?? 0);
+      const r = Number(hash[`l${i}:right`] ?? 0);
       return t ? Math.round((r / t) * 100) : 0;
     });
 
-    return NextResponse.json({ date, levels });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'fail' }, { status: 500 });
+    return new Response(JSON.stringify({ date, levels }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err?.message || 'fail' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
   }
 }
