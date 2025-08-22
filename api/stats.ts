@@ -1,4 +1,3 @@
-// api/stats.ts
 import { Redis } from '@upstash/redis';
 
 const redis = Redis.fromEnv();
@@ -17,11 +16,11 @@ export default async function handler(req: Request): Promise<Response> {
     const key = `results:${date}`;
     const hash = (await redis.hgetall<Record<string, string | number>>(key)) || {};
 
-    // Build 5 levels worth of % (0..100). Adjust length if you ever add more levels.
+    // Build 5-level % correct array
     const levels = Array.from({ length: 5 }, (_, i) => {
-      const t = Number(hash[`l${i}:total`] ?? 0);
-      const r = Number(hash[`l${i}:right`] ?? 0);
-      return t ? Math.round((r / t) * 100) : 0;
+      const total = Number(hash[`l${i}:total`] ?? 0);
+      const right = Number(hash[`l${i}:right`] ?? 0);
+      return total ? Math.round((right / total) * 100) : 0;
     });
 
     return new Response(JSON.stringify({ date, levels }), {
@@ -29,7 +28,7 @@ export default async function handler(req: Request): Promise<Response> {
       headers: { 'content-type': 'application/json' },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || 'fail' }), {
+    return new Response(JSON.stringify({ error: String(err?.message || err) }), {
       status: 500,
       headers: { 'content-type': 'application/json' },
     });
