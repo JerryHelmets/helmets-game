@@ -36,20 +36,14 @@ const COUNTDOWN_START_DELAY_MS = 500;
 /* ---------- PACIFIC TIME helpers ---------- */
 function getPTDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit'
   }).formatToParts(date);
-  const y = parts.find((p) => p.type === 'year')!.value;
-  const m = parts.find((p) => p.type === 'month')!.value;
-  const d = parts.find((p) => p.type === 'day')!.value;
+  const y = parts.find(p => p.type === 'year')!.value;
+  const m = parts.find(p => p.type === 'month')!.value;
+  const d = parts.find(p => p.type === 'day')!.value;
   return { y, m, d };
 }
-function toPTISO(date: Date) {
-  const { y, m, d } = getPTDateParts(date);
-  return `${y}-${m}-${d}`;
-}
+function toPTISO(date: Date) { const { y, m, d } = getPTDateParts(date); return `${y}-${m}-${d}`; }
 function todayPTISO() { return toPTISO(new Date()); }
 function isoToMDYYYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y}`; }
 function isoToMDYY(iso: string) { const [y,m,d]=iso.split('-'); return `${parseInt(m,10)}/${parseInt(d,10)}/${y.slice(-2)}`; }
@@ -105,12 +99,13 @@ function scoreEmojis(total: number): string {
   return '🏆';
 }
 
-/* ---------- Backdrop portal ---------- */
+/* ---------- Backdrop & Modal Portals ---------- */
 const Backdrop: React.FC<{ show: boolean }> = ({ show }) => {
   if (!show) return null;
-  const node = <div className="level-backdrop" aria-hidden="true" />;
-  return ReactDOM.createPortal(node, document.body);
+  return ReactDOM.createPortal(<div className="level-backdrop" aria-hidden="true" />, document.body);
 };
+const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+  ReactDOM.createPortal(children as any, document.body);
 
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
@@ -149,11 +144,8 @@ const GameComponent: React.FC = () => {
 
   const [communityPct, setCommunityPct] = useState<number[]>([]);
 
-  // NEW: position & difficulty maps for dropdown + hint + sorting
   const [posByName, setPosByName] = useState<Record<string, string>>({});
   const [diffByName, setDiffByName] = useState<Record<string, number>>({});
-
-  // Hint state (per-level)
   const [hintShown, setHintShown] = useState<boolean[]>([]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -275,9 +267,7 @@ const GameComponent: React.FC = () => {
     }
     setBasePointsLeft(base);
 
-    // restore hint shown flags to false (fresh day view) — reveal occurs at <=50 or via button
     setHintShown(Array(dailyPaths.length).fill(false));
-
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
     setPopupDismissed(false);
@@ -299,7 +289,7 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  /* persist base points (per-level timer) so refresh keeps countdown */
+  /* persist base points (per-level timer) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
@@ -366,8 +356,6 @@ const GameComponent: React.FC = () => {
         setBasePointsLeft(prev => {
           const n=[...prev]; const cur=n[idx] ?? MAX_BASE_POINTS;
           n[idx] = Math.max(0, cur-1);
-
-          // auto-reveal hint when it drops to 50
           if ((n[idx] ?? 0) <= 50 && !hintShown[idx]) {
             const h = [...hintShown]; h[idx] = true; setHintShown(h);
           }
@@ -441,7 +429,6 @@ const GameComponent: React.FC = () => {
   const sortedSuggestions = (value: string) => {
     const v = value.trim().toLowerCase();
     if (!v) return [];
-    // smarter sort: startsWith > word-boundary match > includes
     const seen = new Set<string>();
     const allNames = players.map(p => p.name);
     const buckets = [[], [], []] as string[][];
@@ -462,7 +449,7 @@ const GameComponent: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     const max = filteredSuggestions[idx]?.length || 0;
     if (!max) {
-      if (e.key === 'Enter') e.preventDefault(); // cannot submit free text
+      if (e.key === 'Enter') e.preventDefault();
       return;
     }
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
@@ -562,11 +549,10 @@ www.helmets-game.com`;
       return da - db;
     });
     const first = candidates[0];
-    return posByName[first.name] || null;
+    return (first && (posByName[first.name] || null)) || null;
   };
 
   const revealHintEarly = (idx: number) => {
-    // drop to 50 if above; mark hint shown
     setBasePointsLeft(prev => {
       const n=[...prev];
       const cur = n[idx] ?? MAX_BASE_POINTS;
@@ -577,15 +563,14 @@ www.helmets-game.com`;
   };
 
   const duringActive = started && !gameOver && !showPopup;
-  const appFixed = duringActive ? 'app-fixed' : '';
   const prestartClass = !started ? 'is-prestart' : '';
 
   return (
     <>
-      {/* Full-viewport dim via portal (independent of transforms) */}
+      {/* Full-viewport dim during active play */}
       <Backdrop show={duringActive} />
 
-      <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
+      <div className={`app-container ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
         <header className="game-header">
           <div className="title-row">
             <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
@@ -676,11 +661,8 @@ www.helmets-game.com`;
                           onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
                           onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
                           onBlur={() => {
-                            // hide suggestions after slight delay to allow click
                             setTimeout(() => {
-                              setFilteredSuggestions(prev => {
-                                const n=[...prev]; n[idx]=[]; return n;
-                              });
+                              setFilteredSuggestions(prev => { const n=[...prev]; n[idx]=[]; return n; });
                             }, 120);
                           }}
                           className="guess-input-field guess-input-mobile font-mobile"
@@ -726,7 +708,6 @@ www.helmets-game.com`;
                               <div className="half-line" />
                             </div>
 
-                            {/* Hint UI */}
                             <div className="hint-row">
                               {hintAvailable && hintPos ? (
                                 <span className="hint-text">Hint: {hintPos}</span>
@@ -766,7 +747,6 @@ www.helmets-game.com`;
                   </div>
                 </div>
 
-                {/* Community % bar in game-complete */}
                 {gameOver && (
                   <div className="community-wrap">
                     <div className="community-row">
@@ -801,97 +781,106 @@ www.helmets-game.com`;
           <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
         )}
 
+        {/* Popups portaled to body to avoid transform clipping */}
         {showHistory && (
-          <div className="popup-modal">
-            <div className="popup-content">
-              <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-              <h3>📆 Game History (Last 30 days)</h3>
-              <div className="calendar-grid">
-                {getLastNDatesPT(30).map((date) => {
-                  const isToday = date === todayPT;
-                  return (
-                    <button
-                      key={date}
-                      className={`calendar-grid-button${isToday ? ' today' : ''}`}
-                      onClick={() => (window.location.href = `/?date=${date}`)}
-                    >
-                      {date.slice(5)}
-                    </button>
-                  );
-                })}
+          <Portal>
+            <div className="popup-modal">
+              <div className="popup-content">
+                <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+                <h3>📆 Game History (Last 30 days)</h3>
+                <div className="calendar-grid">
+                  {getLastNDatesPT(30).map((date) => {
+                    const isToday = date === todayPT;
+                    return (
+                      <button
+                        key={date}
+                        className={`calendar-grid-button${isToday ? ' today' : ''}`}
+                        onClick={() => (window.location.href = `/?date=${date}`)}
+                      >
+                        {date.slice(5)}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          </Portal>
         )}
 
         {showFeedback && (
-          <div className="popup-modal">
-            <div className="popup-content">
-              <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-              <h3>Thoughts for Jerry?</h3>
-              <div className="email-row">
-                <span className="email-emoji">📧</span>
-                <span className="email-text">jerry.helmetsgame@gmail.com</span>
+          <Portal>
+            <div className="popup-modal">
+              <div className="popup-content">
+                <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
+                <h3>Thoughts for Jerry?</h3>
+                <div className="email-row">
+                  <span className="email-emoji">📧</span>
+                  <span className="email-text">jerry.helmetsgame@gmail.com</span>
+                </div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
+                  className="primary-button"
+                >
+                  Copy Email
+                </button>
+                {copied && <p className="copied-msg">Email copied!</p>}
               </div>
-              <button
-                onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
-                className="primary-button"
-              >
-                Copy Email
-              </button>
-              {copied && <p className="copied-msg">Email copied!</p>}
             </div>
-          </div>
+          </Portal>
         )}
 
         {showRules && (
-          <div className="popup-modal fade-in">
-            <div className="popup-content popup-rules">
-              {rulesOpenedManually && (
-                <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
-                  ✖
-                </button>
-              )}
-              <h2>WELCOME TO HELMETS!</h2>
-              <h3>HOW TO PLAY</h3>
+          <Portal>
+            <div className="popup-modal fade-in">
+              <div className="popup-content popup-rules">
+                {rulesOpenedManually && (
+                  <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+                    ✖
+                  </button>
+                )}
+                <h2>WELCOME TO HELMETS!</h2>
+                <h3>HOW TO PLAY</h3>
 
-              <ul className="rules-list football-bullets rules-main">
-                <li><strong>Match each helmet path to an NFL player</strong></li>
-                <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
-                <li><strong>Only one guess per level</strong></li>
-                <li><strong>The faster you answer, the more points you get!</strong></li>
-                <li><strong>You get 0 points if you give up a level</strong></li>
-                <li><strong>Hint when points bar hits 50, can automatically skip to hint</strong></li>
-              </ul>
+                {/* Keep only these 4 in bold summary */}
+                <ul className="rules-list football-bullets rules-main">
+                  <li><strong>Match each helmet path to an NFL player</strong></li>
+                  <li><strong>5 levels: one guess per level</strong></li>
+                  <li><strong>Faster response = more points</strong></li>
+                  <li><strong>Hint drops your points bar to 50</strong></li>
+                  <li><strong>0 points if you give up a level</strong></li>
+                </ul>
 
-              <h4 className="fine-print-title">Fine Print:</h4>
-              <ul className="rules-list football-bullets rules-fineprint">
-                <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
-                <li>Player must have played in the year 2000 or later</li>
-                <li>College helmet is the player's draft college</li>
-                <li>Some paths may have multiple possible answers</li>
-              </ul>
+                <h4 className="fine-print-title">Fine Print:</h4>
+                <ul className="rules-list football-bullets rules-fineprint">
+                  <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+                  <li>Player must have played in the year 2000 or later</li>
+                  <li>College helmet is the player's draft college</li>
+                  <li>Some paths may have multiple possible answers</li>
+                </ul>
 
-              {!started && !gameOver && (
-                <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
-                  Start Game!
-                </button>
-              )}
+                {!started && !gameOver && (
+                  <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
+                    Start Game!
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </Portal>
         )}
 
         {showPopup && (
-          <div className="popup-modal fade-in">
-            <div className="popup-content popup-final">
-              <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
-              <h3 className="popup-title">🎉 Game Complete!</h3>
-              <p className="popup-date">{gameDateMMDDYY}</p>
-              <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
-              <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
-              <button onClick={shareNow} className="primary-button">Share Score!</button>
+          <Portal>
+            <div className="popup-modal fade-in">
+              <div className="popup-content popup-final">
+                <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
+                <h3 className="popup-title">🎉 Game Complete!</h3>
+                <p className="popup-date">{gameDateMMDDYY}</p>
+                <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
+                <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
+                <button onClick={shareNow} className="primary-button">Share Score!</button>
+              </div>
             </div>
-          </div>
+          </Portal>
         )}
 
         {!duringActive && (
