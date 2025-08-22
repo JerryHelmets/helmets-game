@@ -1,25 +1,42 @@
-import { NextResponse } from 'next/server';
+// api/results.ts
 import { Redis } from '@upstash/redis';
-
-export const runtime = 'edge';
 
 const redis = Redis.fromEnv();
 
-export async function POST(req: Request) {
+export default async function handler(req: Request): Promise<Response> {
   try {
-    const { date, index, correct } = await req.json() as {
-      date: string; index: number; correct: boolean;
-    };
-    if (!date || index == null) {
-      return NextResponse.json({ error: 'bad payload' }, { status: 400 });
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'content-type': 'application/json' },
+      });
     }
 
-    const key = `results:${date}`;            // one hash per game day
+    const { date, index, correct } = (await req.json()) as {
+      date?: string;
+      index?: number;
+      correct?: boolean;
+    };
+
+    if (!date || typeof index !== 'number') {
+      return new Response(JSON.stringify({ error: 'Bad payload' }), {
+        status: 400,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+
+    const key = `results:${date}`; // one hash per day
     await redis.hincrby(key, `l${index}:total`, 1);
     if (correct) await redis.hincrby(key, `l${index}:right`, 1);
 
-    return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'fail' }, { status: 500 });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err?.message || 'fail' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
   }
 }
