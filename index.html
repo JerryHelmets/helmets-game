@@ -6,8 +6,20 @@
 
     <title>Helmets</title>
 
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self';
+        worker-src 'self' blob:;
+        child-src 'self' blob:;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self' data:;
+        connect-src 'self';
+      ">
 
-    <!-- Favicons with larger #1E2832 outline -->
+    <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-outline-large-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-outline-large-32x32.png">
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon-outline-large-64x64.png">
@@ -16,7 +28,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-outline-large.png">
     <link rel="shortcut icon" href="/favicon-outline-large.ico">
 
-    <!-- Use a custom OG image that already has the #1E2832 background with transparent logo on top -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Helmets" />
     <meta property="og:description" content="Helmets — football collectibles." />
@@ -26,16 +38,17 @@
     <meta property="og:image:height" content="120">
     <meta property="og:image:type" content="image/png">
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Helmets" />
     <meta name="twitter:description" content="Helmets — football collectibles." />
     <meta name="twitter:image" content="https://helmets-game.com/og-helmets-1e2832-120.png">
 
-    <!-- Theme color for browser UI and some link previews -->
+    <!-- Theme -->
     <meta name="theme-color" content="#1E2832" />
     <meta name="msapplication-TileColor" content="#1E2832" />
 
-    <!-- Primary Meta Tags -->
+    <!-- Primary Meta -->
     <meta name="title" content="Helmets" />
     <meta name="description" content="Helmets — football collectibles." />
   </head>
