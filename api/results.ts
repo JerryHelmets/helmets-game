@@ -1,4 +1,3 @@
-// api/results.ts
 import { Redis } from '@upstash/redis';
 
 const redis = Redis.fromEnv();
@@ -25,16 +24,21 @@ export default async function handler(req: Request): Promise<Response> {
       });
     }
 
-    const key = `results:${date}`; // one hash per day
+    const key = `results:${date}`;
+    // count attempts
     await redis.hincrby(key, `l${index}:total`, 1);
+    // count correct
     if (correct) await redis.hincrby(key, `l${index}:right`, 1);
+
+    // optional TTL so old days expire after 90 days:
+    await redis.expire(key, 60 * 60 * 24 * 90);
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { 'content-type': 'application/json' },
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || 'fail' }), {
+    return new Response(JSON.stringify({ error: String(err?.message || err) }), {
       status: 500,
       headers: { 'content-type': 'application/json' },
     });
