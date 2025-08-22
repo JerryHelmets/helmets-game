@@ -3,15 +3,14 @@
    =============================== */
 
 :root{
-  --active-top: 140px;         /* active card slightly down */
+  --active-top: 140px;
   --popup-offset: 110px;
   --scale: 0.88;
 
-  /* wider cards + centering */
-  --card-w: 380px;             /* widened */
+  --card-w: 380px;
   --card-min-h: 110px;
 
-  --hint-color: #0ea5e9;       /* cyan for hint + midline */
+  --hint-color: #0ea5e9;
 }
 
 html, body { overscroll-behavior: none; }
@@ -25,9 +24,9 @@ html, body { overscroll-behavior: none; }
 }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
-/* Header (stays above overlays) */
+/* Header (above background dim & active card) */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
-.game-logo{height:2.7em;width:auto;display:block}                 /* a bit larger */
+.game-logo{height:2.7em;width:auto;display:block}
 .game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.2rem,6.4vw,3.8rem)}
 .game-header{position:relative;z-index:3000;text-align:center;margin:12px 0;color:#fff}
 .date-line{color:#fff;font-size:1rem;margin-top:4px}
@@ -38,22 +37,23 @@ html, body { overscroll-behavior: none; }
 /* App shell — fully centered */
 .app-container{
   width:100%;
-  max-width:920px;                             /* wider shell */
-  margin-left:auto; margin-right:auto;         /* center */
+  max-width:920px;
+  margin-left:auto; margin-right:auto;
   padding:16px 8px 32px;
   overflow-x:hidden;
   min-height:var(--app-height,100svh);
   transform:scale(var(--scale));
   transform-origin:top center;
+  position:relative; /* creates containing block for the internal dim */
 }
 
-/* Full-viewport dim backdrop (portal) */
+/* Internal dim: sits under header (3000) & active card (2600), above the rest */
 .level-backdrop{
-  position:fixed;
+  position:fixed; /* fixed within transformed ancestor, covers app */
   inset:0;
   background:rgba(0,0,0,.68);
   backdrop-filter:blur(3px);
-  z-index:1800;       /* below header (3000) and popups (4000) */
+  z-index:2000; /* header:3000, active card:2600 */
   pointer-events:none;
 }
 
@@ -65,7 +65,7 @@ html, body { overscroll-behavior: none; }
   padding:12px;
   margin-bottom:12px;
   box-shadow:0 1px 1px rgba(0,0,0,.06);
-  width:min(92vw,var(--card-w));             /* widened */
+  width:min(92vw,var(--card-w));
   margin-left:auto;margin-right:auto;
   text-align:center;
   transition:background-color .25s,border-color .25s;
@@ -76,10 +76,10 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect{background-color:#ffe6e6;border-color:#dc3545}
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
-/* Active card */
+/* Active card: above internal dim */
 .level-card--active{
   position:fixed; left:50%; top:var(--active-top); transform:translateX(-50%);
-  width:min(96vw,calc(var(--card-w) + 40px));      /* a touch wider active */
+  width:min(96vw,calc(var(--card-w) + 40px));
   max-height:min(460px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
   min-height:270px;
   overflow-y:auto; z-index:2600;
@@ -88,7 +88,7 @@ html, body { overscroll-behavior: none; }
   animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both; text-align:center
 }
 
-/* Covered cards */
+/* Covered cards (pre-start / not-active) */
 .level-card.is-covered{
   position:static;
   width:min(92vw,var(--card-w));
@@ -144,7 +144,7 @@ html, body { overscroll-behavior: none; }
 .suggestion-box{
   max-height:180px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;
   background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);
-  width:min(96%,calc(var(--card-w) + 20px));    /* wider list */
+  width:min(96%,calc(var(--card-w) + 20px));
   text-align:left
 }
 .suggestion-item{padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px}
@@ -157,7 +157,7 @@ html, body { overscroll-behavior: none; }
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
 .guess-input-field{
   width:98%;
-  max-width:380px;                 /* slightly wider input */
+  max-width:380px;
   padding:6px 8px;
   font-size:16px;
   border-radius:8px;border:1px solid #ccc;
@@ -171,7 +171,7 @@ html, body { overscroll-behavior: none; }
 .points-label,.points-value{font-weight:700}
 .points-bar{
   width:min(96%,380px);
-  height:16px;                                  /* bigger */
+  height:16px;
   background:#e7efff;border-radius:999px;overflow:hidden;
   border:1px solid #c9d6ff;margin-top:6px;position:relative
 }
@@ -186,7 +186,7 @@ html, body { overscroll-behavior: none; }
 .community-row{display:flex;justify-content:space-between;width:min(96%,420px);font-size:13px;color:#111}
 .community-bar{
   width:min(96%,420px);
-  height:16px;                                  /* bigger */
+  height:16px;
   background:#eef2ff;border-radius:999px;overflow:hidden;
   border:1px solid #c7cffd;margin-top:6px
 }
@@ -222,7 +222,7 @@ html, body { overscroll-behavior: none; }
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
 .complete-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-/* Popups — portaled to body, always full-screen */
+/* Popups */
 .popup-modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:flex;align-items:flex-start;justify-content:center;padding-top:var(--popup-offset);z-index:4000}
 .popup-content{background:#fff;padding:2rem;border-radius:12px;text-align:center;max-width:560px;width:calc(100% - 32px);max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative}
 .popup-rules{max-width:640px;min-height:520px}
