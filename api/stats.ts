@@ -1,25 +1,27 @@
-// /api/stats.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { kv } from '@vercel/kv';
+import { NextResponse } from 'next/server';
+import { Redis } from '@upstash/redis';
 
-// GET /api/stats?date=YYYY-MM-DD  -> { ok:true, date, levels:[pct0..pct4] }
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export const runtime = 'edge';
+
+const redis = Redis.fromEnv();
+
+export async function GET(req: Request) {
   try {
-    const date = String(req.query.date || '');
-    if (!date) return res.status(400).json({ ok: false, error: 'missing-date' });
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get('date');
+    if (!date) return NextResponse.json({ error: 'date required' }, { status: 400 });
 
-    const key = `helmets:stats:${date}`;
-    const totals = await kv.hmget<number>(key, ...[0,1,2,3,4].map(i => `level:${i}:total`));
-    const rights = await kv.hmget<number>(key, ...[0,1,2,3,4].map(i => `level:${i}:correct`));
+    const key = `results:${date}`;
+    const hash = await redis.hgetall<Record<string, number>>(key);
 
-    const levels = [0,1,2,3,4].map(i => {
-      const t = Number(totals[i] || 0);
-      const r = Number(rights[i] || 0);
+    const levels = Array.from({ length: 5 }, (_, i) => {
+      const t = Number(hash?.[`l${i}:total`] ?? 0);
+      const r = Number(hash?.[`l${i}:right`] ?? 0);
       return t ? Math.round((r / t) * 100) : 0;
     });
 
-    return res.status(200).json({ ok: true, date, levels });
+    return NextResponse.json({ date, levels });
   } catch (e: any) {
-    return res.status(500).json({ ok: false, error: String(e) });
+    return NextResponse.json({ error: e?.message || 'fail' }, { status: 500 });
   }
 }
