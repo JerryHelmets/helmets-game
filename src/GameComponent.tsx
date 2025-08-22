@@ -99,11 +99,7 @@ function scoreEmojis(total: number): string {
   return '🏆';
 }
 
-/* ---------- Backdrop & Modal Portals ---------- */
-const Backdrop: React.FC<{ show: boolean }> = ({ show }) => {
-  if (!show) return null;
-  return ReactDOM.createPortal(<div className="level-backdrop" aria-hidden="true" />, document.body);
-};
+/* ---------- Modal Portal ---------- */
 const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   ReactDOM.createPortal(children as any, document.body);
 
@@ -566,338 +562,335 @@ www.helmets-game.com`;
   const prestartClass = !started ? 'is-prestart' : '';
 
   return (
-    <>
-      {/* Full-viewport dim during active play */}
-      <Backdrop show={duringActive} />
+    <div className={`app-container ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
+      {/* Dim ONLY the background: this sits inside the app, under header & active card */}
+      {duringActive && <div className="level-backdrop" aria-hidden="true" />}
 
-      <div className={`app-container ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
-        <header className="game-header">
-          <div className="title-row">
-            <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-            <h1 className="game-title">HELMETS</h1>
+      <header className="game-header">
+        <div className="title-row">
+          <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
+          <h1 className="game-title">HELMETS</h1>
+        </div>
+        <div className="date-line">{gameDateHeader}</div>
+        <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
+        <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
+      </header>
+
+      {gameOver && (
+        <div className="complete-banner">
+          <h3>🎯 Game Complete</h3>
+          <p>Tap each box to view possible answers</p>
+          <div className="complete-actions">
+            <button className="primary-button" onClick={shareNow}>Share Score!</button>
+            <button className="secondary-button small" onClick={() => setShowHistory(true)}>Previous day's games</button>
           </div>
-          <div className="date-line">{gameDateHeader}</div>
-          <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
-          <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
-        </header>
+        </div>
+      )}
 
-        {gameOver && (
-          <div className="complete-banner">
-            <h3>🎯 Game Complete</h3>
-            <p>Tap each box to view possible answers</p>
-            <div className="complete-actions">
-              <button className="primary-button" onClick={shareNow}>Share Score!</button>
-              <button className="secondary-button small" onClick={() => setShowHistory(true)}>Previous day's games</button>
+      {dailyPaths.map((path, idx) => {
+        const isDone = !!guesses[idx];
+        const isFeedback = freezeActiveAfterAnswer === idx;
+        const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || isFeedback);
+        const isCovered = !started || (!isDone && !isActive);
+
+        const blockClass = isDone ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
+        let stateClass = 'level-card--locked';
+        if (isDone && !isFeedback) stateClass = 'level-card--done';
+        else if (isActive) stateClass = 'level-card--active';
+
+        const inputEnabled = isActive && !isDone;
+
+        const multiplier = idx + 1;
+        const wonPoints = awardedPoints[idx] || 0;
+        const showPointsNow = gameOver;
+        const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
+        const badgeClass = showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
+
+        const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
+        const hintAvailable = baseLeft <= 50 || hintShown[idx];
+        const hintPos = hintPositionForLevel(idx);
+
+        return (
+          <div
+            key={idx}
+            className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
+            onClick={() => { if (gameOver) { const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u); } }}
+          >
+            {(isActive || gameOver) && <div className="level-tag">Level {idx + 1}</div>}
+            <div className={badgeClass} aria-hidden="true">{badgeText}</div>
+
+            <div className="level-cover" aria-hidden={!isCovered}>
+              {started && <span className="level-cover-label">Level {idx + 1}</span>}
             </div>
-          </div>
-        )}
 
-        {dailyPaths.map((path, idx) => {
-          const isDone = !!guesses[idx];
-          const isFeedback = freezeActiveAfterAnswer === idx;
-          const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || isFeedback);
-          const isCovered = !started || (!isDone && !isActive);
+            <div className="card-body">
+              {gameOver && <div className="click-hint">Click to view possible answers</div>}
 
-          const blockClass = isDone ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
-          let stateClass = 'level-card--locked';
-          if (isDone && !isFeedback) stateClass = 'level-card--done';
-          else if (isActive) stateClass = 'level-card--active';
-
-          const inputEnabled = isActive && !isDone;
-
-          const multiplier = idx + 1;
-          const wonPoints = awardedPoints[idx] || 0;
-          const showPointsNow = gameOver;
-          const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
-          const badgeClass = showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
-
-          const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
-          const hintAvailable = baseLeft <= 50 || hintShown[idx];
-          const hintPos = hintPositionForLevel(idx);
-
-          return (
-            <div
-              key={idx}
-              className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
-              onClick={() => { if (gameOver) { const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u); } }}
-            >
-              {(isActive || gameOver) && <div className="level-tag">Level {idx + 1}</div>}
-              <div className={badgeClass} aria-hidden="true">{badgeText}</div>
-
-              <div className="level-cover" aria-hidden={!isCovered}>
-                {started && <span className="level-cover-label">Level {idx + 1}</span>}
+              <div className="helmet-sequence">
+                {path.path.map((team, i) => (
+                  <React.Fragment key={i}>
+                    <img
+                      src={`/images/${sanitizeImageName(team)}.png`}
+                      alt={team}
+                      className="helmet-icon"
+                      style={{ ['--i' as any]: `${i * 160}ms` }}
+                    />
+                    {i < path.path.length - 1 && <span className="arrow">→</span>}
+                  </React.Fragment>
+                ))}
               </div>
 
-              <div className="card-body">
-                {gameOver && <div className="click-hint">Click to view possible answers</div>}
-
-                <div className="helmet-sequence">
-                  {path.path.map((team, i) => (
-                    <React.Fragment key={i}>
-                      <img
-                        src={`/images/${sanitizeImageName(team)}.png`}
-                        alt={team}
-                        className="helmet-icon"
-                        style={{ ['--i' as any]: `${i * 160}ms` }}
+              <div className="guess-input-container">
+                <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
+                  {!guesses[idx] ? (
+                    <>
+                      <input
+                        ref={(el) => (inputRefs.current[idx] = el)}
+                        type="text"
+                        placeholder={inputEnabled ? "Guess Player" : "Locked"}
+                        inputMode="text"
+                        autoCorrect="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        autoComplete="off"
+                        onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
+                        onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setFilteredSuggestions(prev => { const n=[...prev]; n[idx]=[]; return n; });
+                          }, 120);
+                        }}
+                        className="guess-input-field guess-input-mobile font-mobile"
+                        disabled={!inputEnabled}
                       />
-                      {i < path.path.length - 1 && <span className="arrow">→</span>}
-                    </React.Fragment>
-                  ))}
-                </div>
 
-                <div className="guess-input-container">
-                  <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
-                    {!guesses[idx] ? (
-                      <>
-                        <input
-                          ref={(el) => (inputRefs.current[idx] = el)}
-                          type="text"
-                          placeholder={inputEnabled ? "Guess Player" : "Locked"}
-                          inputMode="text"
-                          autoCorrect="off"
-                          autoCapitalize="none"
-                          spellCheck={false}
-                          autoComplete="off"
-                          onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
-                          onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
-                          onBlur={() => {
-                            setTimeout(() => {
-                              setFilteredSuggestions(prev => { const n=[...prev]; n[idx]=[]; return n; });
-                            }, 120);
-                          }}
-                          className="guess-input-field guess-input-mobile font-mobile"
-                          disabled={!inputEnabled}
-                        />
-
-                        {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
-                          <div className="suggestion-box fade-in-fast">
-                            {filteredSuggestions[idx].slice(0, 6).map((name, i) => {
-                              const typed = inputRefs.current[idx]?.value || '';
-                              const match = name.toLowerCase().indexOf(typed.toLowerCase());
-                              const pos = posByName[name] || '';
-                              return (
-                                <div
-                                  key={i}
-                                  className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                                  onMouseDown={() => handleGuess(idx, name)}
-                                >
-                                  <span className="suggestion-name">
-                                    {match >= 0 ? (
-                                      <>
-                                        {name.slice(0, match)}
-                                        <strong>{name.slice(match, match + typed.length)}</strong>
-                                        {name.slice(match + typed.length)}
-                                      </>
-                                    ) : name}
-                                  </span>
-                                  {pos && <span className="suggestion-pos">{pos}</span>}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {isActive && (
-                          <div className={`points-wrap ${hintAvailable ? 'hint-available' : ''}`}>
-                            <div className="points-row">
-                              <span className="points-label">Points</span>
-                              <span className="points-value">{baseLeft}</span>
-                            </div>
-                            <div className="points-bar">
-                              <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
-                              <div className="half-line" />
-                            </div>
-
-                            <div className="hint-row">
-                              {hintAvailable && hintPos ? (
-                                <span className="hint-text">Hint: {hintPos}</span>
-                              ) : (
-                                <span className="hint-text pending">Hint at 50</span>
-                              )}
-                            </div>
-
-                            {!hintAvailable && (
-                              <button
-                                className="secondary-button hint-button"
-                                type="button"
-                                onClick={() => revealHintEarly(idx)}
+                      {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
+                        <div className="suggestion-box fade-in-fast">
+                          {filteredSuggestions[idx].slice(0, 6).map((name, i) => {
+                            const typed = inputRefs.current[idx]?.value || '';
+                            const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                            const pos = posByName[name] || '';
+                            return (
+                              <div
+                                key={i}
+                                className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                                onMouseDown={() => handleGuess(idx, name)}
                               >
-                                HINT
-                              </button>
+                                <span className="suggestion-name">
+                                  {match >= 0 ? (
+                                    <>
+                                      {name.slice(0, match)}
+                                      <strong>{name.slice(match, match + typed.length)}</strong>
+                                      {name.slice(match + typed.length)}
+                                    </>
+                                  ) : name}
+                                </span>
+                                {pos && <span className="suggestion-pos">{pos}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {isActive && (
+                        <div className={`points-wrap ${hintAvailable ? 'hint-available' : ''}`}>
+                          <div className="points-row">
+                            <span className="points-label">Points</span>
+                            <span className="points-value">{baseLeft}</span>
+                          </div>
+                          <div className="points-bar">
+                            <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
+                            <div className="half-line" />
+                          </div>
+
+                          <div className="hint-row">
+                            {hintAvailable && hintPos ? (
+                              <span className="hint-text">Hint: {hintPos}</span>
+                            ) : (
+                              <span className="hint-text pending">Hint at 50</span>
                             )}
                           </div>
-                        )}
 
-                        {inputEnabled && (
-                          <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
-                            Give Up
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                        {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
-                        {(!gameOver || isFeedback) && (
-                          <div style={{ marginTop: 6, fontSize: '0.9rem', fontWeight: 700 }}>
-                            {`+${awardedPoints[idx] || 0}`}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                          {!hintAvailable && (
+                            <button
+                              className="secondary-button hint-button"
+                              type="button"
+                              onClick={() => revealHintEarly(idx)}
+                            >
+                              HINT
+                            </button>
+                          )}
+                        </div>
+                      )}
 
-                {gameOver && (
-                  <div className="community-wrap">
-                    <div className="community-row">
-                      <span>Users Correct</span>
-                      <span>{(communityPct[idx] ?? 0)}%</span>
+                      {inputEnabled && (
+                        <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
+                          Give Up
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
+                      {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
+                      {(!gameOver || isFeedback) && (
+                        <div style={{ marginTop: 6, fontSize: '0.9rem', fontWeight: 700 }}>
+                          {`+${awardedPoints[idx] || 0}`}
+                        </div>
+                      )}
                     </div>
-                    <div className="community-bar">
-                      <div
-                        className="community-bar-fill"
-                        style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
-                  <div className="possible-answers">
-                    <strong>Possible Answers:</strong>
-                    <ul className="possible-answers-list">
-                      {answerLists[idx].map((name, i) => (
-                        <li key={i}>👤 {name}{posByName[name] ? ` — ${posByName[name]}` : ''}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {!duringActive && !gameOver && (
-          <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
-        )}
-
-        {/* Popups portaled to body to avoid transform clipping */}
-        {showHistory && (
-          <Portal>
-            <div className="popup-modal">
-              <div className="popup-content">
-                <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
-                <h3>📆 Game History (Last 30 days)</h3>
-                <div className="calendar-grid">
-                  {getLastNDatesPT(30).map((date) => {
-                    const isToday = date === todayPT;
-                    return (
-                      <button
-                        key={date}
-                        className={`calendar-grid-button${isToday ? ' today' : ''}`}
-                        onClick={() => (window.location.href = `/?date=${date}`)}
-                      >
-                        {date.slice(5)}
-                      </button>
-                    );
-                  })}
+                  )}
                 </div>
               </div>
-            </div>
-          </Portal>
-        )}
 
-        {showFeedback && (
-          <Portal>
-            <div className="popup-modal">
-              <div className="popup-content">
-                <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-                <h3>Thoughts for Jerry?</h3>
-                <div className="email-row">
-                  <span className="email-emoji">📧</span>
-                  <span className="email-text">jerry.helmetsgame@gmail.com</span>
+              {gameOver && (
+                <div className="community-wrap">
+                  <div className="community-row">
+                    <span>Users Correct</span>
+                    <span>{(communityPct[idx] ?? 0)}%</span>
+                  </div>
+                  <div className="community-bar">
+                    <div
+                      className="community-bar-fill"
+                      style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }}
+                    />
+                  </div>
                 </div>
-                <button
-                  onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
-                  className="primary-button"
-                >
-                  Copy Email
-                </button>
-                {copied && <p className="copied-msg">Email copied!</p>}
-              </div>
+              )}
+
+              {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
+                <div className="possible-answers">
+                  <strong>Possible Answers:</strong>
+                  <ul className="possible-answers-list">
+                    {answerLists[idx].map((name, i) => (
+                      <li key={i}>👤 {name}{posByName[name] ? ` — ${posByName[name]}` : ''}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          </Portal>
-        )}
-
-        {showRules && (
-          <Portal>
-            <div className="popup-modal fade-in">
-              <div className="popup-content popup-rules">
-                {rulesOpenedManually && (
-                  <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
-                    ✖
-                  </button>
-                )}
-                <h2>WELCOME TO HELMETS!</h2>
-                <h3>HOW TO PLAY</h3>
-
-                {/* Keep only these 4 in bold summary */}
-                <ul className="rules-list football-bullets rules-main">
-                  <li><strong>Match each helmet path to an NFL player</strong></li>
-                  <li><strong>5 levels: one guess per level</strong></li>
-                  <li><strong>Faster response = more points</strong></li>
-                  <li><strong>Hint drops your points bar to 50</strong></li>
-                  <li><strong>0 points if you give up a level</strong></li>
-                </ul>
-
-                <h4 className="fine-print-title">Fine Print:</h4>
-                <ul className="rules-list football-bullets rules-fineprint">
-                  <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
-                  <li>Player must have played in the year 2000 or later</li>
-                  <li>College helmet is the player's draft college</li>
-                  <li>Some paths may have multiple possible answers</li>
-                </ul>
-
-                {!started && !gameOver && (
-                  <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
-                    Start Game!
-                  </button>
-                )}
-              </div>
-            </div>
-          </Portal>
-        )}
-
-        {showPopup && (
-          <Portal>
-            <div className="popup-modal fade-in">
-              <div className="popup-content popup-final">
-                <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
-                <h3 className="popup-title">🎉 Game Complete!</h3>
-                <p className="popup-date">{gameDateMMDDYY}</p>
-                <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
-                <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
-                <button onClick={shareNow} className="primary-button">Share Score!</button>
-              </div>
-            </div>
-          </Portal>
-        )}
-
-        {!duringActive && (
-          <div className="footer-actions">
-            <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
-              💬 Feedback
-            </button>
           </div>
-        )}
+        );
+      })}
 
-        <footer className="site-disclosure">
-          Please note: www.helmets-game.com does not own any of the team, league or event logos depicted within this site.
-          All sports logos contained within this site are properties of their respective leagues, teams, ownership groups
-          and/or organizations.
-        </footer>
-      </div>
-    </>
+      {!duringActive && !gameOver && (
+        <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
+      )}
+
+      {/* Popups use portal so they stack over dim */}
+      {showHistory && (
+        <Portal>
+          <div className="popup-modal">
+            <div className="popup-content">
+              <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+              <h3>📆 Game History (Last 30 days)</h3>
+              <div className="calendar-grid">
+                {getLastNDatesPT(30).map((date) => {
+                  const isToday = date === todayPT;
+                  return (
+                    <button
+                      key={date}
+                      className={`calendar-grid-button${isToday ? ' today' : ''}`}
+                      onClick={() => (window.location.href = `/?date=${date}`)}
+                    >
+                      {date.slice(5)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {showFeedback && (
+        <Portal>
+          <div className="popup-modal">
+            <div className="popup-content">
+              <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
+              <h3>Thoughts for Jerry?</h3>
+              <div className="email-row">
+                <span className="email-emoji">📧</span>
+                <span className="email-text">jerry.helmetsgame@gmail.com</span>
+              </div>
+              <button
+                onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
+                className="primary-button"
+              >
+                Copy Email
+              </button>
+              {copied && <p className="copied-msg">Email copied!</p>}
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {showRules && (
+        <Portal>
+          <div className="popup-modal fade-in">
+            <div className="popup-content popup-rules">
+              {rulesOpenedManually && (
+                <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+                  ✖
+                </button>
+              )}
+              <h2>WELCOME TO HELMETS!</h2>
+              <h3>HOW TO PLAY</h3>
+
+              <ul className="rules-list football-bullets rules-main">
+                <li><strong>Match each helmet path to an NFL player</strong></li>
+                <li><strong>5 levels: one guess per level</strong></li>
+                <li><strong>Faster response = more points</strong></li>
+                <li><strong>Hint drops your points bar to 50</strong></li>
+                <li><strong>0 points if you give up a level</strong></li>
+              </ul>
+
+              <h4 className="fine-print-title">Fine Print:</h4>
+              <ul className="rules-list football-bullets rules-fineprint">
+                <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+                <li>Player must have played in the year 2000 or later</li>
+                <li>College helmet is the player's draft college</li>
+                <li>Some paths may have multiple possible answers</li>
+              </ul>
+
+              {!started && !gameOver && (
+                <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
+                  Start Game!
+                </button>
+              )}
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {showPopup && (
+        <Portal>
+          <div className="popup-modal fade-in">
+            <div className="popup-content popup-final">
+              <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
+              <h3 className="popup-title">🎉 Game Complete!</h3>
+              <p className="popup-date">{gameDateMMDDYY}</p>
+              <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
+              <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
+              <button onClick={shareNow} className="primary-button">Share Score!</button>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {!duringActive && (
+        <div className="footer-actions">
+          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
+            💬 Feedback
+          </button>
+        </div>
+      )}
+
+      <footer className="site-disclosure">
+        Please note: www.helmets-game.com does not own any of the team, league or event logos depicted within this site.
+        All sports logos contained within this site are properties of their respective leagues, teams, ownership groups
+        and/or organizations.
+      </footer>
+    </div>
   );
 };
 
