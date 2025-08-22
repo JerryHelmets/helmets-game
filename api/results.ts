@@ -1,24 +1,25 @@
-// /api/results.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { kv } from '@vercel/kv';
+import { NextResponse } from 'next/server';
+import { Redis } from '@upstash/redis';
 
-// Body: { date: 'YYYY-MM-DD', levelIndex: number(0..4), correct: boolean }
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export const runtime = 'edge';
+
+const redis = Redis.fromEnv();
+
+export async function POST(req: Request) {
   try {
-    if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'method-not-allowed' });
+    const { date, index, correct } = await req.json() as {
+      date: string; index: number; correct: boolean;
+    };
+    if (!date || index == null) {
+      return NextResponse.json({ error: 'bad payload' }, { status: 400 });
+    }
 
-    const { date, levelIndex, correct } = req.body ?? {};
-    if (!date || levelIndex == null) return res.status(400).json({ ok: false, error: 'bad-request' });
+    const key = `results:${date}`;            // one hash per game day
+    await redis.hincrby(key, `l${index}:total`, 1);
+    if (correct) await redis.hincrby(key, `l${index}:right`, 1);
 
-    const key = `helmets:stats:${date}`;
-    await kv.hincrby(key, `level:${levelIndex}:total`, 1);
-    if (correct) await kv.hincrby(key, `level:${levelIndex}:correct`, 1);
-
-    // optional: TTL for daily keys (e.g., keep 60 days)
-    await kv.expire(key, 60 * 60 * 24 * 60);
-
-    return res.status(200).json({ ok: true });
+    return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return res.status(500).json({ ok: false, error: String(e) });
+    return NextResponse.json({ error: e?.message || 'fail' }, { status: 500 });
   }
 }
