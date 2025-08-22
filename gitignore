@@ -1,0 +1,46 @@
+# ---- Dependencies ----
+**/node_modules/
+
+# ---- Build / Output ----
+dist/
+build/
+.next/
+out/
+.vercel/
+
+# ---- Caches ----
+.cache/
+.parcel-cache/
+.vite/
+.turbo/
+turbo/
+.eslintcache
+.stylelintcache
+
+# ---- Coverage / Testing ----
+coverage/
+.cypress/
+playwright-report/
+test-results/
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ---- Environment files (keep examples) ----
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# ---- TypeScript ----
+*.tsbuildinfo
+
+# ---- Editors / OS ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
