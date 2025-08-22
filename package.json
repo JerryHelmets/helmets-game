@@ -9,6 +9,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@vercel/kv": "^3.0.0",
     "canvas-confetti": "^1.9.3",
     "lucide-react": "^0.540.0",
     "papaparse": "^5.5.3",
