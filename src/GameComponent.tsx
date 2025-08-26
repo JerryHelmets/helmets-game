@@ -3,8 +3,10 @@ import confetti from 'canvas-confetti';
 import Papa from 'papaparse';
 import './GameComponent.css';
 
-interface PlayerPath { name: string; path: string[]; path_level: number; }
-interface RawPlayerRow { name: string; college: string; position: string; teams: string; difficulty: string; path: string; path_level: string; }
+interface PlayerPath { name: string; path: string[]; path_level: number; position?: string; difficulty?: number; }
+interface RawPlayerRow {
+  name: string; college: string; position: string; teams: string; difficulty: string; path: string; path_level: string;
+}
 interface Guess { guess: string; correct: boolean; }
 type StoredGuesses = { date: string; guesses: (Guess | null)[]; score: number; awardedPoints: number[]; };
 
@@ -90,17 +92,6 @@ function scoreEmojis(total: number): string {
   return '🏆';
 }
 
-/* ---------- Anonymous device id helper ---------- */
-function getAnonId() {
-  const k = 'helmets-uid';
-  let id = localStorage.getItem(k);
-  if (!id) {
-    id = self.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-    localStorage.setItem(k, id);
-  }
-  return id;
-}
-
 const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
@@ -142,6 +133,9 @@ const GameComponent: React.FC = () => {
   const levelTimerRef = useRef<number | null>(null);
   const levelDelayRef = useRef<number | null>(null);
 
+  // NEW: guard to prevent double-posting per level
+  const postedLevelsRef = useRef<Set<number>>(new Set());
+
   /* viewport / scroll lock */
   useEffect(() => {
     const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
@@ -171,7 +165,9 @@ const GameComponent: React.FC = () => {
           const name = r.name?.trim(), pathStr = r.path?.trim(), lvl = r.path_level?.trim();
           if (!name || !pathStr || !lvl) return;
           const level = parseInt(lvl, 10); if (Number.isNaN(level)) return;
-          arr.push({ name, path: pathStr.split(',').map(s=>s.trim()), path_level: level });
+          const position = r.position?.trim() || undefined;
+          const difficulty = r.difficulty ? Number(r.difficulty) : undefined;
+          arr.push({ name, path: pathStr.split(',').map(s=>s.trim()), path_level: level, position, difficulty });
         });
         if (!cancelled) setPlayers(arr);
       } catch (e) { console.error('❌ CSV load', e); }
@@ -185,6 +181,8 @@ const GameComponent: React.FC = () => {
   /* init for day */
   useEffect(() => {
     if (!dailyPaths.length) return;
+    postedLevelsRef.current = new Set();
+
     let g: (Guess | null)[] = Array(dailyPaths.length).fill(null);
     let s = 0;
     let ap: number[] = Array(dailyPaths.length).fill(0);
@@ -251,13 +249,11 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  /* NEW: persist per-level base points so timer survives refresh */
+  // NEW: persist the ticking base points so it survives refresh
   useEffect(() => {
     if (!dailyPaths.length) return;
-    try {
-      localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
-    } catch {}
-  }, [basePointsLeft, dailyPaths.length, gameDate]);
+    localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
+  }, [basePointsLeft, gameDate, dailyPaths.length]);
 
   /* score flash + count-up (header) */
   useEffect(() => {
@@ -337,7 +333,20 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  /* LIVE Universal Results polling */
+  /* ---- LIVE COMMUNITY % from API (fallback to local history) ---- */
+  const refreshCommunity = async () => {
+    try {
+      const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data?.levels)) {
+        setCommunityPct(
+          data.levels.map((v: number) => Math.max(0, Math.min(100, Math.round(v))))
+        );
+      }
+    } catch {/* ignore */}
+  };
+
   useEffect(() => {
     if (!dailyPaths.length) return;
 
@@ -356,30 +365,16 @@ const GameComponent: React.FC = () => {
       setCommunityPct(pct);
     };
 
-    let stop = false;
-
-    async function load() {
+    (async () => {
       try {
-        const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
-        if (!res.ok) { computeLocal(); return; }
-        const data = await res.json();
-        const arr = (Array.isArray(data?.levels) ? data.levels : null) as number[] | null;
-        if (!stop && arr && arr.length >= dailyPaths.length) {
-          setCommunityPct(arr.slice(0, dailyPaths.length).map(v => Math.max(0, Math.min(100, Math.round(v)))));
-        } else if (!stop) {
-          computeLocal();
-        }
+        await refreshCommunity();
+        // if API didn’t set anything (first run), fallback
+        if (!communityPct.length) computeLocal();
       } catch {
-        if (!stop) computeLocal();
+        computeLocal();
       }
-    }
-
-    load();
-    const id = window.setInterval(load, 15000);
-    const onVis = () => { if (!document.hidden) load(); };
-    document.addEventListener('visibilitychange', onVis);
-
-    return () => { stop = true; window.clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyPaths.length, gameDate]);
 
   /* helpers */
@@ -394,9 +389,36 @@ const GameComponent: React.FC = () => {
   };
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
+  // ------- NEW: post results to API once per level -------
+  async function postResultSafe(levelIndex: number, correct: boolean) {
+    if (postedLevelsRef.current.has(levelIndex)) return;
+    postedLevelsRef.current.add(levelIndex);
+    try {
+      const res = await fetch('/api/results', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ date: gameDate, levelIndex, correct })
+      });
+      if (!res.ok) {
+        postedLevelsRef.current.delete(levelIndex);
+        console.warn('results post failed', await res.text());
+        return;
+      }
+      // refresh live stats after a successful post
+      void refreshCommunity();
+    } catch (e) {
+      postedLevelsRef.current.delete(levelIndex);
+      console.warn('postResult error', e);
+    }
+  }
+
+  // suggestions & input
   const handleInputChange = (index: number, value: string) => {
-    const s = players.filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
-                     .map(p=>p.name).sort().slice(0,20);
+    const s = players
+      .filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
+      .map(p=>p.name)
+      .sort()
+      .slice(0,20);
     const u = [...filteredSuggestions]; u[index]=s; setFilteredSuggestions(u); setHighlightIndex(-1);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
@@ -408,12 +430,18 @@ const GameComponent: React.FC = () => {
 
   const handleGuess = (index: number, value: string) => {
     if (guesses[index]) return;
+
     const correctPath = dailyPaths[index]?.path.join('>');
-    const matched = players.find(p => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath);
+    const matched = players.find(
+      (p) => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath
+    );
 
     const updated = [...guesses];
     updated[index] = { guess: value, correct: !!matched };
     setGuesses(updated);
+
+    // post result to API (guarded)
+    postResultSafe(index, !!matched);
 
     const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[index] ?? MAX_BASE_POINTS));
     const multiplier = index + 1;
@@ -431,20 +459,6 @@ const GameComponent: React.FC = () => {
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
-    /* POST finalize result */
-    try {
-      fetch('/api/guess', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: gameDate,
-          level: index,
-          correct: !!matched,
-          uid: getAnonId(),
-        }),
-      }).catch(() => {});
-    } catch {}
-
     const willComplete = updated.every(Boolean);
     if (willComplete) {
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
@@ -455,26 +469,17 @@ const GameComponent: React.FC = () => {
 
   const handleSkip = (index: number) => {
     if (guesses[index]) return;
+
     const updated = [...guesses];
     updated[index] = { guess: 'No Answer', correct: false };
     setGuesses(updated);
+
+    // post result to API (guarded)
+    postResultSafe(index, false);
+
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
 
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
-
-    /* POST give up result */
-    try {
-      fetch('/api/guess', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: gameDate,
-          level: index,
-          correct: false,
-          uid: getAnonId(),
-        }),
-      }).catch(() => {});
-    } catch {}
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
@@ -643,7 +648,7 @@ www.helmets-game.com`;
 
                       {inputEnabled && (
                         <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
-                          Give Up (0 points)
+                          Give Up
                         </button>
                       )}
                     </>
@@ -755,7 +760,7 @@ www.helmets-game.com`;
             <h4 className="fine-print-title">Fine Print:</h4>
             <ul className="rules-list football-bullets rules-fineprint">
               <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
-              <li>All active or retired NFL players drafted in 2000 or later are eligible</li>
+              <li>Player must have played in the year 2000 or later</li>
               <li>College helmet is the player's draft college</li>
               <li>Some paths may have multiple possible answers</li>
             </ul>
@@ -784,13 +789,9 @@ www.helmets-game.com`;
 
       {!duringActive && (
         <div className="footer-actions">
-          <a
-            href="#"
-            className="feedback-link"
-            onClick={(e) => { e.preventDefault(); setShowFeedback(true); }}
-          >
+          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
             💬 Feedback
-          </a>
+          </button>
         </div>
       )}
 
