@@ -10,7 +10,7 @@ html, body, #root {
   padding: 0;
 }
 
-/* Put the gradient on html (or body) */
+/* Put the gradient on html (or body) with color changes */
 html {
   background:
   linear-gradient(
