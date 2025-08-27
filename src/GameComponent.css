@@ -8,6 +8,8 @@
   --scale: 0.88;
   --card-w: 310px;
   --card-min-h: 110px;
+  /* HINT theme color */
+  --hint-color: #F59E0B; /* amber */
 }
 
 html, body { overscroll-behavior: none; }
@@ -94,8 +96,15 @@ html, body { overscroll-behavior: none; }
 .suggestion-box{max-height:150px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
 .suggestion-item{padding:8px 10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .suggestion-item:hover,.suggestion-item.highlighted{background:#f0f0f0}
+
+/* legacy naming (kept for safety) */
 .suggest-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .suggest-pos{color:#8a8f98;font-size:.85em;margin-left:8px}
+
+/* new naming used by TSX */
+.suggestion-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.suggestion-pos{margin-left:auto;color:#9CA3AF;font-weight:600;font-size:12px}
+
 .fade-in-fast{animation:fadeIn .3s ease-out}
 @keyframes fadeIn{to{opacity:1}}
 
@@ -106,8 +115,35 @@ html, body { overscroll-behavior: none; }
 .points-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
 .points-row{display:flex;justify-content:space-between;width:min(92%,320px);font-size:12px;color:#111}
 .points-label,.points-value{font-weight:700}
-.points-bar{width:min(92%,320px);height:10px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:4px}
-.points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
+.points-bar{
+  width:min(92%,320px);
+  height:12px;                 /* bigger than before */
+  background:#e7efff;
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid #c9d6ff;
+  margin-top:4px;
+  position:relative;           /* for the marker */
+}
+.points-bar-fill{
+  height:100%;
+  width:var(--fill, 100%);     /* driven by TSX */
+  background:#2e6bff;
+  transition:width 1s linear;
+  border-radius:inherit;
+}
+/* dynamic hint marker position (30/60 => 50%) is set by --marker */
+.points-bar-marker{
+  position:absolute;
+  left:var(--marker, 50%);
+  top:-1px;
+  bottom:-1px;
+  width:2px;
+  background:var(--hint-color);
+  opacity:.85;
+  border-radius:1px;
+  pointer-events:none;
+}
 
 /* Community % bar (game complete) */
 .community-wrap{width:100%;margin-top:8px;display:flex;flex-direction:column;align-items:center}
@@ -122,6 +158,21 @@ html, body { overscroll-behavior: none; }
 .secondary-button{background:#fff;color:#111;padding:8px 14px;border:1.5px solid #cfcfcf;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer}
 .secondary-button.small{font-size:.88rem;padding:7px 12px}
 .skip-button{margin-top:18px}
+
+/* Hint UI */
+.hint-row{margin-top:8px}
+.hint-button{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;padding:6px 10px;
+  border-radius:10px;background:transparent;
+  border:1px solid var(--hint-color);color:var(--hint-color);
+}
+.hint-button:hover{background:rgba(245,158,11,0.08)}
+.hint-chip{
+  display:inline-block;font-size:.86rem;font-weight:700;
+  padding:4px 8px;border-radius:8px;
+  background:#FFF7ED;color:#92400E;border:1px solid #FED7AA;
+}
 
 /* Locked answers */
 .locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.85rem;text-align:center}
@@ -171,11 +222,12 @@ html, body { overscroll-behavior: none; }
 .fine-print-title{margin:12px 0 4px;font-size:1rem;font-weight:400}
 .rules-fineprint li{font-weight:400;font-size:.9rem;opacity:.95}
 
-/* Possible answers */
+/* Possible answers / Correct Answers */
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
 .possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.9rem}
 .possible-answers-list li{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .answer-pos{color:#8a8f98;font-size:.9em}
+.possible-answers-list .answer-pos{color:#9CA3AF;margin-left:6px;font-weight:600}
 
 /* Footer */
 .footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
@@ -185,88 +237,4 @@ html, body { overscroll-behavior: none; }
 /* Reduce motion */
 @media (prefers-reduced-motion:reduce){
   .level-card,.level-card--active,.level-card--active .helmet-sequence img,.level-card--active .helmet-sequence .arrow{animation:none!important;transition:none!important}
-}
-/* --- HINT theme & bar marker --- */
-:root {
-  --hint-color: #F59E0B; /* amber */
-}
-
-/* Make the points bar a touch bigger */
-.points-bar {
-  position: relative;       /* for the marker */
-  height: 12px;             /* bigger than before */
-  border-radius: 999px;
-}
-.points-bar-fill {
-  height: 100%;             /* match parent height */
-  border-radius: inherit;
-}
-
-/* 50-point marker that sits centered in the bar */
-.points-bar-marker {
-  position: absolute;
-  left: 50%;
-  top: -1px;
-  bottom: -1px;
-  width: 2px;
-  background: var(--hint-color);
-  opacity: 0.85;
-  border-radius: 1px;
-  pointer-events: none;
-}
-
-/* Hint UI */
-.hint-row { margin-top: 8px; }
-.hint-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: transparent;
-  border: 1px solid var(--hint-color);
-  color: var(--hint-color);
-}
-.hint-button:hover { background: rgba(245, 158, 11, 0.08); }
-
-.hint-chip {
-  display: inline-block;
-  font-size: 0.86rem;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 8px;
-  background: #FFF7ED;        /* amber-50-ish */
-  color: #92400E;             /* amber-900-ish */
-  border: 1px solid #FED7AA;  /* amber-200-ish */
-}
-
-/* Suggestions: name on the left (with highlight), position right-aligned gray */
-.suggestion-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  cursor: pointer;
-}
-.suggestion-item.highlighted { background: #F3F4F6; } /* gray-100 */
-.suggestion-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.suggestion-pos {
-  margin-left: auto;
-  color: #9CA3AF; /* gray-400 */
-  font-weight: 600;
-  font-size: 12px;
-}
-
-/* End-game answer positions */
-.possible-answers-list .answer-pos {
-  color: #9CA3AF; /* gray-400 */
-  margin-left: 6px;
-  font-weight: 600;
 }
