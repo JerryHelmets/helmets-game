@@ -116,6 +116,7 @@ const GameComponent: React.FC = () => {
   const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const dateParam = params.get('date');
   const todayPT = todayPTISO();
+  theGame:
   const gameDate = dateParam || todayPT;
   const gameDateHeader = isoToMDYYYY(gameDate);
   const gameDateMMDDYY = isoToMDYY(gameDate);
@@ -163,27 +164,47 @@ const GameComponent: React.FC = () => {
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
-  /* viewport / scroll lock + full-screen dim */
+  /* viewport / scroll lock + two-layer dim (body and app) */
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const html = document.documentElement;
     const body = document.body;
+    const app = document.querySelector('.app-container') as HTMLElement | null;
+
     const prevHtml = html.style.overflow;
     const prevBody = body.style.overflow;
+
+    const calcDimTop = () => {
+      const hdr = document.querySelector('.game-header') as HTMLElement | null;
+      const headerBottom = hdr ? Math.ceil(hdr.getBoundingClientRect().bottom) : 0;
+      document.documentElement.style.setProperty('--bg-dim-top', `${Math.max(0, headerBottom + 6)}px`);
+      // For app overlay we don't need a top cutout; header sits above via z-index.
+    };
 
     if (lock) {
       html.style.overflow = 'hidden';
       body.style.overflow = 'hidden';
-      body.classList.add('dim-bg');   // add global dim layer (see CSS)
+      body.classList.add('dim-bg');           // body-wide dim (edges/outside app)
+      app?.classList.add('dim-app');          // app-local dim (other cards/content)
+      calcDimTop();
+      window.addEventListener('resize', calcDimTop);
+      window.addEventListener('orientationchange', calcDimTop);
     } else {
       html.style.overflow = '';
       body.style.overflow = '';
       body.classList.remove('dim-bg');
+      app?.classList.remove('dim-app');
+      document.documentElement.style.removeProperty('--bg-dim-top');
     }
+
     return () => {
       html.style.overflow = prevHtml;
       body.style.overflow = prevBody;
       body.classList.remove('dim-bg');
+      app?.classList.remove('dim-app');
+      document.documentElement.style.removeProperty('--bg-dim-top');
+      window.removeEventListener('resize', calcDimTop);
+      window.removeEventListener('orientationchange', calcDimTop);
     };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
@@ -288,7 +309,7 @@ const GameComponent: React.FC = () => {
     prevScoreRef.current = s;
   }, [dailyPaths, gameDate, dateParam, popupDismissed]);
 
-  /* persist state for the day */
+  /* persist */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
@@ -300,7 +321,6 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  // persist ticking base points & start timestamps
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
@@ -509,9 +529,7 @@ const GameComponent: React.FC = () => {
     const max = filteredSuggestions[idx]?.length || 0; if (!max) return;
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
     else if (e.key==='ArrowUp'){ setHighlightIndex(p=>(p-1+max)%max); e.preventDefault(); }
-    else if (e.key==='Escape'){ // dismiss suggestions
-      setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; });
-    }
+    else if (e.key==='Escape'){ setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; }); }
     else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex].name); }
   };
 
@@ -546,7 +564,6 @@ const GameComponent: React.FC = () => {
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
     const willComplete = updated.every(Boolean);
-    // Add 100-point bonus if ALL correct
     const allCorrect = willComplete && updated.every(g => g?.correct);
     if (allCorrect) setScore(prev => prev + 100);
 
@@ -615,7 +632,7 @@ www.helmets-game.com`;
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-        <h1 className="game-title">HELMETS</h1>
+          <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
@@ -725,9 +742,7 @@ www.helmets-game.com`;
                         autoComplete="off"
                         onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
                         onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
-                        onBlur={() => { // dismiss on click-away
-                          setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; });
-                        }}
+                        onBlur={() => { setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; }); }}
                         className="guess-input-field guess-input-mobile font-mobile"
                         disabled={!inputEnabled}
                       />
@@ -770,7 +785,7 @@ www.helmets-game.com`;
                             }}
                           >
                             <div className="points-bar-fill" />
-                            <div className="points-bar-marker" aria-hidden title={`Hint auto-reveals at ${HINT_THRESHOLD}`} />
+                            <div className="points-bar-marker" aria-hidden title={`Hint at ${HINT_THRESHOLD}`} />
                           </div>
                         </div>
                       )}
