@@ -18,12 +18,12 @@ const LS_START_PREFIX = 'helmets-levelstart-';
 
 const REVEAL_HOLD_MS = 2000;
 const FINAL_REVEAL_HOLD_MS = 500;
-const MAX_BASE_POINTS = 100;
+
+/* ---------- TIMER / POINTS ---------- */
+const MAX_BASE_POINTS = 60;   // 60s per level => 60 base points
+const HINT_THRESHOLD = 30;    // hint auto/manual reveal point
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
-
-/* ---------- HINT config ---------- */
-const HINT_THRESHOLD = 50;
 
 /* ---------- PACIFIC TIME helpers ---------- */
 function getPTDateParts(date: Date = new Date()) {
@@ -81,13 +81,13 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   return sel;
 }
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
-  // return {name, position} for Correct Answers list
-  return targets.map(t =>
-    players
-      .filter(p => p.path.join('>')===t.path.join('>'))
-      .map(p=>({ name: p.name, position: p.position }))
-      .sort((a,b)=> a.name.localeCompare(b.name))
-  );
+  // Sort by lowest difficulty; undefined difficulties last; tie-breaker by name
+  return targets.map(t => {
+    const samePath = players.filter(p => p.path.join('>')===t.path.join('>'));
+    return samePath
+      .map(p => ({ name: p.name, position: p.position, difficulty: (typeof p.difficulty==='number' && Number.isFinite(p.difficulty)) ? p.difficulty : Infinity }))
+      .sort((a,b) => a.difficulty===b.difficulty ? a.name.localeCompare(b.name) : a.difficulty - b.difficulty);
+  });
 }
 const isComplete = (guesses: (Guess | null)[], total: number) =>
   guesses.length===total && guesses.every(Boolean);
@@ -97,22 +97,19 @@ function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTE
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---------- score-range emojis ---------- */
+/* ---------- score-range emojis (updated) ---------- */
 function scoreEmojis(total: number): string {
-  if (total < 100) return '🫵🤣🫵';
-  if (total < 200) return '💩';
-  if (total < 300) return '🤡';
-  if (total < 400) return '😐';
-  if (total < 500) return '🤢';
-  if (total < 600) return '😌';
-  if (total < 700) return '👊';
-  if (total < 800) return '👀';
-  if (total < 900) return '👏';
-  if (total < 1000) return '📈';
-  if (total < 1100) return '🔥';
-  if (total < 1200) return '🎯';
-  if (total < 1300) return '🥇';
-  if (total < 1400) return '🚀';
+  if (total < 50) return '🫵🤣🫵';
+  if (total < 100) return '🤡';
+  if (total < 150) return '🤢';
+  if (total < 250) return ':pensive:';
+  if (total < 300) return '👀';
+  if (total < 400) return '👏';
+  if (total < 500) return '📈';
+  if (total < 600) return '🔥';
+  if (total < 700) return '🎯';
+  if (total < 800) return '🥇';
+  if (total < 900) return '🚀';
   return '🏆';
 }
 
@@ -197,7 +194,8 @@ const GameComponent: React.FC = () => {
           if (!name || !pathStr || !lvl) return;
           const level = parseInt(lvl, 10); if (Number.isNaN(level)) return;
           const position = r.position?.trim() || undefined;
-          const difficulty = r.difficulty ? Number(r.difficulty) : undefined;
+          const num = r.difficulty ? Number(r.difficulty) : undefined;
+          const difficulty = (typeof num === 'number' && !Number.isNaN(num)) ? num : undefined;
           arr.push({ name, path: pathStr.split(',').map(s=>s.trim()), path_level: level, position, difficulty });
         });
         if (!cancelled) setPlayers(arr);
@@ -254,7 +252,7 @@ const GameComponent: React.FC = () => {
     if (savedBase) {
       try {
         const parsed = JSON.parse(savedBase);
-        if (Array.isArray(parsed)) base = base.map((v,i)=> (typeof parsed[i]==='number' ? Math.max(0, Math.min(100, parsed[i])) : v));
+        if (Array.isArray(parsed)) base = base.map((v,i)=> (typeof parsed[i]==='number' ? Math.max(0, Math.min(MAX_BASE_POINTS, parsed[i])) : v));
       } catch {}
     }
     setBasePointsLeft(base);
@@ -306,6 +304,7 @@ const GameComponent: React.FC = () => {
 
   useEffect(() => { levelStartAtRef.current = levelStartAt.slice(); }, [levelStartAt]);
 
+  /* header score flash + count-up */
   useEffect(() => {
     const el = document.querySelector('.score-number'); if (!el) return;
     el.classList.add('score-flash'); const t = window.setTimeout(() => el.classList.remove('score-flash'), 600);
@@ -319,6 +318,7 @@ const GameComponent: React.FC = () => {
     raf = requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [score]);
 
+  /* final popup count-up */
   useEffect(() => {
     if (!showPopup) { setFinalDisplayScore(0); return; }
     let raf=0; const start=0, end=score, duration=1800; const t0=performance.now();
@@ -327,6 +327,7 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [showPopup, score]);
 
+  /* completion -> popup (with 5/5 bonus) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
@@ -337,6 +338,7 @@ const GameComponent: React.FC = () => {
     } else if (gameOver) { setGameOver(false); }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed, gameOver]);
 
+  /* focus input */
   useEffect(() => {
     if (!started || gameOver) return;
     if (activeLevel >= 0) {
@@ -345,6 +347,7 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
+  /* per-level countdown (persisted) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -385,6 +388,7 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
+  /* single big confetti on final popup */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
@@ -392,6 +396,7 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
+  /* community % */
   const refreshCommunity = async () => {
     try {
       const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
@@ -434,6 +439,7 @@ const GameComponent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyPaths.length, gameDate]);
 
+  // Preload today's helmet images
   useEffect(() => {
     if (!started || !dailyPaths.length) return;
     const urls: string[] = [];
@@ -496,6 +502,9 @@ const GameComponent: React.FC = () => {
     const max = filteredSuggestions[idx]?.length || 0; if (!max) return;
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
     else if (e.key==='ArrowUp'){ setHighlightIndex(p=>(p-1+max)%max); e.preventDefault(); }
+    else if (e.key==='Escape'){ // dismiss suggestions
+      setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; });
+    }
     else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex].name); }
   };
 
@@ -530,6 +539,10 @@ const GameComponent: React.FC = () => {
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
     const willComplete = updated.every(Boolean);
+    // Add 100-point bonus if ALL correct
+    const allCorrect = willComplete && updated.every(g => g?.correct);
+    if (allCorrect) setScore(prev => prev + 100);
+
     if (willComplete) {
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
     } else {
@@ -552,6 +565,7 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
+      // no bonus, since not all correct
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -705,6 +719,9 @@ www.helmets-game.com`;
                         autoComplete="off"
                         onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
                         onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
+                        onBlur={() => { // dismiss on click-away
+                          setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; });
+                        }}
                         className="guess-input-field guess-input-mobile font-mobile"
                         disabled={!inputEnabled}
                       />
@@ -739,9 +756,15 @@ www.helmets-game.com`;
                             <span className="points-label">Points</span>
                             <span className="points-value">{baseLeft}</span>
                           </div>
-                          <div className="points-bar points-bar--with-marker">
-                            <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
-                            <div className="points-bar-marker" aria-hidden title="Hint auto-reveals at 50" />
+                          <div
+                            className="points-bar points-bar--with-marker"
+                            style={{
+                              ['--fill' as any]: `${(baseLeft / MAX_BASE_POINTS) * 100}%`,
+                              ['--marker' as any]: `${(HINT_THRESHOLD / MAX_BASE_POINTS) * 100}%`,
+                            }}
+                          >
+                            <div className="points-bar-fill" />
+                            <div className="points-bar-marker" aria-hidden title={`Hint auto-reveals at ${HINT_THRESHOLD}`} />
                           </div>
                         </div>
                       )}
