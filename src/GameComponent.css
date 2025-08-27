@@ -186,3 +186,87 @@ html, body { overscroll-behavior: none; }
 @media (prefers-reduced-motion:reduce){
   .level-card,.level-card--active,.level-card--active .helmet-sequence img,.level-card--active .helmet-sequence .arrow{animation:none!important;transition:none!important}
 }
+/* --- HINT theme & bar marker --- */
+:root {
+  --hint-color: #F59E0B; /* amber */
+}
+
+/* Make the points bar a touch bigger */
+.points-bar {
+  position: relative;       /* for the marker */
+  height: 12px;             /* bigger than before */
+  border-radius: 999px;
+}
+.points-bar-fill {
+  height: 100%;             /* match parent height */
+  border-radius: inherit;
+}
+
+/* 50-point marker that sits centered in the bar */
+.points-bar-marker {
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--hint-color);
+  opacity: 0.85;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Hint UI */
+.hint-row { margin-top: 8px; }
+.hint-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--hint-color);
+  color: var(--hint-color);
+}
+.hint-button:hover { background: rgba(245, 158, 11, 0.08); }
+
+.hint-chip {
+  display: inline-block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #FFF7ED;        /* amber-50-ish */
+  color: #92400E;             /* amber-900-ish */
+  border: 1px solid #FED7AA;  /* amber-200-ish */
+}
+
+/* Suggestions: name on the left (with highlight), position right-aligned gray */
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.suggestion-item.highlighted { background: #F3F4F6; } /* gray-100 */
+.suggestion-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.suggestion-pos {
+  margin-left: auto;
+  color: #9CA3AF; /* gray-400 */
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* End-game answer positions */
+.possible-answers-list .answer-pos {
+  color: #9CA3AF; /* gray-400 */
+  margin-left: 6px;
+  font-weight: 600;
+}
