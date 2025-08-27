@@ -14,6 +14,7 @@ const LS_GUESSES = 'helmets-guesses';
 const LS_HISTORY = 'helmets-history';
 const LS_STARTED = 'helmets-started';
 const LS_BASE_PREFIX = 'helmets-basepoints-';
+const LS_START_PREFIX = 'helmets-levelstart-';
 
 const REVEAL_HOLD_MS = 2000;
 const FINAL_REVEAL_HOLD_MS = 500;
@@ -42,10 +43,17 @@ function getLastNDatesPT(n: number) {
 }
 
 /* ---------- daily selection ---------- */
+function toDayIndex(iso: string) {
+  // compute a stable day index from YYYY-MM-DD using UTC midnight
+  const [y,m,d] = iso.split('-').map(x=>parseInt(x,10));
+  const t = Date.UTC(y, (m-1), d);
+  return Math.floor(t / 86400000);
+}
+
 function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
-  const seed = parseInt(dateISO.replace(/-/g, ''), 10);
-  const rng = seededRandom(seed);
+  // No-repeat schedule per level: build unique path keys per level, deterministically permute, then pick by day index.
+  const dayIdx = toDayIndex(dateISO);
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
   players.forEach(p => {
     if (p.path_level>=1 && p.path_level<=5) {
@@ -53,10 +61,23 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
       if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k,p);
     }
   });
+  // deterministic permutation helper
+  const seedRand = (s: number) => () => { const x = Math.sin(s++) * 10000; return x - Math.floor(x); };
+  const shuffle = <T,>(arr: T[], seed: number) => {
+    const a = arr.slice(); const rnd = seedRand(seed);
+    for (let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  };
+
   const sel: PlayerPath[] = [];
   for (let lvl=1; lvl<=5; lvl++) {
-    const a = Array.from(buckets[lvl].values());
-    if (a.length) sel.push(a[Math.floor(rng()*a.length)]);
+    const m = buckets[lvl];
+    const keys = Array.from(m.keys()).sort((a,b)=> a.localeCompare(b));
+    if (!keys.length) continue;
+    // use a fixed seed per level for stable permutation independent of date
+    const perm = shuffle(keys, 0xC0FFEE + lvl);
+    const idx = dayIdx % perm.length;
+    sel.push(m.get(perm[idx])!);
   }
   return sel;
 }
@@ -128,6 +149,10 @@ const GameComponent: React.FC = () => {
   const [awardedPoints, setAwardedPoints] = useState<number[]>([]);
 
   const [communityPct, setCommunityPct] = useState<number[]>([]);
+
+  // Time-based countdown start timestamps (per level)
+  const [levelStartAt, setLevelStartAt] = useState<(number | null)[]>([]);
+  const levelStartAtRef = useRef<(number | null)[]>([]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const levelTimerRef = useRef<number | null>(null);
@@ -228,6 +253,20 @@ const GameComponent: React.FC = () => {
     }
     setBasePointsLeft(base);
 
+    // restore level start timestamps
+    let starts: (number | null)[] = Array(dailyPaths.length).fill(null);
+    const savedStarts = localStorage.getItem(LS_START_PREFIX + gameDate);
+    if (savedStarts) {
+      try {
+        const parsed = JSON.parse(savedStarts);
+        if (Array.isArray(parsed)) {
+          starts = starts.map((v,i)=> (typeof parsed[i]==='number' ? parsed[i] as number : null));
+        }
+      } catch {}
+    }
+    setLevelStartAt(starts);
+    levelStartAtRef.current = starts.slice();
+
     setRevealedAnswers(Array(dailyPaths.length).fill(false));
     setFilteredSuggestions(Array(dailyPaths.length).fill([]));
     setPopupDismissed(false);
@@ -252,8 +291,16 @@ const GameComponent: React.FC = () => {
   // NEW: persist the ticking base points so it survives refresh
   useEffect(() => {
     if (!dailyPaths.length) return;
-    localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
-  }, [basePointsLeft, gameDate, dailyPaths.length]);
+    localStorage\.setItem\(LS_BASE_PREFIX \+ gameDate, JSON\.stringify\(basePointsLeft\)\);
+  }, \[basePointsLeft, gameDate, dailyPaths\.length\]\);
+  // Persist level startAt timestamps
+  useEffect(() => {
+    if (!dailyPaths.length) return;
+    localStorage.setItem(LS_START_PREFIX + gameDate, JSON.stringify(levelStartAt));
+  }, [levelStartAt, gameDate, dailyPaths.length]);
+
+  /* keep startAt ref synced */
+  useEffect(() => { levelStartAtRef.current = levelStartAt.slice(); }, [levelStartAt]);
 
   /* score flash + count-up (header) */
   useEffect(() => {
@@ -312,9 +359,24 @@ const GameComponent: React.FC = () => {
     });
 
     levelDelayRef.current = window.setTimeout(() => {
+      // establish a start timestamp for this level if not already set
+      setLevelStartAt(prev => {
+        const n = prev.length===dailyPaths.length ? [...prev] : Array(dailyPaths.length).fill(null);
+        if (n[idx]==null) n[idx] = Date.now();
+        levelStartAtRef.current = n.slice();
+        return n;
+      });
       levelTimerRef.current = window.setInterval(() => {
         setBasePointsLeft(prev => {
-          const n=[...prev]; const cur=n[idx] ?? MAX_BASE_POINTS; n[idx] = Math.max(0, cur-1); return n;
+          const n = prev.length===dailyPaths.length ? [...prev] : Array(dailyPaths.length).fill(MAX_BASE_POINTS);
+          const st = levelStartAtRef.current[idx];
+          if (st != null) {
+            const elapsedSec = Math.floor((Date.now() - st) / 1000);
+            n[idx] = Math.max(0, MAX_BASE_POINTS - elapsedSec);
+          } else {
+            n[idx] = MAX_BASE_POINTS;
+          }
+          return n;
         });
       }, TICK_MS);
     }, COUNTDOWN_START_DELAY_MS);
@@ -377,8 +439,19 @@ const GameComponent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyPaths.length, gameDate]);
 
+  // Preload today's helmet images (off-DOM); does not affect on-screen animations
+  useEffect(() => {
+    if (!started || !dailyPaths.length) return;
+    const urls: string[] = [];
+    dailyPaths.forEach(p => {
+      p.path.forEach(team => urls.push(`/images/${sanitizeImageName(team)}.png`));
+    });
+    preloadImages(Array.from(new Set(urls)));
+  }, [started, dailyPaths.length]);
+
   /* helpers */
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
+  const preloadImages = (urls: string[]) => { urls.forEach(src=>{ const img=new Image(); img.decoding='async'; img.src=src; }); };
   const stopLevelTimer = () => {
     if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
     if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
@@ -391,8 +464,12 @@ const GameComponent: React.FC = () => {
 
   // ------- NEW: post results to API once per level -------
   async function postResultSafe(levelIndex: number, correct: boolean) {
+    // dedupe per browser for {date, level}
+    const lk = `posted-${gameDate}-L${levelIndex}`;
+    if (localStorage.getItem(lk)) return;
     if (postedLevelsRef.current.has(levelIndex)) return;
     postedLevelsRef.current.add(levelIndex);
+    localStorage.setItem(lk, '1');
     try {
       const res = await fetch('/api/results', {
         method: 'POST',
