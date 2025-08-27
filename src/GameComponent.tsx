@@ -22,6 +22,10 @@ const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
+/* ---------- HINT config (new) ---------- */
+const HINT_THRESHOLD = 50;
+const HINT_COLOR = '#F59E0B'; // amber-ish
+
 /* ---------- PACIFIC TIME helpers ---------- */
 function getPTDateParts(date: Date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -161,6 +165,10 @@ const GameComponent: React.FC = () => {
   // NEW: guard to prevent double-posting per level
   const postedLevelsRef = useRef<Set<number>>(new Set());
 
+  // NEW: per-level hint forced state (true only while on that level)
+  const [hintForced, setHintForced] = useState(false);
+  useEffect(() => { setHintForced(false); }, [activeLevel]);
+
   /* viewport / scroll lock */
   useEffect(() => {
     const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
@@ -288,11 +296,12 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  // NEW: persist the ticking base points so it survives refresh
+  // persist the ticking base points so it survives refresh
   useEffect(() => {
     if (!dailyPaths.length) return;
-    localStorage\.setItem\(LS_BASE_PREFIX \+ gameDate, JSON\.stringify\(basePointsLeft\)\);
-  }, \[basePointsLeft, gameDate, dailyPaths\.length\]\);
+    localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
+  }, [basePointsLeft, gameDate, dailyPaths.length]);
+
   // Persist level startAt timestamps
   useEffect(() => {
     if (!dailyPaths.length) return;
@@ -430,7 +439,6 @@ const GameComponent: React.FC = () => {
     (async () => {
       try {
         await refreshCommunity();
-        // if API didn’t set anything (first run), fallback
         if (!communityPct.length) computeLocal();
       } catch {
         computeLocal();
@@ -464,7 +472,6 @@ const GameComponent: React.FC = () => {
 
   // ------- NEW: post results to API once per level -------
   async function postResultSafe(levelIndex: number, correct: boolean) {
-    // dedupe per browser for {date, level}
     const lk = `posted-${gameDate}-L${levelIndex}`;
     if (localStorage.getItem(lk)) return;
     if (postedLevelsRef.current.has(levelIndex)) return;
@@ -481,7 +488,6 @@ const GameComponent: React.FC = () => {
         console.warn('results post failed', await res.text());
         return;
       }
-      // refresh live stats after a successful post
       void refreshCommunity();
     } catch (e) {
       postedLevelsRef.current.delete(levelIndex);
@@ -517,7 +523,6 @@ const GameComponent: React.FC = () => {
     updated[index] = { guess: value, correct: !!matched };
     setGuesses(updated);
 
-    // post result to API (guarded)
     postResultSafe(index, !!matched);
 
     const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[index] ?? MAX_BASE_POINTS));
@@ -551,7 +556,6 @@ const GameComponent: React.FC = () => {
     updated[index] = { guess: 'No Answer', correct: false };
     setGuesses(updated);
 
-    // post result to API (guarded)
     postResultSafe(index, false);
 
     setAwardedPoints(prev => { const n=[...prev]; n[index]=0; return n; });
@@ -644,6 +648,30 @@ www.helmets-game.com`;
 
         const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
 
+        /* ---- HINT compute for this level (new) ---- */
+        const pathKey = path.path.join('>');
+        const validAnswers = players.filter(p => p.path.join('>') === pathKey);
+        let hintPos: string | null = null;
+        let bestDiff = Number.POSITIVE_INFINITY;
+        for (const p of validAnswers) {
+          const d = (typeof p.difficulty === 'number' && Number.isFinite(p.difficulty)) ? p.difficulty : Number.POSITIVE_INFINITY;
+          if (d < bestDiff && p.position) { bestDiff = d; hintPos = p.position; }
+        }
+        const hintAvailable = !!hintPos;
+        const autoHint = hintAvailable && baseLeft <= HINT_THRESHOLD;
+        const hintVisible = hintAvailable && (autoHint || (hintForced && idx === activeLevel));
+        const revealHintNow = () => {
+          if (!hintAvailable) return;
+          if (baseLeft <= HINT_THRESHOLD) { setHintForced(true); return; }
+          setHintForced(true);
+          setLevelStartAt(prev => {
+            const n = prev.slice();
+            const targetElapsed = MAX_BASE_POINTS - HINT_THRESHOLD; // seconds
+            n[idx] = Date.now() - targetElapsed * 1000;
+            return n;
+          });
+        };
+
         return (
           <div
             key={idx}
@@ -717,9 +745,46 @@ www.helmets-game.com`;
                             <span className="points-label">Points</span>
                             <span className="points-value">{baseLeft}</span>
                           </div>
-                          <div className="points-bar">
+                          {/* Points bar with 50 marker (new: marker & relative positioning) */}
+                          <div className="points-bar" style={{ position: 'relative' }}>
                             <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
+                            <div
+                              aria-hidden
+                              title="Hint auto-reveals at 50"
+                              style={{
+                                position: 'absolute',
+                                top: -1,
+                                bottom: -1,
+                                left: '50%',
+                                width: 2,
+                                background: HINT_COLOR,
+                                opacity: 0.85,
+                                borderRadius: 1,
+                                pointerEvents: 'none'
+                              }}
+                            />
                           </div>
+                        </div>
+                      )}
+
+                      {/* HINT UI (new): below points bar, above Give Up */}
+                      {inputEnabled && hintAvailable && !hintVisible && (
+                        <div style={{ marginTop: 8 }}>
+                          <button
+                            type="button"
+                            className="secondary-button small"
+                            onClick={revealHintNow}
+                            style={{ borderColor: HINT_COLOR, color: HINT_COLOR, background: 'transparent' }}
+                          >
+                            HINT (jump to {HINT_THRESHOLD})
+                          </button>
+                        </div>
+                      )}
+                      {inputEnabled && hintVisible && (
+                        <div style={{ marginTop: 8, fontSize: '0.86rem' }}>
+                          <span style={{ background: '#FFF7ED', color: '#92400E', border: '1px solid #FED7AA', padding: '4px 8px', borderRadius: 8 }}>
+                            Hint: Position — <strong>{hintPos}</strong>
+                          </span>
                         </div>
                       )}
 
