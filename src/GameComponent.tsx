@@ -22,9 +22,8 @@ const MAX_BASE_POINTS = 100;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
-/* ---------- HINT config (new) ---------- */
+/* ---------- HINT config ---------- */
 const HINT_THRESHOLD = 50;
-const HINT_COLOR = '#F59E0B'; // amber-ish
 
 /* ---------- PACIFIC TIME helpers ---------- */
 function getPTDateParts(date: Date = new Date()) {
@@ -48,7 +47,6 @@ function getLastNDatesPT(n: number) {
 
 /* ---------- daily selection ---------- */
 function toDayIndex(iso: string) {
-  // compute a stable day index from YYYY-MM-DD using UTC midnight
   const [y,m,d] = iso.split('-').map(x=>parseInt(x,10));
   const t = Date.UTC(y, (m-1), d);
   return Math.floor(t / 86400000);
@@ -56,7 +54,6 @@ function toDayIndex(iso: string) {
 
 function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
-  // No-repeat schedule per level: build unique path keys per level, deterministically permute, then pick by day index.
   const dayIdx = toDayIndex(dateISO);
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
   players.forEach(p => {
@@ -65,7 +62,6 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
       if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k,p);
     }
   });
-  // deterministic permutation helper
   const seedRand = (s: number) => () => { const x = Math.sin(s++) * 10000; return x - Math.floor(x); };
   const shuffle = <T,>(arr: T[], seed: number) => {
     const a = arr.slice(); const rnd = seedRand(seed);
@@ -78,7 +74,6 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
     const m = buckets[lvl];
     const keys = Array.from(m.keys()).sort((a,b)=> a.localeCompare(b));
     if (!keys.length) continue;
-    // use a fixed seed per level for stable permutation independent of date
     const perm = shuffle(keys, 0xC0FFEE + lvl);
     const idx = dayIdx % perm.length;
     sel.push(m.get(perm[idx])!);
@@ -86,8 +81,12 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   return sel;
 }
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
+  // return {name, position} for Correct Answers list
   return targets.map(t =>
-    players.filter(p => p.path.join('>')===t.path.join('>')).map(p=>p.name).sort()
+    players
+      .filter(p => p.path.join('>')===t.path.join('>'))
+      .map(p=>({ name: p.name, position: p.position }))
+      .sort((a,b)=> a.name.localeCompare(b.name))
   );
 }
 const isComplete = (guesses: (Guess | null)[], total: number) =>
@@ -127,7 +126,7 @@ const GameComponent: React.FC = () => {
 
   const [players, setPlayers] = useState<PlayerPath[]>([]);
   const [guesses, setGuesses] = useState<(Guess | null)[]>([]);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[][]>([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<Array<Array<{name:string; position?:string}>>>([]);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const [score, setScore] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
@@ -162,10 +161,9 @@ const GameComponent: React.FC = () => {
   const levelTimerRef = useRef<number | null>(null);
   const levelDelayRef = useRef<number | null>(null);
 
-  // NEW: guard to prevent double-posting per level
   const postedLevelsRef = useRef<Set<number>>(new Set());
 
-  // NEW: per-level hint forced state (true only while on that level)
+  // HINT state (per-active-level)
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
@@ -296,22 +294,18 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
-  // persist the ticking base points so it survives refresh
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
   }, [basePointsLeft, gameDate, dailyPaths.length]);
 
-  // Persist level startAt timestamps
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_START_PREFIX + gameDate, JSON.stringify(levelStartAt));
   }, [levelStartAt, gameDate, dailyPaths.length]);
 
-  /* keep startAt ref synced */
   useEffect(() => { levelStartAtRef.current = levelStartAt.slice(); }, [levelStartAt]);
 
-  /* score flash + count-up (header) */
   useEffect(() => {
     const el = document.querySelector('.score-number'); if (!el) return;
     el.classList.add('score-flash'); const t = window.setTimeout(() => el.classList.remove('score-flash'), 600);
@@ -325,7 +319,6 @@ const GameComponent: React.FC = () => {
     raf = requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [score]);
 
-  /* final popup count-up */
   useEffect(() => {
     if (!showPopup) { setFinalDisplayScore(0); return; }
     let raf=0; const start=0, end=score, duration=1800; const t0=performance.now();
@@ -334,7 +327,6 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [showPopup, score]);
 
-  /* completion respecting hold */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
@@ -345,7 +337,6 @@ const GameComponent: React.FC = () => {
     } else if (gameOver) { setGameOver(false); }
   }, [guesses, dailyPaths.length, freezeActiveAfterAnswer, showPopup, popupDismissed, gameOver]);
 
-  /* focus input */
   useEffect(() => {
     if (!started || gameOver) return;
     if (activeLevel >= 0) {
@@ -354,7 +345,6 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* per-level countdown (persisted) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -368,7 +358,6 @@ const GameComponent: React.FC = () => {
     });
 
     levelDelayRef.current = window.setTimeout(() => {
-      // establish a start timestamp for this level if not already set
       setLevelStartAt(prev => {
         const n = prev.length===dailyPaths.length ? [...prev] : Array(dailyPaths.length).fill(null);
         if (n[idx]==null) n[idx] = Date.now();
@@ -396,7 +385,6 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* single big confetti on final popup */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
@@ -404,7 +392,6 @@ const GameComponent: React.FC = () => {
     }
   }, [showPopup, confettiFired]);
 
-  /* ---- LIVE COMMUNITY % from API (fallback to local history) ---- */
   const refreshCommunity = async () => {
     try {
       const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
@@ -447,7 +434,6 @@ const GameComponent: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyPaths.length, gameDate]);
 
-  // Preload today's helmet images (off-DOM); does not affect on-screen animations
   useEffect(() => {
     if (!started || !dailyPaths.length) return;
     const urls: string[] = [];
@@ -470,7 +456,6 @@ const GameComponent: React.FC = () => {
   };
   const advanceToNext = (index: number) => { if (index < dailyPaths.length - 1) setActiveLevel(index + 1); };
 
-  // ------- NEW: post results to API once per level -------
   async function postResultSafe(levelIndex: number, correct: boolean) {
     const lk = `posted-${gameDate}-L${levelIndex}`;
     if (localStorage.getItem(lk)) return;
@@ -497,18 +482,21 @@ const GameComponent: React.FC = () => {
 
   // suggestions & input
   const handleInputChange = (index: number, value: string) => {
-    const s = players
-      .filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
-      .map(p=>p.name)
-      .sort()
-      .slice(0,20);
-    const u = [...filteredSuggestions]; u[index]=s; setFilteredSuggestions(u); setHighlightIndex(-1);
+    const val = value.toLowerCase();
+    const map = new Map<string, {name:string; position?:string}>();
+    players.forEach(p => {
+      if (p.name.toLowerCase().includes(val)) {
+        if (!map.has(p.name)) map.set(p.name, { name: p.name, position: p.position });
+      }
+    });
+    const arr = Array.from(map.values()).sort((a,b)=> a.name.localeCompare(b.name)).slice(0, 10);
+    const u = [...filteredSuggestions]; u[index]=arr; setFilteredSuggestions(u); setHighlightIndex(-1);
   };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
     const max = filteredSuggestions[idx]?.length || 0; if (!max) return;
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
     else if (e.key==='ArrowUp'){ setHighlightIndex(p=>(p-1+max)%max); e.preventDefault(); }
-    else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex]); }
+    else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex].name); }
   };
 
   const handleGuess = (index: number, value: string) => {
@@ -648,7 +636,7 @@ www.helmets-game.com`;
 
         const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
 
-        /* ---- HINT compute for this level (new) ---- */
+        /* ---- HINT for this level ---- */
         const pathKey = path.path.join('>');
         const validAnswers = players.filter(p => p.path.join('>') === pathKey);
         let hintPos: string | null = null;
@@ -666,7 +654,7 @@ www.helmets-game.com`;
           setHintForced(true);
           setLevelStartAt(prev => {
             const n = prev.slice();
-            const targetElapsed = MAX_BASE_POINTS - HINT_THRESHOLD; // seconds
+            const targetElapsed = MAX_BASE_POINTS - HINT_THRESHOLD;
             n[idx] = Date.now() - targetElapsed * 1000;
             return n;
           });
@@ -723,16 +711,22 @@ www.helmets-game.com`;
 
                       {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                         <div className="suggestion-box fade-in-fast">
-                          {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
+                          {filteredSuggestions[idx].slice(0, 8).map((s, i) => {
                             const typed = inputRefs.current[idx]?.value || '';
-                            const match = name.toLowerCase().indexOf(typed.toLowerCase());
+                            const match = s.name.toLowerCase().indexOf(typed.toLowerCase());
+                            const before = match >= 0 ? s.name.slice(0, match) : s.name;
+                            const mid = match >= 0 ? s.name.slice(match, match + typed.length) : '';
+                            const after = match >= 0 ? s.name.slice(match + typed.length) : '';
                             return (
                               <div
-                                key={i}
+                                key={`${s.name}-${i}`}
                                 className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                                onMouseDown={() => handleGuess(idx, name)}
+                                onMouseDown={() => handleGuess(idx, s.name)}
                               >
-                                {match >= 0 ? (<>{name.slice(0, match)}<strong>{name.slice(match, match + typed.length)}</strong>{name.slice(match + typed.length)}</>) : name}
+                                <span className="suggestion-name">
+                                  {match >= 0 ? (<>{before}<strong>{mid}</strong>{after}</>) : s.name}
+                                </span>
+                                {s.position && <span className="suggestion-pos">{s.position}</span>}
                               </div>
                             );
                           })}
@@ -745,46 +739,24 @@ www.helmets-game.com`;
                             <span className="points-label">Points</span>
                             <span className="points-value">{baseLeft}</span>
                           </div>
-                          {/* Points bar with 50 marker (new: marker & relative positioning) */}
-                          <div className="points-bar" style={{ position: 'relative' }}>
+                          <div className="points-bar points-bar--with-marker">
                             <div className="points-bar-fill" style={{ ['--fill' as any]: `${baseLeft}%` }} />
-                            <div
-                              aria-hidden
-                              title="Hint auto-reveals at 50"
-                              style={{
-                                position: 'absolute',
-                                top: -1,
-                                bottom: -1,
-                                left: '50%',
-                                width: 2,
-                                background: HINT_COLOR,
-                                opacity: 0.85,
-                                borderRadius: 1,
-                                pointerEvents: 'none'
-                              }}
-                            />
+                            <div className="points-bar-marker" aria-hidden title="Hint auto-reveals at 50" />
                           </div>
                         </div>
                       )}
 
-                      {/* HINT UI (new): below points bar, above Give Up */}
+                      {/* HINT: below bar, above Give Up */}
                       {inputEnabled && hintAvailable && !hintVisible && (
-                        <div style={{ marginTop: 8 }}>
-                          <button
-                            type="button"
-                            className="secondary-button small"
-                            onClick={revealHintNow}
-                            style={{ borderColor: HINT_COLOR, color: HINT_COLOR, background: 'transparent' }}
-                          >
-                            HINT (jump to {HINT_THRESHOLD})
+                        <div className="hint-row">
+                          <button type="button" className="hint-button" onClick={revealHintNow}>
+                            HINT
                           </button>
                         </div>
                       )}
                       {inputEnabled && hintVisible && (
-                        <div style={{ marginTop: 8, fontSize: '0.86rem' }}>
-                          <span style={{ background: '#FFF7ED', color: '#92400E', border: '1px solid #FED7AA', padding: '4px 8px', borderRadius: 8 }}>
-                            Hint: Position — <strong>{hintPos}</strong>
-                          </span>
+                        <div className="hint-row">
+                          <span className="hint-chip">{hintPos}</span>
                         </div>
                       )}
 
@@ -822,9 +794,11 @@ www.helmets-game.com`;
 
               {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
                 <div className="possible-answers">
-                  <strong>Possible Answers:</strong>
+                  <strong>Correct Answers:</strong>
                   <ul className="possible-answers-list">
-                    {answerLists[idx].map((name, i) => (<li key={i}>👤 {name}</li>))}
+                    {answerLists[idx].map((p, i) => (
+                      <li key={i}>👤 {p.name}{p.position ? <span className="answer-pos">({p.position})</span> : null}</li>
+                    ))}
                   </ul>
                 </div>
               )}
