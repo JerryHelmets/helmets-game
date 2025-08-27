@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 136px;
+  --active-top: 148px; /* nudged down slightly from 136px */
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -13,6 +13,17 @@
 }
 
 html, body { overscroll-behavior: none; }
+
+/* Full-screen dim when body has .dim-bg (works despite transformed containers) */
+body.dim-bg::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.68);
+  backdrop-filter:blur(3px);
+  z-index:1000;           /* below cards (1105) and popups (1300) */
+  pointer-events:none;
+}
 
 /* Score flash */
 @keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
@@ -34,8 +45,8 @@ html, body { overscroll-behavior: none; }
 @media (max-width:430px){:root{--scale:.86;--card-w:300px}}
 @media (max-width:380px){:root{--scale:.84;--card-w:290px}}
 
-/* Dim backdrop during active level */
-.level-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px);z-index:1005;pointer-events:none}
+/* Dim backdrop (kept for compatibility; global body overlay handles full-screen dim) */
+.level-backdrop{position:fixed;inset:0;background:transparent;z-index:1005;pointer-events:none}
 
 /* Cards */
 .path-block{position:relative;border:2px solid;border-radius:14px;padding:10px;margin-bottom:12px;box-shadow:0 1px 1px rgba(0,0,0,.06);width:min(86vw,var(--card-w));margin-left:auto;margin-right:auto;text-align:center;transition:background-color .25s,border-color .25s;background:#f7f7f7}
@@ -52,8 +63,8 @@ html, body { overscroll-behavior: none; }
 .level-card.is-covered .card-body,.level-card.is-covered .helmet-sequence,.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
 
-/* Game-complete: short cards & matching widths */
-.is-complete .level-card{width:min(92vw,calc(var(--card-w) + 36px));min-height:44px;padding:8px}
+/* Game-complete: short cards & matching widths (wider) */
+.is-complete .level-card{width:min(96vw,calc(var(--card-w) + 48px));min-height:44px;padding:8px}
 .is-complete .card-body{margin-top:26px}
 .is-complete .level-tag{font-size:.78rem;padding:4px 8px}
 .is-complete .level-badge{right:8px;left:auto}
@@ -190,8 +201,8 @@ html, body { overscroll-behavior: none; }
 .calendar-grid-button{padding:6px;font-size:.75rem;border:1.5px solid #ccc;border-radius:6px;background:#f2f2f2}
 .calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
 
-/* Completed banner — width matches cards */
-.complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(92vw,calc(var(--card-w) + 36px))}
+/* Completed banner — widen to match end-game cards */
+.complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(96vw,calc(var(--card-w) + 48px))}
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
 .complete-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
