@@ -51,7 +51,6 @@ function toDayIndex(iso: string) {
   const t = Date.UTC(y, (m-1), d);
   return Math.floor(t / 86400000);
 }
-
 function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   const dayIdx = toDayIndex(dateISO);
@@ -102,12 +101,12 @@ function scoreEmojis(total: number): string {
   if (total < 50) return '🫵🤣🫵';
   if (total < 100) return '🤡';
   if (total < 150) return '🤢';
-  if (total < 250) return ':pensive:';
+  if (total < 250) return '😔';   // pensive
   if (total < 300) return '👀';
   if (total < 400) return '👏';
   if (total < 500) return '📈';
-  if (total < 600) return '🔥';
-  if (total < 700) return '🎯';
+  if (total < 600) return '🎯';   // flipped
+  if (total < 700) return '🔥';   // flipped
   if (total < 800) return '🥇';
   if (total < 900) return '🚀';
   return '🏆';
@@ -164,19 +163,28 @@ const GameComponent: React.FC = () => {
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
-  /* viewport / scroll lock */
-  useEffect(() => {
-    const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-    setH(); const onOri = () => setTimeout(setH, 250);
-    window.addEventListener('orientationchange', onOri);
-    return () => window.removeEventListener('orientationchange', onOri);
-  }, []);
+  /* viewport / scroll lock + full-screen dim */
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
-    const oh = document.documentElement.style.overflow, ob = document.body.style.overflow;
-    if (lock){ document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden'; }
-    else { document.documentElement.style.overflow=''; document.body.style.overflow=''; }
-    return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+
+    if (lock) {
+      html.style.overflow = 'hidden';
+      body.style.overflow = 'hidden';
+      body.classList.add('dim-bg');   // add global dim layer (see CSS)
+    } else {
+      html.style.overflow = '';
+      body.style.overflow = '';
+      body.classList.remove('dim-bg');
+    }
+    return () => {
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
+      body.classList.remove('dim-bg');
+    };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
   /* load players */
@@ -278,7 +286,7 @@ const GameComponent: React.FC = () => {
 
     setDisplayScore(s);
     prevScoreRef.current = s;
-  }, [dailyPaths, gameDate, dateParam]);
+  }, [dailyPaths, gameDate, dateParam, popupDismissed]);
 
   /* persist state for the day */
   useEffect(() => {
@@ -292,16 +300,15 @@ const GameComponent: React.FC = () => {
     }
   }, [guesses, score, awardedPoints, gameDate, dailyPaths.length, dateParam]);
 
+  // persist ticking base points & start timestamps
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
   }, [basePointsLeft, gameDate, dailyPaths.length]);
-
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_START_PREFIX + gameDate, JSON.stringify(levelStartAt));
   }, [levelStartAt, gameDate, dailyPaths.length]);
-
   useEffect(() => { levelStartAtRef.current = levelStartAt.slice(); }, [levelStartAt]);
 
   /* header score flash + count-up */
@@ -565,7 +572,6 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
-      // no bonus, since not all correct
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -609,7 +615,7 @@ www.helmets-game.com`;
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
@@ -757,7 +763,7 @@ www.helmets-game.com`;
                             <span className="points-value">{baseLeft}</span>
                           </div>
                           <div
-                            className="points-bar points-bar--with-marker"
+                            className="points-bar"
                             style={{
                               ['--fill' as any]: `${(baseLeft / MAX_BASE_POINTS) * 100}%`,
                               ['--marker' as any]: `${(HINT_THRESHOLD / MAX_BASE_POINTS) * 100}%`,
