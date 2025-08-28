@@ -113,7 +113,7 @@ html, body { overscroll-behavior: none; }
 .level-card--active .helmet-sequence .arrow{opacity:0;animation:arrow-fade-in 420ms ease-out calc(var(--i,0ms) + 220ms) both}
 
 /* Card enter */
-@keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}
+@keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
 /* Suggestions + input */
 .suggestion-box{max-height:150px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
