@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 142px;
+  --active-top: 148px;
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -439,4 +439,50 @@ input, select, textarea { font-size: 16px; }
     opacity: 1;
     transform: translateX(-50%) translateY(0) scale(var(--enter-scale, 1));
   }
+}
+/* =========================================================
+   SUBTLER ACTIVE SCALE + SLIGHTLY LARGER HELMETS (MOBILE)
+   (append at end of GameComponent.css)
+   ========================================================= */
+
+/* Gentler active scaling */
+:root{
+  --m-active-scale: .94;   /* was ~.89/.90 — less shrink */
+}
+
+/* Ensure the animation keeps the new scale during pop-in/reveal */
+@keyframes card-enter{
+  from{
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px) scale(var(--enter-scale, 1));
+  }
+  to{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(var(--enter-scale, 1));
+  }
+}
+
+/* Phones */
+@media (max-width: 430px){
+  /* Active card: compose translate + the gentler scale, and feed
+     the scale into the enter animation so it never 'snaps' back */
+  .level-card--active{
+    --enter-scale: var(--m-active-scale);
+    transform: translateX(-50%) scale(var(--m-active-scale)) !important;
+    transform-origin: top center;
+  }
+
+  /* Helmets a bit larger overall and in the active card */
+  .helmet-icon{ width: 58px; height: 58px; }                 /* was ~52–56 */
+  .level-card--active .helmet-icon{ width: 66px; height: 66px; } /* was ~64 */
+}
+
+/* Smaller phones */
+@media (max-width: 380px){
+  :root{ --m-active-scale: .92; }  /* a touch more than before */
+
+  .level-card--active{ --enter-scale: var(--m-active-scale); }
+
+  .helmet-icon{ width: 54px; height: 54px; }                 /* up from ~48–52 */
+  .level-card--active .helmet-icon{ width: 62px; height: 62px; } /* up from ~60–64 */
 }
