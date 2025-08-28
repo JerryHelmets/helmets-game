@@ -334,7 +334,7 @@ html, body { overscroll-behavior: none; }
   :root {
     --m-scale: .82;
     --m-scale-pop: .86;
-    --m-scale-banner: .86;
+    --m-scale-banner: .84;
     /* if you want the active card a touch lower on phones, bump this a few px */
     /* --active-top: 148px; */
   }
@@ -384,7 +384,7 @@ html, body { overscroll-behavior: none; }
   :root {
     --m-scale: .78;
     --m-scale-pop: .82;
-    --m-scale-banner: .82;
+    --m-scale-banner: .80;
     /* --active-top: 150px;  uncomment if you want it a hair lower here */
   }
 
@@ -395,4 +395,65 @@ html, body { overscroll-behavior: none; }
   .primary-button, .share-score-button { padding: 8px 12px; font-size: .9rem; }
   .secondary-button { padding: 6px 10px; font-size: .82rem; }
   .skip-button { margin-top: 12px; padding: 7px 11px; font-size: .86rem; }
+}
+/* =========================================================
+   FOCUS ZOOM FIX • END-GAME TIGHTER • ACTIVE CARD ONLY SMALLER
+   (Drop-in overrides)
+   ========================================================= */
+
+/* 1) Stop mobile zoom on input focus (iOS zooms if font-size < 16px) */
+.guess-input-field {
+  font-size: 16px !important;       /* ensure >= 16px on all screens */
+  -webkit-text-size-adjust: 100%;
+}
+input, select, textarea { font-size: 16px; }  /* belt + suspenders */
+
+/* 2) Make end-game level cards tighter together */
+.is-complete .path-block { 
+  margin-bottom: 6px;               /* was ~12px */
+}
+.is-complete .level-card {
+  padding-top: 6px;                 /* slightly tighter vertical rhythm */
+  padding-bottom: 6px;
+}
+
+/* 3) On mobile, scale down ONLY the active level card (not resting/end-game) */
+@media (max-width: 430px) {
+  :root {
+    --active-top: 148px;            /* nudge down a touch (adjust to taste) */
+    --m-scale-active: .78;          /* active card scale (smaller = more shrink) */
+  }
+
+  /* Ensure non-active / end-game cards are NOT scaled */
+  .level-card { 
+    transform: none !important;     /* reset any previous mobile scaling */
+    transform-origin: top center;
+  }
+
+  /* Compose the active card’s translate with a smaller scale */
+  .level-card--active {
+    transform: translateX(-50%) scale(var(--m-scale-active)) !important;
+    transform-origin: top center;
+    max-height: min(360px, calc(var(--app-height, 100svh) - var(--active-top) - 96px));
+    min-height: 232px;              /* a touch shorter */
+    padding: 10px 12px;             /* slightly slimmer interior */
+  }
+
+  /* Keep the input readable to avoid focus-zoom while the card is scaled */
+  .guess-input-field {
+    max-width: 260px;
+    font-size: 16px !important;     /* don’t drop below 16px on phones */
+    padding: 4px 6px;
+  }
+}
+
+@media (max-width: 380px) {
+  :root { 
+    --active-top: 150px; 
+    --m-scale-active: .74;          /* a bit smaller on very small phones */
+  }
+  .guess-input-field {
+    max-width: 240px;
+    font-size: 16px !important;
+  }
 }
