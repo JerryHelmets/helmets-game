@@ -98,7 +98,7 @@ function scoreEmojis(total: number): string {
   if (total < 50) return '🫵🤣🫵';
   if (total < 100) return '🤡';
   if (total < 150) return '🤢';
-  if (total < 250) return '😔';   // pensive
+  if (total < 250) return '😔';
   if (total < 300) return '👀';
   if (total < 400) return '👏';
   if (total < 500) return '📈';
@@ -158,7 +158,7 @@ const GameComponent: React.FC = () => {
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
-  /* --------- SCROLL LOCK (header will be dimmed now) --------- */
+  /* --------- SCROLL LOCK --------- */
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const html = document.documentElement;
@@ -582,14 +582,20 @@ www.helmets-game.com`;
     }, 420);
   };
 
-  const duringActive = started && !gameOver && !showPopup;
+  const someLevelActive = (() => {
+    if (!started || gameOver) return false;
+    if (showPopup || showRules || showHistory || showFeedback) return false;
+    const idx = activeLevel;
+    return idx >= 0 && !guesses[idx];
+  })();
+
   const prestartClass = !started ? 'is-prestart' : '';
 
   return (
     <div className={`app-container ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
 
-      {/* Darker, full-viewport dim (header included) during active level */}
-      {duringActive && <div className="page-dim" aria-hidden="true" />}
+      {/* background dimmer (below header & active card; above everything else) */}
+      {someLevelActive && <div className="page-dim" aria-hidden="true" />}
 
       <header className="game-header">
         <div className="title-row">
@@ -618,7 +624,7 @@ www.helmets-game.com`;
         {dailyPaths.map((path, idx) => {
           const isDone = !!guesses[idx];
           const isFeedback = freezeActiveAfterAnswer === idx;
-          const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || isFeedback);
+          const isActive = (started && !gameOver && !showPopup && ((idx === activeLevel && !isDone) || isFeedback));
           const isCovered = !started || (!isDone && !isActive);
 
           const blockClass = isDone ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
@@ -813,14 +819,14 @@ www.helmets-game.com`;
 
       </div>{/* /scale-wrap */}
 
-      {!duringActive && !gameOver && (
+      {!showPopup && !gameOver && (
         <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       )}
 
       {showHistory && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
+        <div className="popup-modal" onClick={() => setShowHistory(false)}>
+          <div className="popup-content" onClick={(e)=>e.stopPropagation()}>
+            <button className="close-button" type="button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
               {getLastNDatesPT(30).map((date) => {
@@ -841,9 +847,9 @@ www.helmets-game.com`;
       )}
 
       {showFeedback && (
-        <div className="popup-modal">
-          <div className="popup-content">
-            <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
+        <div className="popup-modal" onClick={() => setShowFeedback(false)}>
+          <div className="popup-content" onClick={(e)=>e.stopPropagation()}>
+            <button className="close-button" type="button" onClick={() => setShowFeedback(false)}>✖</button>
             <h3>Thoughts for Jerry?</h3>
             <div className="email-row">
               <span className="email-emoji">📧</span>
@@ -852,6 +858,7 @@ www.helmets-game.com`;
             <button
               onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
               className="primary-button"
+              type="button"
             >
               Copy Email
             </button>
@@ -861,10 +868,10 @@ www.helmets-game.com`;
       )}
 
       {showRules && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content popup-rules">
+        <div className="popup-modal fade-in" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+          <div className="popup-content popup-rules" onClick={(e)=>e.stopPropagation()}>
             {rulesOpenedManually && (
-              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+              <button className="close-button" type="button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
                 ✖
               </button>
             )}
@@ -888,7 +895,7 @@ www.helmets-game.com`;
             </ul>
 
             {!started && !gameOver && (
-              <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
+              <button onClick={handleStartGame} className="primary-button" type="button" style={{ marginTop: 12 }}>
                 Start Game!
               </button>
             )}
@@ -897,21 +904,21 @@ www.helmets-game.com`;
       )}
 
       {showPopup && (
-        <div className="popup-modal fade-in">
-          <div className="popup-content popup-final">
-            <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
+        <div className="popup-modal fade-in" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>
+          <div className="popup-content popup-final" onClick={(e)=>e.stopPropagation()}>
+            <button className="close-button" type="button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
             <h3 className="popup-title">🎉 Game Complete!</h3>
             <p className="popup-date">{gameDateMMDDYY}</p>
             <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
             <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
-            <button onClick={shareNow} className="primary-button">Share Score!</button>
+            <button onClick={shareNow} className="primary-button" type="button">Share Score!</button>
           </div>
         </div>
       )}
 
-      {!duringActive && (
+      {!showPopup && (
         <div className="footer-actions">
-          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
+          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom" type="button">
             💬 Feedback
           </button>
         </div>
