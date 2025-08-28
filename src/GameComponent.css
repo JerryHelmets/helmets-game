@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 136px;
+  --active-top: 142px;
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -29,8 +29,8 @@ html, body { overscroll-behavior: none; }
 /* App shell */
 .app-container{max-width:820px;margin:0 auto;padding:16px 8px 32px;overflow-x:hidden;min-height:var(--app-height,100svh);transform-origin:top center}
 .app-container.app-fixed{position:fixed;inset:0;height:var(--app-height,100svh);overflow:hidden;background:transparent}
-@media (max-width:430px){:root{--scale:.86;--card-w:300px}}
-@media (max-width:380px){:root{--scale:.84;--card-w:290px}}
+@media (max-width:430px){:root{--scale:.82;--card-w:300px}}
+@media (max-width:380px){:root{--scale:.80;--card-w:280px}}
 
 /* Dim backdrop during active level */
 .level-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px);z-index:1005;pointer-events:none}
@@ -43,7 +43,7 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
 /* Active card */
-.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 24px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:260px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
+.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 24px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:220px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
 
 /* Covered cards */
 .level-card.is-covered{position:static;width:min(86vw,var(--card-w));min-height:var(--card-min-h);max-height:var(--card-min-h);overflow:hidden;background:#1b2838!important;border-color:#25354a!important}
