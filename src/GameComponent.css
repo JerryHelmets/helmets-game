@@ -274,7 +274,7 @@ html, body { overscroll-behavior: none; }
 
 /* Nudge active card down slightly; bring popups closer to top */
 :root {
-  --active-top: 144px;   /* was 136px */
+  --active-top: 150px;   /* was 136px */
   --popup-offset: 96px;  /* was ~150px */
 }
 
