@@ -19,9 +19,9 @@ const LS_START_PREFIX = 'helmets-levelstart-';
 const REVEAL_HOLD_MS = 2000;
 const FINAL_REVEAL_HOLD_MS = 500;
 
-/* ----- TIMER / POINTS ----- */
-const MAX_BASE_POINTS = 60;
-const HINT_THRESHOLD = 30;
+/* ---------- TIMER / POINTS ---------- */
+const MAX_BASE_POINTS = 60;   // 60s per level => 60 base points
+const HINT_THRESHOLD = 30;    // hint auto/manual reveal point
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
@@ -51,6 +51,8 @@ function toDayIndex(iso: string) {
   const t = Date.UTC(y, (m-1), d);
   return Math.floor(t / 86400000);
 }
+
+function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   const dayIdx = toDayIndex(dateISO);
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
@@ -60,12 +62,13 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
       if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k,p);
     }
   });
+  const seedRand = (s: number) => () => { const x = Math.sin(s++) * 10000; return x - Math.floor(x); };
   const shuffle = <T,>(arr: T[], seed: number) => {
-    const a = arr.slice(); let s = seed;
-    const rnd = () => { const x = Math.sin(s++) * 10000; return x - Math.floor(x); };
+    const a = arr.slice(); const rnd = seedRand(seed);
     for (let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
     return a;
   };
+
   const sel: PlayerPath[] = [];
   for (let lvl=1; lvl<=5; lvl++) {
     const m = buckets[lvl];
@@ -78,9 +81,10 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   return sel;
 }
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
+  // Sort by lowest difficulty; undefined difficulties last; tie-breaker by name
   return targets.map(t => {
-    const same = players.filter(p => p.path.join('>')===t.path.join('>'));
-    return same
+    const samePath = players.filter(p => p.path.join('>')===t.path.join('>'));
+    return samePath
       .map(p => ({ name: p.name, position: p.position, difficulty: (typeof p.difficulty==='number' && Number.isFinite(p.difficulty)) ? p.difficulty : Infinity }))
       .sort((a,b) => a.difficulty===b.difficulty ? a.name.localeCompare(b.name) : a.difficulty - b.difficulty);
   });
@@ -93,7 +97,7 @@ function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTE
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---------- score-range emojis ---------- */
+/* ---------- score-range emojis (updated) ---------- */
 function scoreEmojis(total: number): string {
   if (total < 50) return '🫵🤣🫵';
   if (total < 100) return '🤡';
@@ -102,8 +106,8 @@ function scoreEmojis(total: number): string {
   if (total < 300) return '👀';
   if (total < 400) return '👏';
   if (total < 500) return '📈';
-  if (total < 600) return '🎯';   // flipped
-  if (total < 700) return '🔥';   // flipped
+  if (total < 600) return '🎯';
+  if (total < 700) return '🔥';
   if (total < 800) return '🥇';
   if (total < 900) return '🚀';
   return '🏆';
@@ -146,6 +150,7 @@ const GameComponent: React.FC = () => {
 
   const [communityPct, setCommunityPct] = useState<number[]>([]);
 
+  // Time-based countdown start timestamps (per level)
   const [levelStartAt, setLevelStartAt] = useState<(number | null)[]>([]);
   const levelStartAtRef = useRef<(number | null)[]>([]);
 
@@ -155,29 +160,23 @@ const GameComponent: React.FC = () => {
 
   const postedLevelsRef = useRef<Set<number>>(new Set());
 
+  // HINT state (per-active-level)
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
-  /* --------- SCROLL LOCK --------- */
+  /* viewport / scroll lock */
+  useEffect(() => {
+    const setH = () => document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+    setH(); const onOri = () => setTimeout(setH, 250);
+    window.addEventListener('orientationchange', onOri);
+    return () => window.removeEventListener('orientationchange', onOri);
+  }, []);
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtml = html.style.overflow;
-    const prevBody = body.style.overflow;
-
-    if (lock) {
-      html.style.overflow = 'hidden';
-      body.style.overflow = 'hidden';
-    } else {
-      html.style.overflow = '';
-      body.style.overflow = '';
-    }
-
-    return () => {
-      html.style.overflow = prevHtml;
-      body.style.overflow = prevBody;
-    };
+    const oh = document.documentElement.style.overflow, ob = document.body.style.overflow;
+    if (lock){ document.documentElement.style.overflow='hidden'; document.body.style.overflow='hidden'; }
+    else { document.documentElement.style.overflow=''; document.body.style.overflow=''; }
+    return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
   /* load players */
@@ -264,7 +263,9 @@ const GameComponent: React.FC = () => {
     if (savedStarts) {
       try {
         const parsed = JSON.parse(savedStarts);
-        if (Array.isArray(parsed)) starts = starts.map((v,i)=> (typeof parsed[i]==='number' ? parsed[i] as number : null));
+        if (Array.isArray(parsed)) {
+          starts = starts.map((v,i)=> (typeof parsed[i]==='number' ? parsed[i] as number : null));
+        }
       } catch {}
     }
     setLevelStartAt(starts);
@@ -277,9 +278,9 @@ const GameComponent: React.FC = () => {
 
     setDisplayScore(s);
     prevScoreRef.current = s;
-  }, [dailyPaths, gameDate, dateParam, popupDismissed]);
+  }, [dailyPaths, gameDate, dateParam]);
 
-  /* persist */
+  /* persist state for the day */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
@@ -295,10 +296,12 @@ const GameComponent: React.FC = () => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_BASE_PREFIX + gameDate, JSON.stringify(basePointsLeft));
   }, [basePointsLeft, gameDate, dailyPaths.length]);
+
   useEffect(() => {
     if (!dailyPaths.length) return;
     localStorage.setItem(LS_START_PREFIX + gameDate, JSON.stringify(levelStartAt));
   }, [levelStartAt, gameDate, dailyPaths.length]);
+
   useEffect(() => { levelStartAtRef.current = levelStartAt.slice(); }, [levelStartAt]);
 
   /* header score flash + count-up */
@@ -324,14 +327,12 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [showPopup, score]);
 
-  /* completion (+100 for 5/5) */
+  /* completion -> popup (with 5/5 bonus) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
     if (complete) {
       if (freezeActiveAfterAnswer !== null) return;
-      const allCorrect = guesses.every(g => g?.correct);
-      if (allCorrect) setScore(prev => prev + 100);
       setGameOver(true);
       if (!showPopup && !popupDismissed) setShowPopup(true);
     } else if (gameOver) { setGameOver(false); }
@@ -346,7 +347,7 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* per-level countdown */
+  /* per-level countdown (persisted) */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -382,12 +383,12 @@ const GameComponent: React.FC = () => {
     }, COUNTDOWN_START_DELAY_MS);
 
     return () => {
-      if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
-      if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
+      if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current = null; }
+      if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current = null; }
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* confetti on final popup */
+  /* single big confetti on final popup */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
@@ -408,8 +409,10 @@ const GameComponent: React.FC = () => {
       }
     } catch {/* ignore */}
   };
+
   useEffect(() => {
     if (!dailyPaths.length) return;
+
     const computeLocal = () => {
       const totals = new Array(dailyPaths.length).fill(0);
       const rights = new Array(dailyPaths.length).fill(0);
@@ -424,9 +427,14 @@ const GameComponent: React.FC = () => {
       const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
       setCommunityPct(pct);
     };
+
     (async () => {
-      try { await refreshCommunity(); if (!communityPct.length) computeLocal(); }
-      catch { computeLocal(); }
+      try {
+        await refreshCommunity();
+        if (!communityPct.length) computeLocal();
+      } catch {
+        computeLocal();
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyPaths.length, gameDate]);
@@ -435,12 +443,15 @@ const GameComponent: React.FC = () => {
   useEffect(() => {
     if (!started || !dailyPaths.length) return;
     const urls: string[] = [];
-    dailyPaths.forEach(p => p.path.forEach(team => urls.push(`/images/${team.trim().replace(/\s+/g,'_')}.png`)));
-    Array.from(new Set(urls)).forEach(src => { const img=new Image(); img.decoding='async'; img.src=src; });
+    dailyPaths.forEach(p => {
+      p.path.forEach(team => urls.push(`/images/${sanitizeImageName(team)}.png`));
+    });
+    preloadImages(Array.from(new Set(urls)));
   }, [started, dailyPaths.length]);
 
   /* helpers */
-  const sanitize = (name: string) => name.trim().replace(/\s+/g, '_');
+  const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
+  const preloadImages = (urls: string[]) => { urls.forEach(src=>{ const img=new Image(); img.decoding='async'; img.src=src; }); };
   const stopLevelTimer = () => {
     if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
     if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
@@ -491,7 +502,9 @@ const GameComponent: React.FC = () => {
     const max = filteredSuggestions[idx]?.length || 0; if (!max) return;
     if (e.key==='ArrowDown'){ setHighlightIndex(p=>(p+1)%max); e.preventDefault(); }
     else if (e.key==='ArrowUp'){ setHighlightIndex(p=>(p-1+max)%max); e.preventDefault(); }
-    else if (e.key==='Escape'){ setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; }); }
+    else if (e.key==='Escape'){ // dismiss suggestions
+      setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; });
+    }
     else if (e.key==='Enter' && highlightIndex>=0){ handleGuess(idx, filteredSuggestions[idx][highlightIndex].name); }
   };
 
@@ -526,6 +539,10 @@ const GameComponent: React.FC = () => {
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
     const willComplete = updated.every(Boolean);
+    // Add 100-point bonus if ALL correct
+    const allCorrect = willComplete && updated.every(g => g?.correct);
+    if (allCorrect) setScore(prev => prev + 100);
+
     if (willComplete) {
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
     } else {
@@ -548,6 +565,7 @@ const GameComponent: React.FC = () => {
 
     const willComplete = updated.every(Boolean);
     if (willComplete) {
+      // no bonus, since not all correct
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
     } else {
       startRevealHold(index, () => advanceToNext(index), REVEAL_HOLD_MS);
@@ -582,251 +600,244 @@ www.helmets-game.com`;
     }, 420);
   };
 
-  const someLevelActive = (() => {
-    if (!started || gameOver) return false;
-    if (showPopup || showRules || showHistory || showFeedback) return false;
-    const idx = activeLevel;
-    return idx >= 0 && !guesses[idx];
-  })();
-
+  const duringActive = started && !gameOver && !showPopup;
+  const appFixed = duringActive ? 'app-fixed' : '';
   const prestartClass = !started ? 'is-prestart' : '';
 
   return (
-    <div className={`app-container ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
-
-      {/* background dimmer (below header & active card; above everything else) */}
-      {someLevelActive && <div className="page-dim" aria-hidden="true" />}
-
+    <div className={`app-container ${appFixed} ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
+          <h1 className="game-title">HELMETS</h1>
         </div>
-        <h1 className="game-title">HELMETS</h1>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
       </header>
 
-      {/* Scaled content */}
-      <div className="scale-wrap">
+      {gameOver && (
+        <div className="complete-banner">
+          <h3>🎯 Game Complete</h3>
+          <p>Tap each box to view possible answers</p>
+          <div className="complete-actions">
+            <button className="primary-button" onClick={shareNow}>Share Score!</button>
+            <button className="secondary-button small" onClick={() => setShowHistory(true)}>Previous day's games</button>
+          </div>
+        </div>
+      )}
 
-        {gameOver && (
-          <div className="complete-banner">
-            <h3>🎯 Game Complete</h3>
-            <p>Tap each box to view possible answers</p>
-            <div className="complete-actions">
-              <button className="primary-button" onClick={shareNow}>Share Score!</button>
-              <button className="secondary-button small" onClick={() => setShowHistory(true)}>Previous day's games</button>
+      {duringActive && <div className="level-backdrop" aria-hidden="true" />}
+
+      {dailyPaths.map((path, idx) => {
+        const isDone = !!guesses[idx];
+        const isFeedback = freezeActiveAfterAnswer === idx;
+        const isActive = started && !gameOver && ((idx === activeLevel && !isDone) || isFeedback);
+        const isCovered = !started || (!isDone && !isActive);
+
+        const blockClass = isDone ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
+        let stateClass = 'level-card--locked';
+        if (isDone && !isFeedback) stateClass = 'level-card--done';
+        else if (isActive) stateClass = 'level-card--active';
+
+        const inputEnabled = isActive && !isDone;
+
+        const multiplier = idx + 1;
+        const wonPoints = awardedPoints[idx] || 0;
+        const showPointsNow = gameOver;
+        const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
+        const badgeClass = showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
+
+        const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
+
+        /* ---- HINT for this level ---- */
+        const pathKey = path.path.join('>');
+        const validAnswers = players.filter(p => p.path.join('>') === pathKey);
+        let hintPos: string | null = null;
+        let bestDiff = Number.POSITIVE_INFINITY;
+        for (const p of validAnswers) {
+          const d = (typeof p.difficulty === 'number' && Number.isFinite(p.difficulty)) ? p.difficulty : Number.POSITIVE_INFINITY;
+          if (d < bestDiff && p.position) { bestDiff = d; hintPos = p.position; }
+        }
+        const hintAvailable = !!hintPos;
+        const autoHint = hintAvailable && baseLeft <= HINT_THRESHOLD;
+        const hintVisible = hintAvailable && (autoHint || (hintForced && idx === activeLevel));
+        const revealHintNow = () => {
+          if (!hintAvailable) return;
+          if (baseLeft <= HINT_THRESHOLD) { setHintForced(true); return; }
+          setHintForced(true);
+          setLevelStartAt(prev => {
+            const n = prev.slice();
+            const targetElapsed = MAX_BASE_POINTS - HINT_THRESHOLD;
+            n[idx] = Date.now() - targetElapsed * 1000;
+            return n;
+          });
+        };
+
+        return (
+          <div
+            key={idx}
+            className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
+            onClick={() => { if (gameOver) { const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u); } }}
+          >
+            {(isActive || gameOver) && <div className="level-tag">Level {idx + 1}</div>}
+            <div className={badgeClass} aria-hidden="true">{badgeText}</div>
+
+            <div className="level-cover" aria-hidden={!isCovered}>
+              {started && <span className="level-cover-label">Level {idx + 1}</span>}
+            </div>
+
+            <div className="card-body">
+              {gameOver && <div className="click-hint">Click to view possible answers</div>}
+
+              <div className="helmet-sequence">
+                {path.path.map((team, i) => (
+                  <React.Fragment key={i}>
+                    <img
+                      src={`/images/${sanitizeImageName(team)}.png`}
+                      alt={team}
+                      className="helmet-icon"
+                      style={{ ['--i' as any]: `${i * 160}ms` }}
+                    />
+                    {i < path.path.length - 1 && <span className="arrow">→</span>}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              <div className="guess-input-container">
+                <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
+                  {!guesses[idx] ? (
+                    <>
+                      <input
+                        ref={(el) => (inputRefs.current[idx] = el)}
+                        type="text"
+                        placeholder={inputEnabled ? "Guess Player" : "Locked"}
+                        inputMode="text"
+                        autoCorrect="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        autoComplete="off"
+                        onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
+                        onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
+                        onBlur={() => { // dismiss on click-away
+                          setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; });
+                        }}
+                        className="guess-input-field guess-input-mobile font-mobile"
+                        disabled={!inputEnabled}
+                      />
+
+                      {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
+                        <div className="suggestion-box fade-in-fast">
+                          {filteredSuggestions[idx].slice(0, 8).map((s, i) => {
+                            const typed = inputRefs.current[idx]?.value || '';
+                            const match = s.name.toLowerCase().indexOf(typed.toLowerCase());
+                            const before = match >= 0 ? s.name.slice(0, match) : s.name;
+                            const mid = match >= 0 ? s.name.slice(match, match + typed.length) : '';
+                            const after = match >= 0 ? s.name.slice(match + typed.length) : '';
+                            return (
+                              <div
+                                key={`${s.name}-${i}`}
+                                className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
+                                onMouseDown={() => handleGuess(idx, s.name)}
+                              >
+                                <span className="suggestion-name">
+                                  {match >= 0 ? (<>{before}<strong>{mid}</strong>{after}</>) : s.name}
+                                </span>
+                                {s.position && <span className="suggestion-pos">{s.position}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {isActive && (
+                        <div className="points-wrap">
+                          <div className="points-row">
+                            <span className="points-label">Points</span>
+                            <span className="points-value">{baseLeft}</span>
+                          </div>
+                          <div
+                            className="points-bar points-bar--with-marker"
+                            style={{
+                              ['--fill' as any]: `${(baseLeft / MAX_BASE_POINTS) * 100}%`,
+                              ['--marker' as any]: `${(HINT_THRESHOLD / MAX_BASE_POINTS) * 100}%`,
+                            }}
+                          >
+                            <div className="points-bar-fill" />
+                            <div className="points-bar-marker" aria-hidden title={`Hint auto-reveals at ${HINT_THRESHOLD}`} />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* HINT: below bar, above Give Up */}
+                      {inputEnabled && hintAvailable && !hintVisible && (
+                        <div className="hint-row">
+                          <button type="button" className="hint-button" onClick={revealHintNow}>
+                            HINT
+                          </button>
+                        </div>
+                      )}
+                      {inputEnabled && hintVisible && (
+                        <div className="hint-row">
+                          <span className="hint-chip">{hintPos}</span>
+                        </div>
+                      )}
+
+                      {inputEnabled && (
+                        <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
+                          Give Up
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
+                      {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
+                      {(!gameOver || isFeedback) && (
+                        <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
+                          {`+${awardedPoints[idx] || 0}`}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Community % bar in game-complete */}
+              {gameOver && (
+                <div className="community-wrap">
+                  <div className="community-row">
+                    <span>Users Correct</span>
+                    <span>{(communityPct[idx] ?? 0)}%</span>
+                  </div>
+                  <div className="community-bar">
+                    <div className="community-bar-fill" style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
+                <div className="possible-answers">
+                  <strong>Correct Answers:</strong>
+                  <ul className="possible-answers-list">
+                    {answerLists[idx].map((p, i) => (
+                      <li key={i}>👤 {p.name}{p.position ? <span className="answer-pos">({p.position})</span> : null}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        );
+      })}
 
-        {dailyPaths.map((path, idx) => {
-          const isDone = !!guesses[idx];
-          const isFeedback = freezeActiveAfterAnswer === idx;
-          const isActive = (started && !gameOver && !showPopup && ((idx === activeLevel && !isDone) || isFeedback));
-          const isCovered = !started || (!isDone && !isActive);
-
-          const blockClass = isDone ? (guesses[idx]!.correct ? 'path-block-correct' : 'path-block-incorrect') : 'path-block-default';
-          let stateClass = 'level-card--locked';
-          if (isDone && !isFeedback) stateClass = 'level-card--done';
-          else if (isActive) stateClass = 'level-card--active';
-
-          const inputEnabled = isActive && !isDone;
-
-          const multiplier = idx + 1;
-          const wonPoints = awardedPoints[idx] || 0;
-          const showPointsNow = gameOver;
-          const badgeText = showPointsNow && isDone ? `+${wonPoints}` : `${multiplier}x Points`;
-          const badgeClass = showPointsNow && isDone ? (wonPoints > 0 ? 'level-badge won' : 'level-badge zero') : 'level-badge';
-
-          const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
-
-          const pathKey = path.path.join('>');
-          const validAnswers = players.filter(p => p.path.join('>') === pathKey);
-          let hintPos: string | null = null;
-          let bestDiff = Number.POSITIVE_INFINITY;
-          for (const p of validAnswers) {
-            const d = (typeof p.difficulty === 'number' && Number.isFinite(p.difficulty)) ? p.difficulty : Number.POSITIVE_INFINITY;
-            if (d < bestDiff && p.position) { bestDiff = d; hintPos = p.position; }
-          }
-          const hintAvailable = !!hintPos;
-          const autoHint = hintAvailable && baseLeft <= HINT_THRESHOLD;
-          const hintVisible = hintAvailable && (autoHint || (hintForced && idx === activeLevel));
-          const revealHintNow = () => {
-            if (!hintAvailable) return;
-            if (baseLeft <= HINT_THRESHOLD) { setHintForced(true); return; }
-            setHintForced(true);
-            setLevelStartAt(prev => {
-              const n = prev.slice();
-              const targetElapsed = MAX_BASE_POINTS - HINT_THRESHOLD;
-              n[idx] = Date.now() - targetElapsed * 1000;
-              return n;
-            });
-          };
-
-          return (
-            <div
-              key={idx}
-              className={`path-block level-card ${blockClass} ${stateClass} ${isCovered ? 'is-covered' : ''}`}
-              onClick={() => { if (gameOver) { const u=[...revealedAnswers]; u[idx]=!u[idx]; setRevealedAnswers(u); } }}
-            >
-              {(isActive || gameOver) && <div className="level-tag">Level {idx + 1}</div>}
-              <div className={badgeClass} aria-hidden="true">{badgeText}</div>
-
-              <div className="level-cover" aria-hidden={!isCovered}>
-                {started && <span className="level-cover-label">Level {idx + 1}</span>}
-              </div>
-
-              <div className="card-body">
-                {gameOver && <div className="click-hint">Click to view possible answers</div>}
-
-                <div className="helmet-sequence">
-                  {path.path.map((team, i) => (
-                    <React.Fragment key={i}>
-                      <img
-                        src={`/images/${team.trim().replace(/\s+/g,'_')}.png`}
-                        alt={team}
-                        className="helmet-icon"
-                        style={{ ['--i' as any]: `${i * 160}ms` }}
-                      />
-                      {i < path.path.length - 1 && <span className="arrow">→</span>}
-                    </React.Fragment>
-                  ))}
-                </div>
-
-                <div className="guess-input-container">
-                  <div className={`guess-input ${guesses[idx] ? (guesses[idx]!.correct ? 'correct' : 'incorrect') : ''}`}>
-                    {!guesses[idx] ? (
-                      <>
-                        <input
-                          ref={(el) => (inputRefs.current[idx] = el)}
-                          type="text"
-                          placeholder={inputEnabled ? "Guess Player" : "Locked"}
-                          inputMode="text"
-                          autoCorrect="off"
-                          autoCapitalize="none"
-                          spellCheck={false}
-                          autoComplete="off"
-                          onChange={(e) => inputEnabled && handleInputChange(idx, e.target.value)}
-                          onKeyDown={(e) => inputEnabled && handleKeyDown(e, idx)}
-                          onBlur={() => { setFilteredSuggestions(prev => { const u=[...prev]; u[idx]=[]; return u; }); }}
-                          className="guess-input-field guess-input-mobile font-mobile"
-                          disabled={!inputEnabled}
-                        />
-
-                        {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
-                          <div className="suggestion-box fade-in-fast">
-                            {filteredSuggestions[idx].slice(0, 8).map((s, i) => {
-                              const typed = inputRefs.current[idx]?.value || '';
-                              const match = s.name.toLowerCase().indexOf(typed.toLowerCase());
-                              const before = match >= 0 ? s.name.slice(0, match) : s.name;
-                              const mid = match >= 0 ? s.name.slice(match, match + typed.length) : '';
-                              const after = match >= 0 ? s.name.slice(match + typed.length) : '';
-                              return (
-                                <div
-                                  key={`${s.name}-${i}`}
-                                  className={`suggestion-item ${highlightIndex === i ? 'highlighted' : ''}`}
-                                  onMouseDown={() => handleGuess(idx, s.name)}
-                                >
-                                  <span className="suggestion-name">
-                                    {match >= 0 ? (<>{before}<strong>{mid}</strong>{after}</>) : s.name}
-                                  </span>
-                                  {s.position && <span className="suggestion-pos">{s.position}</span>}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {isActive && (
-                          <div className="points-wrap">
-                            <div className="points-row">
-                              <span className="points-label">Points</span>
-                              <span className="points-value">{baseLeft}</span>
-                            </div>
-                            <div
-                              className="points-bar"
-                              style={{
-                                ['--fill' as any]: `${(baseLeft / MAX_BASE_POINTS) * 100}%`,
-                                ['--marker' as any]: `${(HINT_THRESHOLD / MAX_BASE_POINTS) * 100}%`,
-                              }}
-                            >
-                              <div className="points-bar-fill" />
-                              <div className="points-bar-marker" aria-hidden title={`Hint at ${HINT_THRESHOLD}`} />
-                            </div>
-                          </div>
-                        )}
-
-                        {inputEnabled && hintAvailable && !hintVisible && (
-                          <div className="hint-row">
-                            <button type="button" className="hint-button" onClick={revealHintNow}>
-                              HINT
-                            </button>
-                          </div>
-                        )}
-                        {inputEnabled && hintVisible && (
-                          <div className="hint-row">
-                            <span className="hint-chip">{hintPos}</span>
-                          </div>
-                        )}
-
-                        {inputEnabled && (
-                          <button className="primary-button skip-button" type="button" onClick={() => handleSkip(idx)}>
-                            Give Up
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <div className={`locked-answer ${guesses[idx]!.correct ? 'answer-correct' : 'answer-incorrect blink-red'} locked-answer-mobile font-mobile`}>
-                        {guesses[idx]!.correct ? `✅ ${guesses[idx]!.guess}` : `❌ ${guesses[idx]!.guess || 'No Answer'}`}
-                        {(!gameOver || isFeedback) && (
-                          <div style={{ marginTop: 6, fontSize: '0.85rem', fontWeight: 700 }}>
-                            {`+${awardedPoints[idx] || 0}`}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {gameOver && (
-                  <div className="community-wrap">
-                    <div className="community-row">
-                      <span>Users Correct</span>
-                      <span>{(communityPct[idx] ?? 0)}%</span>
-                    </div>
-                    <div className="community-bar">
-                      <div className="community-bar-fill" style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}%` }} />
-                    </div>
-                  </div>
-                )}
-
-                {gameOver && revealedAnswers[idx] && !!answerLists[idx]?.length && (
-                  <div className="possible-answers">
-                    <strong>Correct Answers:</strong>
-                    <ul className="possible-answers-list">
-                      {answerLists[idx].map((p, i) => (
-                        <li key={i}>👤 {p.name}{p.position ? <span className="answer-pos">({p.position})</span> : null}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-      </div>{/* /scale-wrap */}
-
-      {!showPopup && !gameOver && (
+      {!duringActive && !gameOver && (
         <button onClick={() => setShowHistory(true)} className="fab-button fab-history">📅 History</button>
       )}
 
       {showHistory && (
-        <div className="popup-modal" onClick={() => setShowHistory(false)}>
-          <div className="popup-content" onClick={(e)=>e.stopPropagation()}>
-            <button className="close-button" type="button" onClick={() => setShowHistory(false)}>✖</button>
+        <div className="popup-modal">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowHistory(false)}>✖</button>
             <h3>📆 Game History (Last 30 days)</h3>
             <div className="calendar-grid">
               {getLastNDatesPT(30).map((date) => {
@@ -847,9 +858,9 @@ www.helmets-game.com`;
       )}
 
       {showFeedback && (
-        <div className="popup-modal" onClick={() => setShowFeedback(false)}>
-          <div className="popup-content" onClick={(e)=>e.stopPropagation()}>
-            <button className="close-button" type="button" onClick={() => setShowFeedback(false)}>✖</button>
+        <div className="popup-modal">
+          <div className="popup-content">
+            <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
             <h3>Thoughts for Jerry?</h3>
             <div className="email-row">
               <span className="email-emoji">📧</span>
@@ -858,7 +869,6 @@ www.helmets-game.com`;
             <button
               onClick={() => { navigator.clipboard.writeText('jerry.helmetsgame@gmail.com'); setCopied(true); setTimeout(()=>setCopied(false),1500); }}
               className="primary-button"
-              type="button"
             >
               Copy Email
             </button>
@@ -868,10 +878,10 @@ www.helmets-game.com`;
       )}
 
       {showRules && (
-        <div className="popup-modal fade-in" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
-          <div className="popup-content popup-rules" onClick={(e)=>e.stopPropagation()}>
+        <div className="popup-modal fade-in">
+          <div className="popup-content popup-rules">
             {rulesOpenedManually && (
-              <button className="close-button" type="button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
+              <button className="close-button" onClick={() => { setShowRules(false); setRulesOpenedManually(false); }}>
                 ✖
               </button>
             )}
@@ -895,7 +905,7 @@ www.helmets-game.com`;
             </ul>
 
             {!started && !gameOver && (
-              <button onClick={handleStartGame} className="primary-button" type="button" style={{ marginTop: 12 }}>
+              <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
                 Start Game!
               </button>
             )}
@@ -904,21 +914,21 @@ www.helmets-game.com`;
       )}
 
       {showPopup && (
-        <div className="popup-modal fade-in" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>
-          <div className="popup-content popup-final" onClick={(e)=>e.stopPropagation()}>
-            <button className="close-button" type="button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
+        <div className="popup-modal fade-in">
+          <div className="popup-content popup-final">
+            <button className="close-button" onClick={() => { setShowPopup(false); setPopupDismissed(true); }}>✖</button>
             <h3 className="popup-title">🎉 Game Complete!</h3>
             <p className="popup-date">{gameDateMMDDYY}</p>
             <p className="popup-score">Score: <span className="score-number">{finalDisplayScore}</span></p>
             <p>{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</p>
-            <button onClick={shareNow} className="primary-button" type="button">Share Score!</button>
+            <button onClick={shareNow} className="primary-button">Share Score!</button>
           </div>
         </div>
       )}
 
-      {!showPopup && (
+      {!duringActive && (
         <div className="footer-actions">
-          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom" type="button">
+          <button onClick={() => setShowFeedback(true)} className="primary-button feedback-bottom">
             💬 Feedback
           </button>
         </div>
