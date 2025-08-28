@@ -389,3 +389,54 @@ input, select, textarea { font-size: 16px; }
   .secondary-button { padding: 6px 10px; font-size: .82rem; }
   .skip-button { margin-top: 12px; padding: 7px 11px; font-size: .86rem; }
 }
+/* =========================================================
+   MOBILE SCALING REFINEMENT
+   - Keep active-card scale during enter/feedback
+   - Gentler scaling (about half the previous shrink)
+   - End-game cards slightly scaled
+   ========================================================= */
+
+/* Gentler scale defaults */
+:root{
+  --m-active-scale: .89;     /* was ~.78/.80 → less shrink */
+  --m-complete-scale: .97;   /* was ~.92/.94 → less shrink */
+}
+
+/* Active card keeps scale even while its 'enter' animation runs
+   and during the immediate feedback phase (it keeps the same class) */
+@media (max-width: 430px){
+  .level-card--active{
+    transform: translateX(-50%) scale(var(--m-active-scale)) !important;
+    transform-origin: top center;
+    /* feed scale into the animation keyframes (see override below) */
+    --enter-scale: var(--m-active-scale);
+  }
+
+  /* End-game: slightly scaled down */
+  .is-complete .level-card{
+    transform: scale(var(--m-complete-scale)) !important;
+    transform-origin: top center;
+  }
+}
+
+/* Smaller phones: a touch more shrink than above, but still gentler than before */
+@media (max-width: 380px){
+  :root{
+    --m-active-scale: .86;
+    --m-complete-scale: .95;
+  }
+  .level-card--active{ --enter-scale: var(--m-active-scale); }
+}
+
+/* IMPORTANT: Override the active-card enter animation so it preserves scale
+   (previous keyframes set transform without scale, which momentarily removed it) */
+@keyframes card-enter{
+  from{
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px) scale(var(--enter-scale, 1));
+  }
+  to{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(var(--enter-scale, 1));
+  }
+}
