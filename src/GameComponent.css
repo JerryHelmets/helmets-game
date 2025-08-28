@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 176px; /* nudged down a hair more */
+  --active-top: 176px; /* nudged down more */
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -13,36 +13,19 @@
 
 html, body { overscroll-behavior: none; }
 
-/* BODY overlay: dims page background *below* header (edges too).
-   Lower z-index than the app so header/card can float above. */
-body.dim-bg::before{
-  content:"";
-  position:fixed;
-  left:0; right:0; bottom:0;
-  top: var(--bg-dim-top, 0px);
+/* Page-dimmer used during active level (header left visible) */
+.page-dim{
+  position:fixed; left:0; right:0; bottom:0; top:var(--bg-dim-top, 0px);
   background:rgba(0,0,0,.58);
-  z-index:900;               /* < app (1100), popups (1500), active card (1400), header (1250) */
+  z-index:900;           /* below header(1250) & active card(1400) */
   pointer-events:none;
 }
-
-/* APP overlay: dims content inside the app; excluded by z-index for header/active/popup */
-.app-container.dim-app::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.38);
-  z-index:1000;              /* < header(1250), popups(1500), active(1400) */
-  pointer-events:none;
-}
-
-/* Lift app above body overlay when dim is on */
-.app-container.app-on-top{ z-index:1100; }
 
 /* Score flash */
 @keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
-/* Header — above dim overlays */
+/* Header — always above dimmer */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
 .game-logo{height:2.4em;width:auto;display:block}
 .game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
@@ -52,20 +35,21 @@ body.dim-bg::before{
 .score-number{display:inline-block;min-width:2ch;text-align:right}
 .rules-button{margin-top:8px}
 
-/* App shell */
+/* App shell (no transform here!) */
 .app-container{
-  position:relative; /* creates stacking context for app overlay */
+  position:relative;
   width:100%;max-width:820px;margin:0 auto;
   padding:16px 8px 32px;overflow-x:hidden;
   min-height:var(--app-height,100svh);
-  transform:scale(var(--scale));transform-origin:top center;
 }
-.app-container.app-fixed{position:fixed;inset:0;height:var(--app-height,100svh);overflow:hidden;background:transparent}
+
+/* Scaled content lives here so fixed overlays aren’t clipped */
+.scale-wrap{
+  transform:scale(var(--scale));
+  transform-origin:top center;
+}
 @media (max-width:430px){:root{--scale:.86;--card-w:300px}}
 @media (max-width:380px){:root{--scale:.84;--card-w:290px}}
-
-/* Transparent helper (kept for structure) */
-.level-backdrop{position:fixed;inset:0;background:transparent;z-index:1005;pointer-events:none}
 
 /* Cards */
 .path-block{position:relative;border:2px solid;border-radius:14px;padding:10px;margin-bottom:12px;box-shadow:0 1px 1px rgba(0,0,0,.06);width:min(86vw,var(--card-w));margin-left:auto;margin-right:auto;text-align:center;transition:background-color .25s,border-color .25s;background:#f7f7f7}
@@ -74,7 +58,7 @@ body.dim-bg::before{
 .path-block-incorrect{background-color:#ffe6e6;border-color:#dc3545}
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
-/* Active card — above both overlays; slightly shorter */
+/* Active card — above page-dimmer; slightly shorter */
 .level-card--active{
   position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);
   width:min(92vw,calc(var(--card-w) + 24px));
@@ -153,7 +137,7 @@ body.dim-bg::before{
 .points-bar-fill{height:100%;width:var(--fill, 100%);background:#2e6bff;transition:width 1s linear;border-radius:inherit}
 .points-bar-marker{position:absolute;left:var(--marker, 50%);top:-1px;bottom:-1px;width:2px;background:var(--hint-color);opacity:.85;border-radius:1px;pointer-events:none}
 
-/* Community % bar (game complete) */
+/* Community % bar */
 .community-wrap{width:100%;margin-top:8px;display:flex;flex-direction:column;align-items:center}
 .community-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:12px;color:#111}
 .community-bar{width:min(92%,360px);height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:4px}
@@ -194,18 +178,18 @@ body.dim-bg::before{
 .fab-button{position:fixed;padding:6px 10px;font-size:.8rem;z-index:1201}
 .fab-history{top:12px;right:12px}
 
-/* History popup */
+/* History popup (keeps your existing dim on modal) */
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:1rem}
 .calendar-grid-button{padding:6px;font-size:.75rem;border:1.5px solid #ccc;border-radius:6px;background:#f2f2f2}
 .calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
 
-/* Completed banner */
+/* Completed banner — width matches larger end-game cards */
 .complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(96vw,calc(var(--card-w) + 48px))}
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
 .complete-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-/* Popups — above everything, content not dimmed */
+/* Popups cover the whole page because they're not inside a transformed ancestor */
 .popup-modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:flex;align-items:flex-start;justify-content:center;padding-top:var(--popup-offset);z-index:1500}
 .popup-content{background:#fff;padding:2rem;border-radius:12px;text-align:center;max-width:520px;width:calc(100% - 32px);max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative}
 .popup-rules{max-width:600px;min-height:520px}
@@ -215,12 +199,6 @@ body.dim-bg::before{
 .popup-score{margin:12px 0 10px;font-weight:900;font-size:clamp(1.6rem,6.2vw,2.7rem)}
 .popup-final .score-number{display:inline-block;min-width:3ch}
 .close-button{position:absolute;top:12px;right:12px;background:transparent;font-size:18px;border:none;cursor:pointer}
-
-/* Feedback popup bits */
-.email-row{display:flex;align-items:center;justify-content:center;margin-top:1em;gap:8px}
-.email-emoji{font-size:1.2rem}
-.email-text{font-size:.95rem}
-.copied-msg{margin-top:.5em;color:green;font-size:.8rem}
 
 /* Rules lists */
 .rules-list{list-style:none;padding-left:0;margin-top:8px;text-align:left}
