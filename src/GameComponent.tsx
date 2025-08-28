@@ -19,9 +19,9 @@ const LS_START_PREFIX = 'helmets-levelstart-';
 const REVEAL_HOLD_MS = 2000;
 const FINAL_REVEAL_HOLD_MS = 500;
 
-/* ---------- TIMER / POINTS ---------- */
-const MAX_BASE_POINTS = 60;   // 60s per level => 60 base points
-const HINT_THRESHOLD = 30;    // hint auto/manual reveal point
+/* ----- TIMER / POINTS ----- */
+const MAX_BASE_POINTS = 60;
+const HINT_THRESHOLD = 30;
 const TICK_MS = 1000;
 const COUNTDOWN_START_DELAY_MS = 500;
 
@@ -51,7 +51,6 @@ function toDayIndex(iso: string) {
   const t = Date.UTC(y, (m-1), d);
   return Math.floor(t / 86400000);
 }
-function seededRandom(seed: number) { return () => { const x = Math.sin(seed++) * 10000; return x - Math.floor(x); }; }
 function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   const dayIdx = toDayIndex(dateISO);
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
@@ -61,13 +60,12 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
       if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k,p);
     }
   });
-  const seedRand = (s: number) => () => { const x = Math.sin(s++) * 10000; return x - Math.floor(x); };
   const shuffle = <T,>(arr: T[], seed: number) => {
-    const a = arr.slice(); const rnd = seedRand(seed);
+    const a = arr.slice(); let s = seed;
+    const rnd = () => { const x = Math.sin(s++) * 10000; return x - Math.floor(x); };
     for (let i=a.length-1;i>0;i--){ const j = Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
     return a;
   };
-
   const sel: PlayerPath[] = [];
   for (let lvl=1; lvl<=5; lvl++) {
     const m = buckets[lvl];
@@ -80,10 +78,9 @@ function pickDailyPaths(players: PlayerPath[], dateISO: string) {
   return sel;
 }
 function buildAnswerLists(players: PlayerPath[], targets: PlayerPath[]) {
-  // Sort by lowest difficulty; undefined difficulties last; tie-breaker by name
   return targets.map(t => {
-    const samePath = players.filter(p => p.path.join('>')===t.path.join('>'));
-    return samePath
+    const same = players.filter(p => p.path.join('>')===t.path.join('>'));
+    return same
       .map(p => ({ name: p.name, position: p.position, difficulty: (typeof p.difficulty==='number' && Number.isFinite(p.difficulty)) ? p.difficulty : Infinity }))
       .sort((a,b) => a.difficulty===b.difficulty ? a.name.localeCompare(b.name) : a.difficulty - b.difficulty);
   });
@@ -96,17 +93,17 @@ function getStartedMap(){ try { return JSON.parse(localStorage.getItem(LS_STARTE
 function setStartedFor(date: string, v: boolean){ const m = getStartedMap(); m[date]=v; localStorage.setItem(LS_STARTED, JSON.stringify(m)); }
 function getStartedFor(date: string){ const m = getStartedMap(); return !!m[date]; }
 
-/* ---------- score-range emojis (updated) ---------- */
+/* ---------- score-range emojis ---------- */
 function scoreEmojis(total: number): string {
   if (total < 50) return '🫵🤣🫵';
   if (total < 100) return '🤡';
   if (total < 150) return '🤢';
-  if (total < 250) return '😔';   // pensive
+  if (total < 250) return '😔';
   if (total < 300) return '👀';
   if (total < 400) return '👏';
   if (total < 500) return '📈';
-  if (total < 600) return '🎯';   // flipped
-  if (total < 700) return '🔥';   // flipped
+  if (total < 600) return '🎯';  // flipped
+  if (total < 700) return '🔥';  // flipped
   if (total < 800) return '🥇';
   if (total < 900) return '🚀';
   return '🏆';
@@ -149,7 +146,6 @@ const GameComponent: React.FC = () => {
 
   const [communityPct, setCommunityPct] = useState<number[]>([]);
 
-  // Time-based countdown start timestamps (per level)
   const [levelStartAt, setLevelStartAt] = useState<(number | null)[]>([]);
   const levelStartAtRef = useRef<(number | null)[]>([]);
 
@@ -159,11 +155,14 @@ const GameComponent: React.FC = () => {
 
   const postedLevelsRef = useRef<Set<number>>(new Set());
 
-  // HINT state (per-active-level)
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
-  /* viewport / scroll lock + two-layer dim (body and app) */
+  /* --------- DIM + SCROLL LOCK ---------
+     We use two overlays:
+     - body.dim-bg::before (dims *outside* the app, incl. page edges)
+     - .app-container.dim-app::before (dims inside the app)
+     App container is lifted above body overlay via z-index. */
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const html = document.documentElement;
@@ -177,30 +176,34 @@ const GameComponent: React.FC = () => {
       const hdr = document.querySelector('.game-header') as HTMLElement | null;
       const headerBottom = hdr ? Math.ceil(hdr.getBoundingClientRect().bottom) : 0;
       document.documentElement.style.setProperty('--bg-dim-top', `${Math.max(0, headerBottom + 6)}px`);
-      // For app overlay we don't need a top cutout; header sits above via z-index.
     };
 
     if (lock) {
       html.style.overflow = 'hidden';
       body.style.overflow = 'hidden';
-      body.classList.add('dim-bg');           // body-wide dim (edges/outside app)
-      app?.classList.add('dim-app');          // app-local dim (other cards/content)
+      body.classList.add('dim-bg');
+      app?.classList.add('dim-app');
+      // ensure the app paints above body overlay
+      app?.classList.add('app-on-top');
       calcDimTop();
+      requestAnimationFrame(calcDimTop);
       window.addEventListener('resize', calcDimTop);
       window.addEventListener('orientationchange', calcDimTop);
     } else {
       html.style.overflow = '';
       body.style.overflow = '';
       body.classList.remove('dim-bg');
-      app?.classList.remove('dim-app');
+      app?.classList.remove('dim-app', 'app-on-top');
       document.documentElement.style.removeProperty('--bg-dim-top');
+      window.removeEventListener('resize', calcDimTop);
+      window.removeEventListener('orientationchange', calcDimTop);
     }
 
     return () => {
       html.style.overflow = prevHtml;
       body.style.overflow = prevBody;
       body.classList.remove('dim-bg');
-      app?.classList.remove('dim-app');
+      app?.classList.remove('dim-app', 'app-on-top');
       document.documentElement.style.removeProperty('--bg-dim-top');
       window.removeEventListener('resize', calcDimTop);
       window.removeEventListener('orientationchange', calcDimTop);
@@ -291,9 +294,7 @@ const GameComponent: React.FC = () => {
     if (savedStarts) {
       try {
         const parsed = JSON.parse(savedStarts);
-        if (Array.isArray(parsed)) {
-          starts = starts.map((v,i)=> (typeof parsed[i]==='number' ? parsed[i] as number : null));
-        }
+        if (Array.isArray(parsed)) starts = starts.map((v,i)=> (typeof parsed[i]==='number' ? parsed[i] as number : null));
       } catch {}
     }
     setLevelStartAt(starts);
@@ -353,12 +354,14 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [showPopup, score]);
 
-  /* completion -> popup (with 5/5 bonus) */
+  /* completion (adds +100 for 5/5) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
     if (complete) {
       if (freezeActiveAfterAnswer !== null) return;
+      const allCorrect = guesses.every(g => g?.correct);
+      if (allCorrect) setScore(prev => prev + 100);
       setGameOver(true);
       if (!showPopup && !popupDismissed) setShowPopup(true);
     } else if (gameOver) { setGameOver(false); }
@@ -373,7 +376,7 @@ const GameComponent: React.FC = () => {
     }
   }, [activeLevel, started, gameOver]);
 
-  /* per-level countdown (persisted) */
+  /* per-level countdown */
   useEffect(() => {
     if (!started || gameOver) return;
     const idx = activeLevel;
@@ -409,12 +412,12 @@ const GameComponent: React.FC = () => {
     }, COUNTDOWN_START_DELAY_MS);
 
     return () => {
-      if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current = null; }
-      if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current = null; }
+      if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
+      if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length]);
 
-  /* single big confetti on final popup */
+  /* confetti on final popup */
   useEffect(() => {
     if (showPopup && !confettiFired) {
       confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
@@ -435,10 +438,8 @@ const GameComponent: React.FC = () => {
       }
     } catch {/* ignore */}
   };
-
   useEffect(() => {
     if (!dailyPaths.length) return;
-
     const computeLocal = () => {
       const totals = new Array(dailyPaths.length).fill(0);
       const rights = new Array(dailyPaths.length).fill(0);
@@ -453,14 +454,9 @@ const GameComponent: React.FC = () => {
       const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
       setCommunityPct(pct);
     };
-
     (async () => {
-      try {
-        await refreshCommunity();
-        if (!communityPct.length) computeLocal();
-      } catch {
-        computeLocal();
-      }
+      try { await refreshCommunity(); if (!communityPct.length) computeLocal(); }
+      catch { computeLocal(); }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dailyPaths.length, gameDate]);
@@ -469,15 +465,12 @@ const GameComponent: React.FC = () => {
   useEffect(() => {
     if (!started || !dailyPaths.length) return;
     const urls: string[] = [];
-    dailyPaths.forEach(p => {
-      p.path.forEach(team => urls.push(`/images/${sanitizeImageName(team)}.png`));
-    });
-    preloadImages(Array.from(new Set(urls)));
+    dailyPaths.forEach(p => p.path.forEach(team => urls.push(`/images/${team.trim().replace(/\s+/g,'_')}.png`)));
+    Array.from(new Set(urls)).forEach(src => { const img=new Image(); img.decoding='async'; img.src=src; });
   }, [started, dailyPaths.length]);
 
   /* helpers */
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
-  const preloadImages = (urls: string[]) => { urls.forEach(src=>{ const img=new Image(); img.decoding='async'; img.src=src; }); };
   const stopLevelTimer = () => {
     if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
     if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
@@ -563,9 +556,6 @@ const GameComponent: React.FC = () => {
     const sugg = [...filteredSuggestions]; sugg[index]=[]; setFilteredSuggestions(sugg);
 
     const willComplete = updated.every(Boolean);
-    const allCorrect = willComplete && updated.every(g => g?.correct);
-    if (allCorrect) setScore(prev => prev + 100);
-
     if (willComplete) {
       startRevealHold(index, () => { setGameOver(true); setShowPopup(true); }, FINAL_REVEAL_HOLD_MS);
     } else {
@@ -631,8 +621,8 @@ www.helmets-game.com`;
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
         </div>
+        <h1 className="game-title">HELMETS</h1>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
@@ -649,6 +639,7 @@ www.helmets-game.com`;
         </div>
       )}
 
+      {/* Transparent helper div kept for layout parity */}
       {duringActive && <div className="level-backdrop" aria-hidden="true" />}
 
       {dailyPaths.map((path, idx) => {
@@ -672,7 +663,6 @@ www.helmets-game.com`;
 
         const baseLeft = Math.max(0, Math.min(MAX_BASE_POINTS, basePointsLeft[idx] ?? MAX_BASE_POINTS));
 
-        /* ---- HINT for this level ---- */
         const pathKey = path.path.join('>');
         const validAnswers = players.filter(p => p.path.join('>') === pathKey);
         let hintPos: string | null = null;
@@ -789,7 +779,6 @@ www.helmets-game.com`;
                         </div>
                       )}
 
-                      {/* HINT: below bar, above Give Up */}
                       {inputEnabled && hintAvailable && !hintVisible && (
                         <div className="hint-row">
                           <button type="button" className="hint-button" onClick={revealHintNow}>
@@ -822,7 +811,6 @@ www.helmets-game.com`;
                 </div>
               </div>
 
-              {/* Community % bar in game-complete */}
               {gameOver && (
                 <div className="community-wrap">
                   <div className="community-row">
