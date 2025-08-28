@@ -309,3 +309,83 @@ html, body { overscroll-behavior: none; }
 @media (max-width: 380px){
   :root{ --scale: .80; }   /* was .84 */
 }
+/* =========================================================
+   MOBILE SCALING (safe for position:fixed elements)
+   - Scales: active level card, end-game cards, popup white card
+   - Leaves header & backdrop logic untouched
+   ========================================================= */
+
+/* Tuning knobs */
+:root{
+  --m-active-scale: .80;      /* active level card on phones */
+  --m-complete-scale: .94;    /* end-game cards on phones (slight) */
+  --m-popup-scale: .86;       /* rules/final popup content on phones */
+  --m-banner-scale: .92;      /* complete banner on phones */
+}
+
+/* Prevent iOS focus-zoom while still readable */
+.guess-input-field { font-size: 16px !important; }
+input, select, textarea { font-size: 16px; }
+
+/* Slightly tighter spacing between end-game cards */
+.is-complete .path-block { margin-bottom: 8px; }
+
+/* Phone breakpoint */
+@media (max-width: 430px){
+
+  /* 1) Active card: compose its existing translate with a scale.
+        Don't scale any ancestor; scale THIS fixed card only. */
+  .level-card--active{
+    transform: translateX(-50%) scale(var(--m-active-scale)) !important;
+    transform-origin: top center;
+    /* keep it a bit shorter on phones */
+    min-height: 232px;
+    max-height: min(360px, calc(var(--app-height, 100svh) - var(--active-top) - 96px));
+    padding: 10px 12px;
+  }
+
+  /* 2) End-game level cards: small visual shrink */
+  .is-complete .level-card{
+    transform: scale(var(--m-complete-scale));
+    transform-origin: top center;
+  }
+
+  /* 3) Completed banner: match overall shrink */
+  .complete-banner{
+    transform: scale(var(--m-banner-scale));
+    transform-origin: top center;
+  }
+
+  /* 4) Popups: scale ONLY the white card (keeps overlay full-screen) */
+  .popup-content{
+    transform: scale(var(--m-popup-scale));
+    transform-origin: top center;
+    width: calc(100% - 36px);  /* keep nice side gutters */
+    max-width: 460px;
+    padding: 1.05rem .95rem;   /* slightly tighter padding when scaled */
+  }
+
+  /* Optional: small harmonizers so contents feel balanced when scaled */
+  .helmet-icon { width: 52px; height: 52px; }
+  .points-row { width:min(92%, 280px); font-size: 11px; }
+  .points-bar { width:min(92%, 280px); }
+  .primary-button, .share-score-button { padding: 9px 14px; font-size: .95rem; }
+  .secondary-button { padding: 7px 11px; font-size: .86rem; }
+  .skip-button { margin-top: 14px; padding: 8px 12px; font-size: .9rem; }
+}
+
+/* Very small phones */
+@media (max-width: 380px){
+  :root{
+    --m-active-scale: .76;
+    --m-complete-scale: .92;
+    --m-popup-scale: .82;
+    --m-banner-scale: .90;
+  }
+  .helmet-icon { width: 48px; height: 48px; }
+  .points-row { width:min(92%, 250px); font-size: 10.5px; }
+  .points-bar { width:min(92%, 250px); }
+  .primary-button, .share-score-button { padding: 8px 12px; font-size: .9rem; }
+  .secondary-button { padding: 6px 10px; font-size: .82rem; }
+  .skip-button { margin-top: 12px; padding: 7px 11px; font-size: .86rem; }
+}
