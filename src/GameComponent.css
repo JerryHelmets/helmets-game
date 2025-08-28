@@ -270,3 +270,42 @@ html, body { overscroll-behavior: none; }
   margin-left: 6px;
   font-weight: 600;
 }
+/* ====== Tweaks (drop-in overrides) ====== */
+
+/* Nudge active card down slightly; bring popups closer to top */
+:root {
+  --active-top: 144px;   /* was 136px */
+  --popup-offset: 96px;  /* was ~150px */
+}
+
+/* Make the active card a touch shorter */
+.level-card--active{
+  /* slightly smaller padding and heights */
+  padding: 12px;
+  min-height: 244px; /* was ~260px */
+  max-height: min(392px, calc(var(--app-height, 100svh) - var(--active-top) - 96px)); /* was ~420px */
+}
+
+/* Make Give Up just a touch smaller */
+.skip-button{
+  margin-top: 14px;
+  padding: 8px 12px;     /* smaller than primary default */
+  font-size: 0.92rem;    /* down a notch */
+}
+
+/* Rules popup: smaller, higher, and keep a bit of side margin */
+.popup-content{
+  width: calc(100% - 40px); /* prevent touching screen edges on tiny devices */
+}
+.popup-rules{
+  max-width: 520px;    /* down from ~600px */
+  min-height: 460px;   /* down from ~520px */
+}
+
+/* Mobile fit: zoom everything out a bit more */
+@media (max-width: 430px){
+  :root{ --scale: .82; }   /* was .86 */
+}
+@media (max-width: 380px){
+  :root{ --scale: .80; }   /* was .84 */
+}
