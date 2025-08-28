@@ -158,7 +158,7 @@ const GameComponent: React.FC = () => {
   const [hintForced, setHintForced] = useState(false);
   useEffect(() => { setHintForced(false); }, [activeLevel]);
 
-  /* --------- SCROLL LOCK + header bottom for page-dim --------- */
+  /* --------- SCROLL LOCK (header will be dimmed now) --------- */
   useEffect(() => {
     const lock = (started && !gameOver) || showPopup || showRules || showHistory || showFeedback;
     const html = document.documentElement;
@@ -166,32 +166,17 @@ const GameComponent: React.FC = () => {
     const prevHtml = html.style.overflow;
     const prevBody = body.style.overflow;
 
-    const calcDimTop = () => {
-      const hdr = document.querySelector('.game-header') as HTMLElement | null;
-      const headerBottom = hdr ? Math.ceil(hdr.getBoundingClientRect().bottom) : 0;
-      document.documentElement.style.setProperty('--bg-dim-top', `${Math.max(0, headerBottom + 6)}px`);
-    };
-
     if (lock) {
       html.style.overflow = 'hidden';
       body.style.overflow = 'hidden';
-      calcDimTop();
-      window.addEventListener('resize', calcDimTop);
-      window.addEventListener('orientationchange', calcDimTop);
     } else {
       html.style.overflow = '';
       body.style.overflow = '';
-      document.documentElement.style.removeProperty('--bg-dim-top');
-      window.removeEventListener('resize', calcDimTop);
-      window.removeEventListener('orientationchange', calcDimTop);
     }
 
     return () => {
       html.style.overflow = prevHtml;
       body.style.overflow = prevBody;
-      document.documentElement.style.removeProperty('--bg-dim-top');
-      window.removeEventListener('resize', calcDimTop);
-      window.removeEventListener('orientationchange', calcDimTop);
     };
   }, [started, gameOver, showPopup, showRules, showHistory, showFeedback]);
 
@@ -339,7 +324,7 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [showPopup, score]);
 
-  /* completion (adds +100 for 5/5) */
+  /* completion (+100 for 5/5) */
   useEffect(() => {
     if (!dailyPaths.length) return;
     const complete = guesses.length===dailyPaths.length && guesses.every(Boolean);
@@ -455,7 +440,7 @@ const GameComponent: React.FC = () => {
   }, [started, dailyPaths.length]);
 
   /* helpers */
-  const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
+  const sanitize = (name: string) => name.trim().replace(/\s+/g, '_');
   const stopLevelTimer = () => {
     if (levelDelayRef.current) { window.clearTimeout(levelDelayRef.current); levelDelayRef.current=null; }
     if (levelTimerRef.current) { window.clearInterval(levelTimerRef.current); levelTimerRef.current=null; }
@@ -514,7 +499,7 @@ const GameComponent: React.FC = () => {
     if (guesses[index]) return;
 
     const correctPath = dailyPaths[index]?.path.join('>');
-       const matched = players.find(
+    const matched = players.find(
       (p) => p.name.toLowerCase()===value.toLowerCase() && p.path.join('>')===correctPath
     );
 
@@ -600,13 +585,10 @@ www.helmets-game.com`;
   const duringActive = started && !gameOver && !showPopup;
   const prestartClass = !started ? 'is-prestart' : '';
 
-  /* hint helpers per-level (computed inside map) */
-  const sanitize = (name: string) => name.trim().replace(/\s+/g, '_');
-
   return (
     <div className={`app-container ${gameOver ? 'is-complete' : ''} ${prestartClass}`}>
 
-      {/* Page dim during active level: covers whole viewport except header */}
+      {/* Darker, full-viewport dim (header included) during active level */}
       {duringActive && <div className="page-dim" aria-hidden="true" />}
 
       <header className="game-header">
@@ -619,7 +601,7 @@ www.helmets-game.com`;
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
       </header>
 
-      {/* Everything below gets scaled; overlays/popups live outside this wrapper */}
+      {/* Scaled content */}
       <div className="scale-wrap">
 
         {gameOver && (
@@ -697,7 +679,7 @@ www.helmets-game.com`;
                   {path.path.map((team, i) => (
                     <React.Fragment key={i}>
                       <img
-                        src={`/images/${sanitize(team)}.png`}
+                        src={`/images/${team.trim().replace(/\s+/g,'_')}.png`}
                         alt={team}
                         className="helmet-icon"
                         style={{ ['--i' as any]: `${i * 160}ms` }}
