@@ -3,9 +3,9 @@
    =============================== */
 
 :root{
-  --active-top: 156px;     /* moved UP a bit */
-  --popup-offset: 120px;   /* rules popup higher */
-  --scale: 0.84;           /* slightly smaller overall */
+  --active-top: 128px;     /* higher (closer to the top) */
+  --popup-offset: 72px;    /* popups closer to top */
+  --scale: 0.84;           /* slight global downscale */
   --card-w: 310px;
   --card-min-h: 110px;
   --hint-color: #F59E0B;   /* HINT theme */
@@ -13,19 +13,19 @@
 
 html, body { overscroll-behavior: none; }
 
-/* Darker full-viewport page dim (includes header) */
+/* Background dimmer (NOT over header or active card) */
 .page-dim{
   position:fixed; left:0; right:0; top:0; bottom:0;
-  background:rgba(0,0,0,.78); /* darker */
-  z-index:1200;               /* above header, below active card & popups */
-  pointer-events:none;        /* allow clicks through (Rules, etc.) */
+  background:rgba(0,0,0,.78);
+  z-index:1000;            /* below header (1100) and active card (1400) */
+  pointer-events:auto;     /* block clicks to background */
 }
 
 /* Score flash */
 @keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
-/* Header — place it below the dim so it appears dimmed but visible */
+/* Header (sits above dimmer) */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
 .game-logo{height:2.4em;width:auto;display:block}
 .game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
@@ -35,7 +35,7 @@ html, body { overscroll-behavior: none; }
 .score-number{display:inline-block;min-width:2ch;text-align:right}
 .rules-button{margin-top:8px}
 
-/* App shell (no transform here) */
+/* App shell */
 .app-container{
   position:relative;
   width:100%;max-width:820px;margin:0 auto;
@@ -43,7 +43,7 @@ html, body { overscroll-behavior: none; }
   min-height:var(--app-height,100svh);
 }
 
-/* Scaled content lives here so fixed overlays aren’t clipped */
+/* Scaled content */
 .scale-wrap{
   transform:scale(var(--scale));
   transform-origin:top center;
@@ -58,13 +58,13 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect{background-color:#ffe6e6;border-color:#dc3545}
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
-/* Active card — raised above the dim; slightly shorter */
+/* Active card — ABOVE the dimmer */
 .level-card--active{
   position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);
   width:min(92vw,calc(var(--card-w) + 24px));
   max-height:min(372px,calc(var(--app-height,100svh) - var(--active-top) - 96px));
   min-height:228px;
-  overflow-y:auto;z-index:1400;
+  overflow-y:auto;z-index:1400;        /* higher than dimmer */
   border:2px solid #e5e7eb;border-radius:18px;padding:12px;
   box-shadow:0 22px 60px rgba(0,0,0,.42);
   animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center
@@ -113,7 +113,7 @@ html, body { overscroll-behavior: none; }
 .level-card--active .helmet-sequence .arrow{opacity:0;animation:arrow-fade-in 420ms ease-out calc(var(--i,0ms) + 220ms) both}
 
 /* Card enter */
-@keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Suggestions + input */
 .suggestion-box{max-height:150px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
@@ -178,22 +178,17 @@ html, body { overscroll-behavior: none; }
 .fab-button{position:fixed;padding:6px 10px;font-size:.8rem;z-index:1501}
 .fab-history{top:12px;right:12px}
 
-/* History popup */
-.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:1rem}
-.calendar-grid-button{padding:6px;font-size:.75rem;border:1.5px solid #ccc;border-radius:6px;background:#f2f2f2}
-.calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
-
-/* Completed banner — width matches larger end-game cards */
+/* Completed banner */
 .complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(96vw,calc(var(--card-w) + 48px))}
 .complete-banner h3{margin:0}
 .complete-banner p{margin:6px 0 10px;font-size:.95rem}
 .complete-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-/* Popups (unchanged; still dim only the background, not the popup) */
+/* Popups (still dim whole page behind them) */
 .popup-modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:flex;align-items:flex-start;justify-content:center;padding-top:var(--popup-offset);z-index:1500}
-.popup-content{background:#fff;padding:2rem;border-radius:12px;text-align:center;max-width:520px;width:calc(100% - 32px);max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative}
-.popup-rules{max-width:600px;min-height:520px}
-.popup-final{max-width:300px;font-size:1.08rem;padding:1.25rem 1rem;min-height:280px}
+.popup-content{background:#fff;padding:1.4rem;border-radius:12px;text-align:center;max-width:460px;width:calc(100% - 32px);max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative}
+.popup-rules{max-width:460px;min-height:420px} /* smaller rules popup */
+.popup-final{max-width:300px;font-size:1.08rem;padding:1.1rem 1rem;min-height:260px}
 .popup-title{font-size:1.55rem;margin-bottom:6px}
 .popup-date{margin:6px 0 14px;font-weight:700;color:#333}
 .popup-score{margin:12px 0 10px;font-weight:900;font-size:clamp(1.6rem,6.2vw,2.7rem)}
