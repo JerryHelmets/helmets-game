@@ -3,7 +3,7 @@
    =============================== */
 
 :root{
-  --active-top: 142px; /* moved down just a touch (was 136px) */
+  --active-top: 136px;
   --popup-offset: 150px;
   --scale: 0.88;
   --card-w: 310px;
@@ -42,16 +42,8 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect{background-color:#ffe6e6;border-color:#dc3545}
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
-/* Active card (moved down a touch & a bit shorter) */
-.level-card--active{
-  position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);
-  width:min(92vw,calc(var(--card-w) + 24px));
-  max-height:min(400px,calc(var(--app-height,100svh) - var(--active-top) - 88px)); /* was 420/-80 */
-  min-height:248px;  /* was 260px */
-  overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:12px; /* was 14px */
-  box-shadow:0 22px 60px rgba(0,0,0,.42);
-  animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center
-}
+/* Active card */
+.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 24px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:260px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
 
 /* Covered cards */
 .level-card.is-covered{position:static;width:min(86vw,var(--card-w));min-height:var(--card-min-h);max-height:var(--card-min-h);overflow:hidden;background:#1b2838!important;border-color:#25354a!important}
@@ -194,81 +186,126 @@ html, body { overscroll-behavior: none; }
 @media (prefers-reduced-motion:reduce){
   .level-card,.level-card--active,.level-card--active .helmet-sequence img,.level-card--active .helmet-sequence .arrow{animation:none!important;transition:none!important}
 }
-
 /* --- HINT theme & bar marker --- */
 :root {
   --hint-color: #F59E0B; /* amber */
 }
 
 /* Make the points bar a touch bigger */
-.points-bar { position: relative; height: 12px; border-radius: 999px; }
-.points-bar-fill { height: 100%; border-radius: inherit; }
+.points-bar {
+  position: relative;       /* for the marker */
+  height: 12px;             /* bigger than before */
+  border-radius: 999px;
+}
+.points-bar-fill {
+  height: 100%;             /* match parent height */
+  border-radius: inherit;
+}
 
 /* 50-point marker that sits centered in the bar */
 .points-bar-marker {
-  position: absolute; left: 50%; top: -1px; bottom: -1px; width: 2px;
-  background: var(--hint-color); opacity: 0.85; border-radius: 1px; pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--hint-color);
+  opacity: 0.85;
+  border-radius: 1px;
+  pointer-events: none;
 }
 
 /* Hint UI */
 .hint-row { margin-top: 8px; }
 .hint-button {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
-  padding: 6px 10px; border-radius: 10px; background: transparent;
-  border: 1px solid var(--hint-color); color: var(--hint-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--hint-color);
+  color: var(--hint-color);
 }
 .hint-button:hover { background: rgba(245, 158, 11, 0.08); }
+
 .hint-chip {
-  display: inline-block; font-size: 0.86rem; font-weight: 700; padding: 4px 8px;
-  border-radius: 8px; background: #FFF7ED; color: #92400E; border: 1px solid #FED7AA;
+  display: inline-block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #FFF7ED;        /* amber-50-ish */
+  color: #92400E;             /* amber-900-ish */
+  border: 1px solid #FED7AA;  /* amber-200-ish */
 }
 
 /* Suggestions: name on the left (with highlight), position right-aligned gray */
-.suggestion-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; }
-.suggestion-item.highlighted { background: #F3F4F6; }
-.suggestion-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.suggestion-pos { margin-left: auto; color: #9CA3AF; font-weight: 600; font-size: 12px; }
-
-/* End-game answer positions */
-.possible-answers-list .answer-pos { color: #9CA3AF; margin-left: 6px; font-weight: 600; }
-
-/* =========================================================
-   MOBILE DOWNSCALE — much smaller & zoomed out on phones
-   ========================================================= */
-@media (max-width: 430px){
-  :root{ --card-w: 280px; }                 /* narrower cards */
-  .helmet-icon{ width:50px; height:50px; }  /* smaller helmets */
-  .arrow{ font-size:.78rem; }
-  .guess-input-field{ max-width: 260px; font-size: 15px; padding: 4px 6px; }
-  .points-row{ width:min(92%, 280px); font-size: 11px; }
-  .points-bar{ width:min(92%, 280px); }
-  .community-row{ width:min(92%, 300px); font-size: 11px; }
-  .community-bar{ width:min(92%, 300px); }
-  .primary-button,.share-score-button{ padding:9px 16px; font-size:.95rem; }
-  .secondary-button{ padding:7px 12px; font-size:.86rem; }
-  .skip-button{ margin-top:14px; padding:8px 12px; font-size:.9rem; } /* a touch smaller */
-  .level-card--active{
-    max-height:min(360px, calc(var(--app-height, 100svh) - var(--active-top) - 88px));
-    min-height:236px;
-    padding:10px;
-  }
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.suggestion-item.highlighted { background: #F3F4F6; } /* gray-100 */
+.suggestion-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.suggestion-pos {
+  margin-left: auto;
+  color: #9CA3AF; /* gray-400 */
+  font-weight: 600;
+  font-size: 12px;
 }
 
+/* End-game answer positions */
+.possible-answers-list .answer-pos {
+  color: #9CA3AF; /* gray-400 */
+  margin-left: 6px;
+  font-weight: 600;
+}
+/* ====== Tweaks (drop-in overrides) ====== */
+
+/* Nudge active card down slightly; bring popups closer to top */
+:root {
+  --active-top: 144px;   /* was 136px */
+  --popup-offset: 96px;  /* was ~150px */
+}
+
+/* Make the active card a touch shorter */
+.level-card--active{
+  /* slightly smaller padding and heights */
+  padding: 12px;
+  min-height: 244px; /* was ~260px */
+  max-height: min(392px, calc(var(--app-height, 100svh) - var(--active-top) - 96px)); /* was ~420px */
+}
+
+/* Make Give Up just a touch smaller */
+.skip-button{
+  margin-top: 14px;
+  padding: 8px 12px;     /* smaller than primary default */
+  font-size: 0.92rem;    /* down a notch */
+}
+
+/* Rules popup: smaller, higher, and keep a bit of side margin */
+.popup-content{
+  width: calc(100% - 40px); /* prevent touching screen edges on tiny devices */
+}
+.popup-rules{
+  max-width: 520px;    /* down from ~600px */
+  min-height: 460px;   /* down from ~520px */
+}
+
+/* Mobile fit: zoom everything out a bit more */
+@media (max-width: 430px){
+  :root{ --scale: .82; }   /* was .86 */
+}
 @media (max-width: 380px){
-  :root{ --card-w: 260px; }                 /* even narrower */
-  .helmet-icon{ width:46px; height:46px; }
-  .arrow{ font-size:.74rem; }
-  .guess-input-field{ max-width: 240px; font-size: 14px; }
-  .points-row{ width:min(92%, 250px); font-size: 10.5px; }
-  .points-bar{ width:min(92%, 250px); }
-  .community-row{ width:min(92%, 270px); font-size: 10.5px; }
-  .community-bar{ width:min(92%, 270px); }
-  .primary-button,.share-score-button{ padding:8px 14px; font-size:.9rem; }
-  .secondary-button{ padding:6px 10px; font-size:.82rem; }
-  .skip-button{ margin-top:12px; padding:7px 11px; font-size:.86rem; }
-  .level-card--active{
-    max-height:min(340px, calc(var(--app-height, 100svh) - var(--active-top) - 90px));
-    min-height:228px;
-    padding:10px;
-  }
+  :root{ --scale: .80; }   /* was .84 */
 }
