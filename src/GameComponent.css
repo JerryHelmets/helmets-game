@@ -537,3 +537,70 @@ input, select, textarea { font-size: 16px; }
 }
 
 /* Keep existing mobile scaling/active-card behavior from your current sheet */
+
+/* ---------- PREVIOUS GAMES (small link under header) ---------- */
+.prev-games-wrap{ display:flex; justify-content:center; margin:6px 0 8px; }
+.prev-games-link{
+  background:transparent; border:none; cursor:pointer;
+  font-size:.9rem; font-weight:700; color:#1f3bd9; text-decoration:underline;
+}
+
+/* ---------- COMPLETE BANNERS ---------- */
+.complete-banner{
+  text-align:center;
+  padding:18px 16px;            /* taller */
+  margin:12px auto 16px;
+  background:#d1e7dd;
+  color:#0f5132;
+  border:1px solid #badbcc;
+  border-radius:12px;
+  width:min(96vw, calc(var(--card-w) + 110px)); /* a bit wider/taller than before */
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.complete-banner h3{ margin:0 0 8px; font-size:1.28rem; }
+
+/* Bigger emoji + score in banner */
+.banner-emoji{ display:block; margin:4px 0 8px; font-size:clamp(1.3rem, 6vw, 1.8rem); letter-spacing:2px; }
+.banner-score{ display:block; margin:6px 0 10px; font-weight:900; font-size:clamp(1.6rem, 6.2vw, 2.2rem); }
+.banner-bonus{ margin:-2px 0 10px; font-weight:800; }
+
+/* Share button centered at bottom of banner */
+.banner-share-wrap{ display:flex; justify-content:center; margin-top:10px; }
+.banner-share-button{
+  background:#2e6bff; color:#fff; border:none; cursor:pointer;
+  font-weight:800; border-radius:12px;
+  padding:12px 22px; font-size:1.05rem;
+}
+.banner-share-button:hover{ filter:brightness(1.06); }
+
+/* Bottom banner variant (below last level) */
+.complete-banner--bottom{ margin-top:14px; }
+
+/* ---------- HINT styles (restored) ---------- */
+:root { --hint-color: #F59E0B; }
+.hint-row{ margin-top:8px; }
+.hint-button{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:700; padding:6px 10px;
+  border-radius:10px; background:transparent;
+  border:1px solid var(--hint-color); color:var(--hint-color);
+}
+.hint-button:hover{ background:rgba(245,158,11,.08); }
+.hint-chip{
+  display:inline-block; font-size:.9rem; font-weight:800;
+  padding:4px 8px; border-radius:8px;
+  background:#FFF7ED; color:#92400E; border:1px solid #FED7AA;
+}
+
+/* 50% marker in the points bar (already present; safe to keep) */
+.points-bar-marker{
+  position:absolute; left:50%; top:-1px; bottom:-1px; width:2px;
+  background:var(--hint-color); opacity:.85; border-radius:1px; pointer-events:none;
+}
+
+/* ---------- FEEDBACK "LINK" ---------- */
+.feedback-link{
+  text-align:center; margin:10px auto 8px; font-size:.95rem; font-weight:700;
+  color:#1f2937; text-decoration:underline; cursor:pointer;
+}
+
