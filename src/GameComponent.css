@@ -759,8 +759,8 @@ input, select, textarea { font-size: 16px; }
 /* ======= BANNERS: narrower, bluer, tighter spacing ======= */
 .complete-banner{
   text-align:center;
-  padding:10px 10px;
-  margin:2px auto 3px;                 /* tighter spacing */
+  padding:12px 12px;
+  margin:1px auto 2px;                 /* tighter spacing */
   background:#161c7b;                   /* more black/yellow */
   color:#E5E7EB;
   border:1.5px solid #D4AF37;           /* gold */
