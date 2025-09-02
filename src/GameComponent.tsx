@@ -33,7 +33,10 @@ function getPTDateParts(date: Date = new Date()) {
   const y = parts.find(p => p.type === 'year')!.value;
   const m = parts.find(p => p.type === 'month')!.value;
   const d = parts.find(p => p.type === 'day')!.value;
-  return { y, m, d };
+  const h = parts.find(p => p.type === 'hour')?.value ?? '0';
+  const min = parts.find(p => p.type === 'minute')?.value ?? '0';
+  const s = parts.find(p => p.type === 'second')?.value ?? '0';
+  return { y, m, d, h: +h, min: +min, s: +s };
 }
 function toPTISO(date: Date) { const { y, m, d } = getPTDateParts(date); return `${y}-${m}-${d}`; }
 function todayPTISO() { return toPTISO(new Date()); }
@@ -160,6 +163,14 @@ const GameComponent: React.FC = () => {
 
   // Banner-specific count-up when game completes
   const [bannerScore, setBannerScore] = useState(0);
+
+  // Next Game countdown (PT)
+  const [nextSecs, setNextSecs] = useState<number>(0);
+  const formatHMS = (s: number) => {
+    const hh = Math.floor(s/3600), mm = Math.floor((s%3600)/60), ss = s%60;
+    const pad = (n:number)=> String(n).padStart(2,'0');
+    return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
+  };
 
   /* viewport / scroll lock */
   useEffect(() => {
@@ -315,7 +326,8 @@ const GameComponent: React.FC = () => {
   /* banner count-up when game completes */
   useEffect(() => {
     if (!gameOver) { setBannerScore(0); return; }
-    let raf=0; const start=0, end=score, duration=1800; const t0=performance.now();
+    let raf=0; const start=0, end=score, duration=1400;
+    const t0=performance.now();
     const ease = (p:number)=> (p<0.5? 2*p*p : -1 + (4-2*p)*p);
     const step=(t:number)=>{ const p=Math.min(1,(t-t0)/duration); const val=Math.round(start+(end-start)*ease(p)); setBannerScore(val); if(p<1) raf=requestAnimationFrame(step); };
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
@@ -324,7 +336,7 @@ const GameComponent: React.FC = () => {
   /* completion → confetti (no popup) */
   useEffect(() => {
     if (gameOver && !confettiFired) {
-      confetti({ particleCount: 1800, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
+      confetti({ particleCount: 1500, spread: 170, startVelocity: 60, origin: { y: 0.5 } });
       setConfettiFired(true);
     }
   }, [gameOver, confettiFired]);
@@ -359,6 +371,7 @@ const GameComponent: React.FC = () => {
     (async () => {
       try {
         await refreshCommunity();
+        // if API didn’t set anything (first run), fallback
         if (!communityPct.length) computeLocal();
       } catch { computeLocal(); }
     })();
@@ -491,11 +504,24 @@ const GameComponent: React.FC = () => {
 
   // Manual + auto hint
   const revealHint = (idx: number) => {
+    // mark hint
     setHintShown(prev => { const n=[...prev]; n[idx]=true; return n; });
+
+    // If current points are above threshold, "skip" timer to threshold by backdating levelStartAt
     setBasePointsLeft(prev => {
       const n = [...prev];
-      const cur = n[idx] ?? MAX_BASE_POINTS;
-      n[idx] = Math.min(cur, HINT_THRESHOLD); // jump down to 30 if above
+      const current = n[idx] ?? MAX_BASE_POINTS;
+      if (current > HINT_THRESHOLD) {
+        // backdate the start time so computed remaining equals threshold
+        setLevelStartAt(prevStarts => {
+          const ns = [...(prevStarts.length ? prevStarts : Array(n.length).fill(null))];
+          const desiredElapsedMs = (MAX_BASE_POINTS - HINT_THRESHOLD) * 1000; // e.g., 30s elapsed
+          ns[idx] = Date.now() - desiredElapsedMs;
+          levelStartAtRef.current = ns.slice();
+          return ns;
+        });
+        n[idx] = HINT_THRESHOLD;
+      }
       return n;
     });
   };
@@ -547,6 +573,20 @@ const GameComponent: React.FC = () => {
     };
   }, [activeLevel, started, gameOver, guesses, freezeActiveAfterAnswer, dailyPaths.length, hintShown]);
 
+  // Next Game PT countdown updater
+  useEffect(() => {
+    const compute = () => {
+      const { h, min, s } = getPTDateParts(new Date());
+      const elapsed = h*3600 + min*60 + s;
+      let left = 24*3600 - elapsed;
+      if (left <= 0) left = 24*3600;
+      setNextSecs(left);
+    };
+    compute();
+    const id = window.setInterval(compute, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const shareNow = () => {
     const title = `🏈 Helmets – ${gameDateMMDDYY}`;
     const emojiSquares = guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('');
@@ -579,7 +619,6 @@ www.helmets-game.com`;
   const appFixed = duringActive ? 'app-fixed' : '';
   const prestartClass = !started ? 'is-prestart' : '';
 
-  /* Small helper bits */
   const EmojiSummary = () => <span className="banner-emoji">{guesses.map(g => (g?.correct ? '🟩' : '🟥')).join('')}</span>;
   const BannerScoreLine = () => <span className="banner-score">Score: <span className="score-number">{bannerScore}</span></span>;
 
@@ -588,25 +627,33 @@ www.helmets-game.com`;
       <header className="game-header">
         <div className="title-row">
           <img className="game-logo" src="/android-chrome-outline-large-512x512.png" alt="Game Logo" />
-          <h1 className="game-title">HELMETS</h1>
+        <h1 className="game-title">HELMETS</h1>
         </div>
         <div className="date-line">{gameDateHeader}</div>
         <div className="score-line">Score: <span className="score-number">{displayScore}</span></div>
         <button className="rules-button" onClick={() => { setRulesOpenedManually(true); setShowRules(true); }}>Rules</button>
 
-        {/* small "Previous Games" link below header area */}
-        <div className="prev-games-wrap">
-          <button className="prev-games-link" onClick={() => setShowHistory(true)}>Previous Games</button>
+        {/* Next Game countdown (always visible) */}
+        <div className="nextgame-wrap">
+          <div className="nextgame-label">Next Game</div>
+          <div className="nextgame-time">{formatHMS(nextSecs)}</div>
         </div>
+
+        {/* Previous Games – only when game is over, shown under countdown */}
+        {gameOver && (
+          <div className="prev-games-wrap">
+            <button className="prev-games-link" onClick={() => setShowHistory(true)}>Previous Games</button>
+          </div>
+        )}
       </header>
 
-      {/* TOP Game Complete banner */}
+      {/* TOP Game Complete banner (space gray, smaller) */}
       {gameOver && (
-        <div className="complete-banner">
+        <div className="complete-banner complete-banner--top">
           <h3>🎯 Game Complete</h3>
           <EmojiSummary />
           <BannerScoreLine />
-          {gotPerfect && <p className="banner-bonus">Perfect! +100 bonus</p>}
+          {gotPerfect && <p className="banner-bonus">+100! (5/5)</p>}
           <div className="banner-share-wrap">
             <button className="banner-share-button" onClick={shareNow}>Share Score</button>
           </div>
@@ -783,7 +830,7 @@ www.helmets-game.com`;
         );
       })}
 
-      {/* BOTTOM Game Complete banner */}
+      {/* BOTTOM Game Complete banner (space gray) */}
       {gameOver && (
         <div className="complete-banner complete-banner--bottom">
           <EmojiSummary />
@@ -818,7 +865,7 @@ www.helmets-game.com`;
         </div>
       )}
 
-      {/* Feedback "link" (not a button) below bottom banner */}
+      {/* Feedback link (more visible) */}
       <div className="feedback-link" onClick={() => setShowFeedback(true)} role="link" tabIndex={0}>
         💬 Feedback
       </div>
