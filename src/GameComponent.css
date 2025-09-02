@@ -603,4 +603,94 @@ input, select, textarea { font-size: 16px; }
   text-align:center; margin:10px auto 8px; font-size:.95rem; font-weight:700;
   color:#1f2937; text-decoration:underline; cursor:pointer;
 }
+/* ======= BANNERS: space-gray + smaller UI ======= */
+.complete-banner{
+  text-align:center;
+  padding:14px 14px;              /* smaller than before */
+  margin:10px auto 12px;
+  background:#111827;             /* space gray */
+  color:#E5E7EB;                  /* light text */
+  border:1px solid #1f2937;
+  border-radius:12px;
+  width:min(94vw, calc(var(--card-w) + 80px)); /* a bit narrower */
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+.complete-banner h3{ margin:0 0 6px; font-size:1.05rem; color:#F3F4F6; }
+
+/* Smaller emoji + score + share */
+.banner-emoji{ display:block; margin:2px 0 6px; font-size:clamp(1.0rem, 4.2vw, 1.4rem); letter-spacing:1.5px; }
+.banner-score{ display:block; margin:2px 0 6px; font-weight:900; font-size:clamp(1.3rem, 4.8vw, 1.8rem); }
+.banner-bonus{ margin:0 0 6px; font-weight:800; color:#93C5FD; } /* +100! (5/5) accent */
+
+.banner-share-wrap{ display:flex; justify-content:center; margin-top:6px; }
+.banner-share-button{
+  background:#3B82F6; color:#fff; border:none; cursor:pointer;
+  font-weight:800; border-radius:10px;
+  padding:10px 18px; font-size:.98rem;
+}
+.banner-share-button:hover{ filter:brightness(1.06); }
+
+/* Top & bottom variants (both space gray) */
+.complete-banner--top{ margin-top:8px; }
+.complete-banner--bottom{ margin-top:12px; }
+
+/* ======= PREVIOUS GAMES (white, small) – shown only when gameOver by TSX ======= */
+.prev-games-wrap{ display:flex; justify-content:center; margin:6px 0 8px; }
+.prev-games-link{
+  background:#ffffff10; border:1px solid #ffffff30; color:#fff;
+  padding:6px 10px; font-size:.86rem; font-weight:800; border-radius:8px; cursor:pointer;
+}
+.prev-games-link:hover{ background:#ffffff20; }
+
+/* ======= FEEDBACK link: more visible ======= */
+.feedback-link{
+  text-align:center; margin:12px auto 10px; font-size:1rem; font-weight:800;
+  color:#2563EB; text-decoration:underline; cursor:pointer;
+}
+
+/* ======= "Correct Answers" panel: light blue-gray ======= */
+.possible-answers{
+  margin-top:6px; padding:6px 8px;
+  background:#EEF3FF;           /* light blue-gray */
+  border:1px solid #DBE2FF;
+  border-radius:6px;
+}
+.possible-answers-list{ margin-top:4px; }
+
+/* ======= Points bar (keep marker color consistent with hint) ======= */
+:root { --hint-color: #F59E0B; }
+.points-bar-marker{
+  position:absolute; left:50%; top:-1px; bottom:-1px; width:2px;
+  background:var(--hint-color); opacity:.85; border-radius:1px; pointer-events:none;
+}
+
+/* ======= Hint UI (restore styles) ======= */
+.hint-row{ margin-top:8px; }
+.hint-button{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:700; padding:6px 10px;
+  border-radius:10px; background:transparent;
+  border:1px solid var(--hint-color); color:var(--hint-color);
+}
+.hint-button:hover{ background:rgba(245,158,11,.08); }
+.hint-chip{
+  display:inline-block; font-size:.9rem; font-weight:800;
+  padding:4px 8px; border-radius:8px;
+  background:#FFF7ED; color:#92400E; border:1px solid #FED7AA;
+}
+
+/* ======= Next Game countdown (white, bold) ======= */
+.nextgame-wrap{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  margin:6px 0 6px;
+}
+.nextgame-label{ color:#fff; font-weight:900; letter-spacing:.2px; }
+.nextgame-time{
+  color:#fff; font-weight:900; font-variant-numeric: tabular-nums;
+  padding:2px 8px; border-radius:8px; background:#00000033;
+  border:1px solid #ffffff30;
+}
+
+/* (Optional) tighten bottom spacing a hair in end game card stack */
+.is-complete .path-block{ margin-bottom:8px; }
 
