@@ -1,32 +1,22 @@
 /* ===============================
-   GameComponent.css  (consolidated)
+   GameComponent.css
    =============================== */
 
-/* ---------- Root variables ---------- */
 :root{
-  --active-top: 142px;
+  --active-top: 158px;
   --popup-offset: 150px;
+  --scale: 0.88;
   --card-w: 310px;
   --card-min-h: 110px;
-
-  /* Hint & mobile scale */
-  --hint-color: #F59E0B;
-  --m-active-scale: .94;   /* subtle active-card shrink on phones */
 }
 
-/* ---------- Global ---------- */
 html, body { overscroll-behavior: none; }
 
 /* Score flash */
-@keyframes scoreFlash {
-  0%{background:transparent;color:#fff;}
-  25%{background:rgba(255,221,0,.9);color:#000;}
-  60%{background:rgba(255,221,0,.75);color:#000;}
-  100%{background:transparent;color:#fff;}
-}
+@keyframes scoreFlash { 0%{background:transparent;color:#fff;}25%{background:rgba(255,221,0,.9);color:#000;}60%{background:rgba(255,221,0,.75);color:#000;}100%{background:transparent;color:#fff;} }
 .score-flash{animation:scoreFlash .6s ease-out 1;border-radius:4px;padding:0 4px}
 
-/* ---------- Header ---------- */
+/* Header — bigger logo/title */
 .title-row{display:flex;align-items:center;justify-content:center;gap:.7em;margin-bottom:.25rem}
 .game-logo{height:2.4em;width:auto;display:block}
 .game-title{margin:0;font-weight:800;line-height:1;font-size:clamp(2.05rem,6vw,3.6rem)}
@@ -36,24 +26,16 @@ html, body { overscroll-behavior: none; }
 .score-number{display:inline-block;min-width:2ch;text-align:right}
 .rules-button{margin-top:8px}
 
-/* Header, end-game status row (countdown + previous games) */
-.top-status-row{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 6px}
-.nextgame-wrap{display:flex;align-items:baseline;gap:6px}
-.nextgame-label{font-weight:800;color:#e5e7eb}
-.nextgame-time{font-variant-numeric:tabular-nums;font-weight:900;color:#fff}
-.prev-games-link{
-  background:transparent;border:none;cursor:pointer;
-  font-size:.9rem;font-weight:700;color:#e5e7eb;text-decoration:none;
-}
-
-/* ---------- App shell ---------- */
+/* App shell */
 .app-container{max-width:820px;margin:0 auto;padding:16px 8px 32px;overflow-x:hidden;min-height:var(--app-height,100svh);transform-origin:top center}
 .app-container.app-fixed{position:fixed;inset:0;height:var(--app-height,100svh);overflow:hidden;background:transparent}
+@media (max-width:430px){:root{--scale:.82;--card-w:300px}}
+@media (max-width:380px){:root{--scale:.80;--card-w:280px}}
 
-/* ---------- Dim backdrop during active level ---------- */
+/* Dim backdrop during active level */
 .level-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px);z-index:1005;pointer-events:none}
 
-/* ---------- Cards ---------- */
+/* Cards */
 .path-block{position:relative;border:2px solid;border-radius:14px;padding:10px;margin-bottom:12px;box-shadow:0 1px 1px rgba(0,0,0,.06);width:min(86vw,var(--card-w));margin-left:auto;margin-right:auto;text-align:center;transition:background-color .25s,border-color .25s;background:#f7f7f7}
 .path-block-default{border-color:#cfcfcf}
 .path-block-correct{background-color:#e6ffe6;border-color:#28a745}
@@ -61,15 +43,9 @@ html, body { overscroll-behavior: none; }
 .path-block-incorrect img{filter:grayscale(100%) brightness(85%)}
 
 /* Active card */
-.level-card--active{
-  position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);
-  width:min(92vw,calc(var(--card-w) + 24px));
-  max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));
-  min-height:220px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;
-  box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center
-}
+.level-card--active{position:fixed;left:50%;top:var(--active-top);transform:translateX(-50%);width:min(92vw,calc(var(--card-w) + 24px));max-height:min(420px,calc(var(--app-height,100svh) - var(--active-top) - 80px));min-height:220px;overflow-y:auto;z-index:1105;border:2px solid #e5e7eb;border-radius:18px;padding:14px;box-shadow:0 22px 60px rgba(0,0,0,.42);animation:card-enter 360ms cubic-bezier(.2,.8,.2,1) 10ms both;text-align:center}
 
-/* Covered cards (locked) */
+/* Covered cards */
 .level-card.is-covered{position:static;width:min(86vw,var(--card-w));min-height:var(--card-min-h);max-height:var(--card-min-h);overflow:hidden;background:#1b2838!important;border-color:#25354a!important}
 .level-card.is-covered .card-body,.level-card.is-covered .helmet-sequence,.level-card.is-covered .guess-input-container{opacity:0;visibility:hidden;height:0}
 .level-card.is-covered .level-badge{display:none}
@@ -94,7 +70,7 @@ html, body { overscroll-behavior: none; }
 .card-body{margin-top:42px}
 .click-hint{font-size:.8rem;color:#6b7280;margin:-2px 0 6px}
 
-/* Helmets + arrows */
+/* Helmets + arrows (normal) */
 .helmet-sequence{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 8px 0;text-align:center}
 .helmet-icon{width:68px;height:68px;object-fit:contain}
 @media (max-width:480px){.helmet-icon{width:56px;height:56px}}
@@ -111,103 +87,65 @@ html, body { overscroll-behavior: none; }
 @keyframes arrow-fade-in{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
 .level-card--active .helmet-sequence .arrow{opacity:0;animation:arrow-fade-in 420ms ease-out calc(var(--i,0ms) + 220ms) both}
 
-/* Active-card enter (keeps mobile scale via --enter-scale) */
-@keyframes card-enter{
-  from{opacity:0;transform:translateX(-50%) translateY(-6px) scale(var(--enter-scale,1));}
-  to{opacity:1;transform:translateX(-50%) translateY(0) scale(var(--enter-scale,1));}
-}
+/* Card enter */
+@keyframes card-enter{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
-/* ---------- Suggestions + input ---------- */
+/* Suggestions + input */
 .suggestion-box{max-height:150px;overflow-y:auto;border:1px solid #ccc;border-radius:6px;margin:6px auto 0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);width:min(92%,calc(var(--card-w) - 10px));text-align:left}
 .suggestion-item{padding:8px 10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .suggestion-item:hover,.suggestion-item.highlighted{background:#f0f0f0}
-.suggestion-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.suggestion-pos{color:#8a8f98;font-size:.85em;margin-left:8px}
+.suggest-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.suggest-pos{color:#8a8f98;font-size:.85em;margin-left:8px}
 .fade-in-fast{animation:fadeIn .3s ease-out}
 @keyframes fadeIn{to{opacity:1}}
 
 .guess-input-container{display:flex;justify-content:center;margin-top:6px}
-.guess-input-field{
-  width:98%;max-width:300px;padding:4px 6px;border-radius:8px;border:1px solid #ccc;
-  -webkit-text-size-adjust:100%;
-  font-size:16px !important; /* prevent iOS zoom */
-  margin-left:auto;margin-right:auto
-}
-input, select, textarea { font-size:16px; }
+.guess-input-field{width:98%;max-width:300px;padding:4px 6px;font-size:16px;border-radius:8px;border:1px solid #ccc;-webkit-text-size-adjust:100%;margin-left:auto;margin-right:auto}
 
-/* ---------- Points bar + hint ---------- */
+/* Points bar */
 .points-wrap{width:100%;margin-top:10px;display:flex;flex-direction:column;align-items:center}
 .points-row{display:flex;justify-content:space-between;width:min(92%,320px);font-size:12px;color:#111}
 .points-label,.points-value{font-weight:700}
-.points-bar{position:relative;width:min(92%,320px);height:10px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:4px}
+.points-bar{width:min(92%,320px);height:10px;background:#e7efff;border-radius:999px;overflow:hidden;border:1px solid #c9d6ff;margin-top:4px}
 .points-bar-fill{height:100%;width:var(--fill,100%);background:#2e6bff;transition:width 1s linear}
-.points-bar-marker{position:absolute;left:50%;top:-1px;bottom:-1px;width:2px;background:var(--hint-color);opacity:.85;border-radius:1px;pointer-events:none}
 
-.hint-row{margin-top:8px}
-.hint-button{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;font-weight:700;padding:6px 10px;border-radius:10px;background:transparent;
-  border:1px solid var(--hint-color);color:var(--hint-color)
-}
-.hint-button:hover{background:rgba(245,158,11,.08)}
-.hint-chip{
-  display:inline-block;font-size:.9rem;font-weight:800;padding:4px 8px;border-radius:8px;
-  background:#FFF7ED;color:#92400E;border:1px solid #FED7AA
-}
-
-/* ---------- Community % (game complete) ---------- */
+/* Community % bar (game complete) */
 .community-wrap{width:100%;margin-top:8px;display:flex;flex-direction:column;align-items:center}
 .community-row{display:flex;justify-content:space-between;width:min(92%,360px);font-size:12px;color:#111}
 .community-bar{width:min(92%,360px);height:10px;background:#eef2ff;border-radius:999px;overflow:hidden;border:1px solid #c7cffd;margin-top:4px}
 .community-bar-fill{height:100%;background:#6366f1;transform-origin:left;transform:scaleX(0);transition:transform .9s ease}
 .is-complete .community-bar-fill{transform:scaleX(calc(var(--pct, 0)/100))}
 
-/* ---------- Buttons ---------- */
+/* Buttons */
 .primary-button,.share-score-button{background:#2e6bff;color:#fff;padding:10px 18px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer}
 .primary-button:hover,.share-score-button:hover{filter:brightness(1.06)}
 .secondary-button{background:#fff;color:#111;padding:8px 14px;border:1.5px solid #cfcfcf;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer}
 .secondary-button.small{font-size:.88rem;padding:7px 12px}
 .skip-button{margin-top:18px}
 
-/* ---------- Locked answers ---------- */
+/* Locked answers */
 .locked-answer{padding:6px 10px;border-radius:8px;font-weight:bold;color:#fff;font-size:.85rem;text-align:center}
 .answer-correct{background:#28a745;animation:fadeIn .25s ease-in-out}
 .answer-incorrect{background:#dc3545}
 @keyframes blinkRed{0%{background-color:#dc3545}50%{background-color:#ff6b6b}100%{background-color:#dc3545}}
 .blink-red{animation:blinkRed .6s ease-in-out 1}
 
-/* ---------- FABs ---------- */
+/* FABs */
 .fab-button{position:fixed;padding:6px 10px;font-size:.8rem;z-index:1201}
 .fab-history{top:12px;right:12px}
 
-/* ---------- History popup ---------- */
+/* History popup */
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:1rem}
 .calendar-grid-button{padding:6px;font-size:.75rem;border:1.5px solid #ccc;border-radius:6px;background:#f2f2f2}
 .calendar-grid-button.today{background:#e0ecff;border-color:#2e6bff}
 
-/* Numbered/history states */
-.calendar-grid-button.played-release{background:#3b3b3b;color:#fff;border-color:#555}
-.calendar-grid-button.played-replay{background:#5a5340;color:#fff;border-color:#a5903a;position:relative}
-.calendar-grid-button.played-replay::after{content:"*";position:absolute;top:2px;right:4px;font-size:10px;opacity:.9}
-.calendar-note{margin-top:6px;font-size:10px;color:#9aa3af}
+/* Completed banner — width matches cards */
+.complete-banner{text-align:center;padding:12px;margin:10px auto 14px;background:#d1e7dd;color:#0f5132;border:1px solid #badbcc;border-radius:10px;width:min(92vw,calc(var(--card-w) + 36px))}
+.complete-banner h3{margin:0}
+.complete-banner p{margin:6px 0 10px;font-size:.95rem}
+.complete-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-/* ---------- Completed banner(s) ---------- */
-.complete-banner{
-  text-align:center;padding:14px 14px;margin:10px auto 12px;
-  background:#111827;color:#E5E7EB;border:1px solid #1f2937;border-radius:12px;
-  width:min(94vw, calc(var(--card-w) + 80px)); /* current visual width */
-  box-shadow:0 6px 18px rgba(0,0,0,.18)
-}
-.complete-banner h3{margin:0 0 6px;font-size:1.05rem;color:#F3F4F6}
-.banner-emoji{display:block;margin:2px 0 6px;font-size:clamp(1.0rem, 4.2vw, 1.4rem);letter-spacing:1.5px}
-.banner-score{display:block;margin:2px 0 6px;font-weight:900;font-size:clamp(1.3rem, 4.8vw, 1.8rem)}
-.banner-bonus{margin:0 0 6px;font-weight:800;color:#93C5FD}
-.banner-share-wrap{display:flex;justify-content:center;margin-top:4px}
-.banner-share-button{background:#3B82F6;color:#fff;border:none;cursor:pointer;font-weight:600;border-radius:10px;padding:10px 18px;font-size:.98rem}
-.banner-share-button:hover{filter:brightness(1.06)}
-.complete-banner--bottom{margin-top:14px}
-
-/* ---------- Popups ---------- */
+/* Popups */
 .popup-modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:flex;align-items:flex-start;justify-content:center;padding-top:var(--popup-offset);z-index:1300}
 .popup-content{background:#fff;padding:2rem;border-radius:12px;text-align:center;max-width:520px;width:calc(100% - 32px);max-height:calc(var(--app-height,100svh) - var(--popup-offset) - 16px);overflow:auto;box-shadow:0 8px 20px rgba(0,0,0,.25);position:relative}
 .popup-rules{max-width:600px;min-height:520px}
@@ -218,13 +156,13 @@ input, select, textarea { font-size:16px; }
 .popup-final .score-number{display:inline-block;min-width:3ch}
 .close-button{position:absolute;top:12px;right:12px;background:transparent;font-size:18px;border:none;cursor:pointer}
 
-/* ---------- Feedback link ---------- */
-.feedback-link{
-  text-align:center;margin:10px auto 8px;font-size:.95rem;font-weight:700;
-  color:#1f2937;text-decoration:underline;cursor:pointer
-}
+/* Feedback popup bits */
+.email-row{display:flex;align-items:center;justify-content:center;margin-top:1em;gap:8px}
+.email-emoji{font-size:1.2rem}
+.email-text{font-size:.95rem}
+.copied-msg{margin-top:.5em;color:green;font-size:.8rem}
 
-/* ---------- Rules lists ---------- */
+/* Rules lists */
 .rules-list{list-style:none;padding-left:0;margin-top:8px;text-align:left}
 .rules-list.football-bullets li{position:relative;padding-left:1.6rem;margin:6px 0}
 .rules-list.football-bullets li::before{content:"🏈";position:absolute;left:0;top:0;transform:translateY(2px);font-size:1rem}
@@ -233,36 +171,642 @@ input, select, textarea { font-size:16px; }
 .fine-print-title{margin:12px 0 4px;font-size:1rem;font-weight:400}
 .rules-fineprint li{font-weight:400;font-size:.9rem;opacity:.95}
 
-/* ---------- Correct answers ---------- */
+/* Possible answers */
 .possible-answers{margin-top:6px;padding:6px;background:#eee;border-radius:6px}
 .possible-answers-list{list-style:none;padding-left:0;margin-top:4px;font-size:.9rem}
 .possible-answers-list li{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .answer-pos{color:#8a8f98;font-size:.9em}
 
-/* ---------- Footer ---------- */
+/* Footer */
 .footer-actions{display:flex;justify-content:center;margin:10px auto 6px}
 .feedback-bottom{margin-bottom:4px}
 .site-disclosure{margin:18px auto 10px;max-width:800px;text-align:center;font-size:10px;line-height:1.25;color:#9aa3af;padding:0 10px}
 
-/* ---------- Reduce motion ---------- */
+/* Reduce motion */
 @media (prefers-reduced-motion:reduce){
   .level-card,.level-card--active,.level-card--active .helmet-sequence img,.level-card--active .helmet-sequence .arrow{animation:none!important;transition:none!important}
 }
+/* --- HINT theme & bar marker --- */
+:root {
+  --hint-color: #F59E0B; /* amber */
+}
 
-/* ---------- Mobile scaling: keep active-card scaled (enter/feedback too) ---------- */
+/* Make the points bar a touch bigger */
+.points-bar {
+  position: relative;       /* for the marker */
+  height: 12px;             /* bigger than before */
+  border-radius: 999px;
+}
+.points-bar-fill {
+  height: 100%;             /* match parent height */
+  border-radius: inherit;
+}
+
+/* 50-point marker that sits centered in the bar */
+.points-bar-marker {
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--hint-color);
+  opacity: 0.85;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Hint UI */
+.hint-row { margin-top: 8px; }
+.hint-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--hint-color);
+  color: var(--hint-color);
+}
+.hint-button:hover { background: rgba(245, 158, 11, 0.08); }
+
+.hint-chip {
+  display: inline-block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #FFF7ED;        /* amber-50-ish */
+  color: #92400E;             /* amber-900-ish */
+  border: 1px solid #FED7AA;  /* amber-200-ish */
+}
+
+/* Suggestions: name on the left (with highlight), position right-aligned gray */
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.suggestion-item.highlighted { background: #F3F4F6; } /* gray-100 */
+.suggestion-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.suggestion-pos {
+  margin-left: auto;
+  color: #9CA3AF; /* gray-400 */
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* End-game answer positions */
+.possible-answers-list .answer-pos {
+  color: #9CA3AF; /* gray-400 */
+  margin-left: 6px;
+  font-weight: 600;
+}
+/* ====== Tweaks (drop-in overrides) ====== */
+
+/* Nudge active card down slightly; bring popups closer to top */
+:root {
+  --active-top: 150px;   /* was 136px */
+  --popup-offset: 96px;  /* was ~150px */
+}
+
+/* Make the active card a touch shorter */
+.level-card--active{
+  /* slightly smaller padding and heights */
+  padding: 12px;
+  min-height: 244px; /* was ~260px */
+  max-height: min(392px, calc(var(--app-height, 100svh) - var(--active-top) - 96px)); /* was ~420px */
+}
+
+/* Make Give Up just a touch smaller */
+.skip-button{
+  margin-top: 14px;
+  padding: 8px 12px;     /* smaller than primary default */
+  font-size: 0.92rem;    /* down a notch */
+}
+
+/* Rules popup: smaller, higher, and keep a bit of side margin */
+.popup-content{
+  width: calc(100% - 40px); /* prevent touching screen edges on tiny devices */
+}
+.popup-rules{
+  max-width: 520px;    /* down from ~600px */
+  min-height: 460px;   /* down from ~520px */
+}
+
+/* Mobile fit: zoom everything out a bit more */
 @media (max-width: 430px){
+  :root{ --scale: .82; }   /* was .86 */
+}
+@media (max-width: 380px){
+  :root{ --scale: .80; }   /* was .84 */
+}
+/* =========================================================
+   MOBILE SCALING (safe for position:fixed elements)
+   - Scales: active level card, end-game cards, popup white card
+   - Leaves header & backdrop logic untouched
+   ========================================================= */
+
+/* Tuning knobs */
+:root{
+  --m-active-scale: .80;      /* active level card on phones */
+  --m-complete-scale: .94;    /* end-game cards on phones (slight) */
+  --m-popup-scale: .86;       /* rules/final popup content on phones */
+  --m-banner-scale: .92;      /* complete banner on phones */
+}
+
+/* Prevent iOS focus-zoom while still readable */
+.guess-input-field { font-size: 16px !important; }
+input, select, textarea { font-size: 16px; }
+
+/* Slightly tighter spacing between end-game cards */
+.is-complete .path-block { margin-bottom: 8px; }
+
+/* Phone breakpoint */
+@media (max-width: 430px){
+
+  /* 1) Active card: compose its existing translate with a scale.
+        Don't scale any ancestor; scale THIS fixed card only. */
+  .level-card--active{
+    transform: translateX(-50%) scale(var(--m-active-scale)) !important;
+    transform-origin: top center;
+    /* keep it a bit shorter on phones */
+    min-height: 232px;
+    max-height: min(360px, calc(var(--app-height, 100svh) - var(--active-top) - 96px));
+    padding: 10px 12px;
+  }
+
+  /* 2) End-game level cards: small visual shrink */
+  .is-complete .level-card{
+    transform: scale(var(--m-complete-scale));
+    transform-origin: top center;
+  }
+
+  /* 3) Completed banner: match overall shrink */
+  .complete-banner{
+    transform: scale(var(--m-banner-scale));
+    transform-origin: top center;
+  }
+
+  /* 4) Popups: scale ONLY the white card (keeps overlay full-screen) */
+  .popup-content{
+    transform: scale(var(--m-popup-scale));
+    transform-origin: top center;
+    width: calc(100% - 36px);  /* keep nice side gutters */
+    max-width: 460px;
+    padding: 1.05rem .95rem;   /* slightly tighter padding when scaled */
+  }
+
+  /* Optional: small harmonizers so contents feel balanced when scaled */
+  .helmet-icon { width: 52px; height: 52px; }
+  .points-row { width:min(92%, 280px); font-size: 11px; }
+  .points-bar { width:min(92%, 280px); }
+  .primary-button, .share-score-button { padding: 9px 14px; font-size: .95rem; }
+  .secondary-button { padding: 7px 11px; font-size: .86rem; }
+  .skip-button { margin-top: 14px; padding: 8px 12px; font-size: .9rem; }
+}
+
+/* Very small phones */
+@media (max-width: 380px){
+  :root{
+    --m-active-scale: .76;
+    --m-complete-scale: .92;
+    --m-popup-scale: .82;
+    --m-banner-scale: .90;
+  }
+  .helmet-icon { width: 48px; height: 48px; }
+  .points-row { width:min(92%, 250px); font-size: 10.5px; }
+  .points-bar { width:min(92%, 250px); }
+  .primary-button, .share-score-button { padding: 8px 12px; font-size: .9rem; }
+  .secondary-button { padding: 6px 10px; font-size: .82rem; }
+  .skip-button { margin-top: 12px; padding: 7px 11px; font-size: .86rem; }
+}
+/* =========================================================
+   MOBILE SCALING REFINEMENT
+   - Keep active-card scale during enter/feedback
+   - Gentler scaling (about half the previous shrink)
+   - End-game cards slightly scaled
+   ========================================================= */
+
+/* Gentler scale defaults */
+:root{
+  --m-active-scale: .89;     /* was ~.78/.80 → less shrink */
+  --m-complete-scale: .97;   /* was ~.92/.94 → less shrink */
+}
+
+/* Active card keeps scale even while its 'enter' animation runs
+   and during the immediate feedback phase (it keeps the same class) */
+@media (max-width: 430px){
+  .level-card--active{
+    transform: translateX(-50%) scale(var(--m-active-scale)) !important;
+    transform-origin: top center;
+    /* feed scale into the animation keyframes (see override below) */
+    --enter-scale: var(--m-active-scale);
+  }
+
+  /* End-game: slightly scaled down */
+  .is-complete .level-card{
+    transform: scale(var(--m-complete-scale)) !important;
+    transform-origin: top center;
+  }
+}
+
+/* Smaller phones: a touch more shrink than above, but still gentler than before */
+@media (max-width: 380px){
+  :root{
+    --m-active-scale: .86;
+    --m-complete-scale: .95;
+  }
+  .level-card--active{ --enter-scale: var(--m-active-scale); }
+}
+
+/* IMPORTANT: Override the active-card enter animation so it preserves scale
+   (previous keyframes set transform without scale, which momentarily removed it) */
+@keyframes card-enter{
+  from{
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px) scale(var(--enter-scale, 1));
+  }
+  to{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(var(--enter-scale, 1));
+  }
+}
+/* =========================================================
+   SUBTLER ACTIVE SCALE + SLIGHTLY LARGER HELMETS (MOBILE)
+   (append at end of GameComponent.css)
+   ========================================================= */
+
+/* Gentler active scaling */
+:root{
+  --m-active-scale: .94;   /* was ~.89/.90 — less shrink */
+}
+
+/* Ensure the animation keeps the new scale during pop-in/reveal */
+@keyframes card-enter{
+  from{
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px) scale(var(--enter-scale, 1));
+  }
+  to{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(var(--enter-scale, 1));
+  }
+}
+
+/* Phones */
+@media (max-width: 430px){
+  /* Active card: compose translate + the gentler scale, and feed
+     the scale into the enter animation so it never 'snaps' back */
   .level-card--active{
     --enter-scale: var(--m-active-scale);
     transform: translateX(-50%) scale(var(--m-active-scale)) !important;
     transform-origin: top center;
   }
-  /* Slightly smaller elements to harmonize when scaled */
-  .helmet-icon{ width: 58px; height: 58px; }
-  .level-card--active .helmet-icon{ width: 66px; height: 66px; }
+
+  /* Helmets a bit larger overall and in the active card */
+  .helmet-icon{ width: 58px; height: 58px; }                 /* was ~52–56 */
+  .level-card--active .helmet-icon{ width: 66px; height: 66px; } /* was ~64 */
 }
+
+/* Smaller phones */
 @media (max-width: 380px){
-  :root{ --m-active-scale: .92; }
+  :root{ --m-active-scale: .92; }  /* a touch more than before */
+
   .level-card--active{ --enter-scale: var(--m-active-scale); }
-  .helmet-icon{ width: 54px; height: 54px; }
-  .level-card--active .helmet-icon{ width: 62px; height: 62px; }
+
+  .helmet-icon{ width: 54px; height: 54px; }                 /* up from ~48–52 */
+  .level-card--active .helmet-icon{ width: 62px; height: 62px; } /* up from ~60–64 */
+}
+
+/* ===============================
+   GameComponent.css
+   =============================== */
+
+/* (Your existing styles remain unchanged; only the banner & tiny helpers added/adjusted) */
+
+.complete-banner{
+  text-align:center;
+  padding:16px 14px;
+  margin:12px auto 16px;
+  background:#d1e7dd;
+  color:#0f5132;
+  border:1px solid #badbcc;
+  border-radius:12px;
+  width:min(96vw, calc(var(--card-w) + 96px)); /* bigger than before */
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.complete-banner h3{ margin:0 0 6px; font-size:1.2rem; }
+.banner-emoji{ margin:4px 0 8px; font-size:1.25rem; letter-spacing:2px; }
+.banner-score{ margin:6px 0 10px; font-weight:900; font-size:clamp(1.4rem,5.8vw,2.1rem); }
+.banner-bonus{ margin:-4px 0 10px; font-weight:800; }
+
+.possible-answers{
+  margin-top:6px;
+  padding:6px;
+  background:#eee;
+  border-radius:6px;
+}
+.possible-answers-list{
+  list-style:none;
+  padding-left:0;
+  margin-top:4px;
+  font-size:.9rem
+}
+.possible-answers-list li{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px
+}
+.answer-pos{ color:#8a8f98; font-size:.9em }
+
+/* Points marker already present; ensure fill is percentage-based for 60 max */
+.points-bar-fill{ height:100%; width:var(--fill,100%); background:#2e6bff; transition:width 1s linear }
+.points-bar-marker {
+  position:absolute; left:50%; top:-1px; bottom:-1px; width:2px;
+  background:#F59E0B; opacity:.85; border-radius:1px; pointer-events:none;
+}
+
+/* Keep existing mobile scaling/active-card behavior from your current sheet */
+
+/* ---------- PREVIOUS GAMES (small link under header) ---------- */
+.prev-games-wrap{ display:flex; justify-content:center; margin:6px 0 8px; }
+.prev-games-link{
+  background:transparent; border:none; cursor:pointer;
+  font-size:.9rem; font-weight:700; color:#1f3bd9; text-decoration:underline;
+}
+
+/* ---------- COMPLETE BANNERS ---------- */
+.complete-banner{
+  text-align:center;
+  padding:18px 16px;            /* taller */
+  margin:12px auto 16px;
+  background:#d1e7dd;
+  color:#0f5132;
+  border:1px solid #badbcc;
+  border-radius:12px;
+  width:min(96vw, calc(var(--card-w) + 110px)); /* a bit wider/taller than before */
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.complete-banner h3{ margin:0 0 8px; font-size:1.28rem; }
+
+/* Bigger emoji + score in banner */
+.banner-emoji{ display:block; margin:4px 0 8px; font-size:clamp(1.3rem, 6vw, 1.8rem); letter-spacing:2px; }
+.banner-score{ display:block; margin:6px 0 10px; font-weight:900; font-size:clamp(1.6rem, 6.2vw, 2.2rem); }
+.banner-bonus{ margin:-2px 0 10px; font-weight:800; }
+
+/* Share button centered at bottom of banner */
+.banner-share-wrap{ display:flex; justify-content:center; margin-top:10px; }
+.banner-share-button{
+  background:#2e6bff; color:#fff; border:none; cursor:pointer;
+  font-weight:800; border-radius:12px;
+  padding:12px 22px; font-size:1.05rem;
+}
+.banner-share-button:hover{ filter:brightness(1.06); }
+
+/* Bottom banner variant (below last level) */
+.complete-banner--bottom{ margin-top:14px; }
+
+/* ---------- HINT styles (restored) ---------- */
+:root { --hint-color: #F59E0B; }
+.hint-row{ margin-top:8px; }
+.hint-button{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:700; padding:6px 10px;
+  border-radius:10px; background:transparent;
+  border:1px solid var(--hint-color); color:var(--hint-color);
+}
+.hint-button:hover{ background:rgba(245,158,11,.08); }
+.hint-chip{
+  display:inline-block; font-size:.9rem; font-weight:800;
+  padding:4px 8px; border-radius:8px;
+  background:#FFF7ED; color:#92400E; border:1px solid #FED7AA;
+}
+
+/* 50% marker in the points bar (already present; safe to keep) */
+.points-bar-marker{
+  position:absolute; left:50%; top:-1px; bottom:-1px; width:2px;
+  background:var(--hint-color); opacity:.85; border-radius:1px; pointer-events:none;
+}
+
+/* ---------- FEEDBACK "LINK" ---------- */
+.feedback-link{
+  text-align:center; margin:10px auto 8px; font-size:.95rem; font-weight:700;
+  color:#1f2937; text-decoration:underline; cursor:pointer;
+}
+/* ======= BANNERS: space-gray + smaller UI ======= */
+.complete-banner{
+  text-align:center;
+  padding:14px 14px;              /* smaller than before */
+  margin:10px auto 12px;
+  background:#111827;             /* space gray */
+  color:#E5E7EB;                  /* light text */
+  border:1px solid #1f2937;
+  border-radius:12px;
+  width:min(94vw, calc(var(--card-w) + 80px)); /* a bit narrower */
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+.complete-banner h3{ margin:0 0 6px; font-size:1.05rem; color:#F3F4F6; }
+
+/* Smaller emoji + score + share */
+.banner-emoji{ display:block; margin:2px 0 6px; font-size:clamp(1.0rem, 4.2vw, 1.4rem); letter-spacing:1.5px; }
+.banner-score{ display:block; margin:2px 0 6px; font-weight:900; font-size:clamp(1.3rem, 4.8vw, 1.8rem); }
+.banner-bonus{ margin:0 0 6px; font-weight:800; color:#93C5FD; } /* +100! (5/5) accent */
+
+.banner-share-wrap{ display:flex; justify-content:center; margin-top:6px; }
+.banner-share-button{
+  background:#3B82F6; color:#fff; border:none; cursor:pointer;
+  font-weight:800; border-radius:10px;
+  padding:10px 18px; font-size:.98rem;
+}
+.banner-share-button:hover{ filter:brightness(1.06); }
+
+/* Top & bottom variants (both space gray) */
+.complete-banner--top{ margin-top:8px; }
+.complete-banner--bottom{ margin-top:12px; }
+
+/* ======= PREVIOUS GAMES (white, small) – shown only when gameOver by TSX ======= */
+.prev-games-wrap{ display:flex; justify-content:center; margin:6px 0 8px; }
+.prev-games-link{
+  background:#ffffff10; border:1px solid #ffffff30; color:#fff;
+  padding:6px 10px; font-size:.86rem; font-weight:800; border-radius:8px; cursor:pointer;
+}
+.prev-games-link:hover{ background:#ffffff20; }
+
+/* ======= FEEDBACK link: more visible ======= */
+.feedback-link{
+  text-align:center; margin:12px auto 10px; font-size:1rem; font-weight:800;
+  color:#2563EB; text-decoration:underline; cursor:pointer;
+}
+
+/* ======= "Correct Answers" panel: light blue-gray ======= */
+.possible-answers{
+  margin-top:6px; padding:6px 8px;
+  background:#EEF3FF;           /* light blue-gray */
+  border:1px solid #DBE2FF;
+  border-radius:6px;
+}
+.possible-answers-list{ margin-top:4px; }
+
+/* ======= Points bar (keep marker color consistent with hint) ======= */
+:root { --hint-color: #F59E0B; }
+.points-bar-marker{
+  position:absolute; left:50%; top:-1px; bottom:-1px; width:2px;
+  background:var(--hint-color); opacity:.85; border-radius:1px; pointer-events:none;
+}
+
+/* ======= Hint UI (restore styles) ======= */
+.hint-row{ margin-top:8px; }
+.hint-button{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:700; padding:6px 10px;
+  border-radius:10px; background:transparent;
+  border:1px solid var(--hint-color); color:var(--hint-color);
+}
+.hint-button:hover{ background:rgba(245,158,11,.08); }
+.hint-chip{
+  display:inline-block; font-size:.9rem; font-weight:800;
+  padding:4px 8px; border-radius:8px;
+  background:#FFF7ED; color:#92400E; border:1px solid #FED7AA;
+}
+
+/* ======= Next Game countdown (white, bold) ======= */
+.nextgame-wrap{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  margin:6px 0 6px;
+}
+.nextgame-label{ color:#fff; font-weight:900; letter-spacing:.2px; }
+.nextgame-time{
+  color:#fff; font-weight:900; font-variant-numeric: tabular-nums;
+  padding:2px 8px; border-radius:8px; background:#00000033;
+  border:1px solid #ffffff30;
+}
+
+/* (Optional) tighten bottom spacing a hair in end game card stack */
+.is-complete .path-block{ margin-bottom:4px; }
+
+/* ======= HEADER STATUS ROW (end game only) ======= */
+.top-status-row{
+  display:flex; gap:10px; justify-content:center; align-items:center;
+  margin:8px 0 4px;
+}
+.prev-games-link{
+  background:#ffffff10; border:1px solid #ffffff30; color:#fff;
+  padding:6px 10px; font-size:.86rem; font-weight:800; border-radius:8px; cursor:pointer;
+  text-decoration:none; /* no underline */
+}
+.prev-games-link:hover{ background:#ffffff20; }
+
+/* ======= BANNERS: dark blue bg + gold border; lighter share button ======= */
+.complete-banner{
+  text-align:center;
+  padding:14px 14px;
+  margin:10px auto 12px;
+  background:#0B1A3C;            /* dark blue */
+  color:#E5E7EB;
+  border:1.5px solid #D4AF37;    /* gold */
+  border-radius:12px;
+  width:min(94vw, calc(var(--card-w) + 80px));
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+.complete-banner h3{ margin:0 0 6px; font-size:1.05rem; color:#F3F4F6; }
+
+.banner-emoji{ display:block; margin:2px 0 6px; font-size:clamp(1.0rem, 4.2vw, 1.4rem); letter-spacing:1.5px; }
+.banner-score{ display:block; margin:2px 0 6px; font-weight:900; font-size:clamp(1.3rem, 4.8vw, 1.8rem); }
+.banner-bonus{ margin:0 0 8px; font-weight:800; color:#FDE68A; } /* gold-ish for +100 */
+
+.banner-share-wrap{ display:flex; justify-content:center; margin-top:6px; }
+.banner-share-button{
+  background:#3B82F6; color:#fff; border:none; cursor:pointer;
+  font-weight:600; /* lower weight */
+  border-radius:10px; padding:10px 18px; font-size:.98rem;
+}
+.banner-share-button:hover{ filter:brightness(1.06); }
+
+/* ======= "Correct Answers": light blue-gray background ======= */
+.possible-answers{
+  margin-top:6px; padding:6px 8px;
+  background:#EEF3FF;
+  border:1px solid #DBE2FF;
+  border-radius:6px;
+}
+
+/* ======= Next Game countdown visuals ======= */
+.nextgame-wrap{
+  display:flex; align-items:center; gap:8px;
+}
+.nextgame-label{ color:#fff; font-weight:900; letter-spacing:.2px; }
+.nextgame-time{
+  color:#fff; font-weight:900; font-variant-numeric: tabular-nums;
+  padding:2px 8px; border-radius:8px; background:#00000033;
+  border:1px solid #ffffff30;
+}
+
+/* ======= Community % bar animation fix ======= */
+.community-bar-fill{ height:100%; background:#6366f1; transform-origin:left; transform:scaleX(0); transition:transform .9s ease; }
+.is-complete .community-bar-fill{ transform:scaleX(calc(var(--pct, 0) / 100)); }
+
+/* ======= Suggestions box already closes on blur; keep styling ======= */
+/* ======= BANNERS: narrower, bluer, tighter spacing ======= */
+.complete-banner{
+  text-align:center;
+  padding:12px 12px;
+  margin:1px auto 2px;                 /* tighter spacing */
+  background:#383843;                   /* more black/yellow */
+  color:#E5E7EB;
+  border:1.5px solid #D4AF37;           /* gold */
+  border-radius:12px;
+  width:min(94vw, calc(var(--card-w) + 36px)); /* narrower (was +80px) */
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+.complete-banner h3{ margin:0 0 4px; font-size:1.02rem; color:#F3F4F6; }
+
+.banner-emoji{ display:block; margin:2px 0 4px; font-size:clamp(0.95rem, 4.0vw, 1.35rem); letter-spacing:1.5px; }
+.banner-score{ display:block; margin:0 0 4px; font-weight:900; font-size:clamp(1.2rem, 4.6vw, 1.7rem); }
+.banner-bonus{ margin:2px 0 6px; font-weight:800; color:#FDE68A; } /* +100 (5/5) below score */
+
+.banner-share-wrap{ display:flex; justify-content:center; margin-top:4px; }
+.banner-share-button{
+  background:#3B82F6; color:#fff; border:none; cursor:pointer;
+  font-weight:600; border-radius:10px; padding:10px 18px; font-size:.98rem;
+}
+.banner-share-button:hover{ filter:brightness(1.06); }
+
+/* Slightly tighten spacing around cards too */
+.path-block{ margin-bottom:6px; }      /* was 12px */
+
+/* Status row visuals unchanged; colon added in TSX already */
+
+/* History calendar states for numbered games */
+.calendar-grid-button.played-release{
+  background:#3b3b3b;
+  color:#fff;
+  border-color:#555;
+}
+.calendar-grid-button.played-replayed{
+  background:#5a5340;      /* dark yellow/gray */
+  color:#fff;
+  border-color:#a5903a;
+  position:relative;
+}
+.calendar-grid-button.played-replayed::after{
+  content:"*";
+  position:absolute;
+  top:2px; right:4px;
+  font-size:10px;
+  opacity:0.9;
+}
+.calendar-note{
+  margin-top:6px;
+  font-size:10px;
+  color:#9aa3af;
 }
