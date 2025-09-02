@@ -486,3 +486,54 @@ input, select, textarea { font-size: 16px; }
   .helmet-icon{ width: 54px; height: 54px; }                 /* up from ~48–52 */
   .level-card--active .helmet-icon{ width: 62px; height: 62px; } /* up from ~60–64 */
 }
+
+/* ===============================
+   GameComponent.css
+   =============================== */
+
+/* (Your existing styles remain unchanged; only the banner & tiny helpers added/adjusted) */
+
+.complete-banner{
+  text-align:center;
+  padding:16px 14px;
+  margin:12px auto 16px;
+  background:#d1e7dd;
+  color:#0f5132;
+  border:1px solid #badbcc;
+  border-radius:12px;
+  width:min(96vw, calc(var(--card-w) + 96px)); /* bigger than before */
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.complete-banner h3{ margin:0 0 6px; font-size:1.2rem; }
+.banner-emoji{ margin:4px 0 8px; font-size:1.25rem; letter-spacing:2px; }
+.banner-score{ margin:6px 0 10px; font-weight:900; font-size:clamp(1.4rem,5.8vw,2.1rem); }
+.banner-bonus{ margin:-4px 0 10px; font-weight:800; }
+
+.possible-answers{
+  margin-top:6px;
+  padding:6px;
+  background:#eee;
+  border-radius:6px;
+}
+.possible-answers-list{
+  list-style:none;
+  padding-left:0;
+  margin-top:4px;
+  font-size:.9rem
+}
+.possible-answers-list li{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px
+}
+.answer-pos{ color:#8a8f98; font-size:.9em }
+
+/* Points marker already present; ensure fill is percentage-based for 60 max */
+.points-bar-fill{ height:100%; width:var(--fill,100%); background:#2e6bff; transition:width 1s linear }
+.points-bar-marker {
+  position:absolute; left:50%; top:-1px; bottom:-1px; width:2px;
+  background:#F59E0B; opacity:.85; border-radius:1px; pointer-events:none;
+}
+
+/* Keep existing mobile scaling/active-card behavior from your current sheet */
