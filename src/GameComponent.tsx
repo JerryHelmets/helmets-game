@@ -784,18 +784,19 @@ www.helmets-game.com`;
                           </div>
 
                           <div className="hint-row">
-                            {hintShown[idx] ? (
-                              <span className="hint-chip">{hintPos || '—'}</span>  {/* no 'Hint:' label */}
-                            ) : (
-                              <button
-                                type="button"
-                                className="hint-button"
-                                onClick={() => revealHint(idx)}
-                              >
-                                Hint
-                              </button>
-                            )}
-                          </div>
+  {hintShown[idx] ? (
+    <span className="hint-chip">{hintPos || '—'}</span>
+  ) : (
+    <button
+      type="button"
+      className="hint-button"
+      onClick={() => revealHint(idx)}
+    >
+      Hint
+    </button>
+  )}
+</div>
+
                         </>
                       )}
 
