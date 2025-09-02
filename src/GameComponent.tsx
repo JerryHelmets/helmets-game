@@ -332,20 +332,45 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [gameOver, score]);
 
-  /* completion → confetti (fewer blasts, lower, almost straight up) */
+  /* completion → confetti (strong left/right inward blasts) */
 useEffect(() => {
   if (gameOver && !confettiFired) {
-    const blast = (angle: number, x: number) =>
-      confetti({
-        particleCount: 420,
-        spread: 50,
-        startVelocity: 58,
-        angle,                    // ~straight up with slight tilt
-        origin: { x, y: 0.75 }    // lower on the screen
-      });
+    const sideBlast = (side: 'left' | 'right', delay = 0) => {
+      const fromLeft = side === 'left';
+      const x = fromLeft ? 0.08 : 0.92;   // near screen edges
+      const angle = fromLeft ? 60 : 120;  // aim inward toward center
+      const drift = fromLeft ? 1.2 : -1.2;
 
-    setTimeout(() => blast(85, 0.46), 140);  // slight left tilt
-    setTimeout(() => blast(95, 0.54), 340);  // slight right tilt
+      setTimeout(() => {
+        // main volley (potent)
+        confetti({
+          particleCount: 850,
+          spread: 55,
+          startVelocity: 72,
+          angle,
+          origin: { x, y: 0.78 },
+          drift,
+          scalar: 1
+        });
+        // quick follow-up for fullness
+        confetti({
+          particleCount: 520,
+          spread: 70,
+          startVelocity: 58,
+          angle,
+          origin: { x, y: 0.80 },
+          drift: drift * 1.1,
+          scalar: 0.9
+        });
+      }, delay);
+    };
+
+    // staggered left/right volleys
+    sideBlast('left', 120);
+    sideBlast('right', 260);
+    sideBlast('left', 420);
+    sideBlast('right', 560);
+
     setConfettiFired(true);
   }
 }, [gameOver, confettiFired]);
