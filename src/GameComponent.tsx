@@ -1020,9 +1020,10 @@ www.helmets-game.com`;
 
             <ul className="rules-list football-bullets rules-main">
               <li><strong>Match each helmet path to an NFL player</strong></li>
-              <li><strong>5 levels: each gets more difficult and is worth more points</strong></li>
+              <li><strong>5 levels: each gets more difficult</strong></li>
               <li><strong>Only one guess per level</strong></li>
-              <li><strong>The faster you answer, the more points you get!</strong></li>
+              <li><strong>Answer faster for more points!</strong></li>
+              <li><strong>Hint at 30 seconds, can skip to hint</strong></li>
               <li><strong>You get 0 points if you give up a level</strong></li>
             </ul>
 
@@ -1030,9 +1031,9 @@ www.helmets-game.com`;
             <ul className="rules-list football-bullets rules-fineprint">
               <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
               <li>100 bonus points if you get all 5 levels correct</li>
+              <li>Some paths may have multiple possible answers</li>
               <li>Player must have played in the year 2000 or later</li>
               <li>College helmet is the player's draft college</li>
-              <li>Some paths may have multiple possible answers</li>
             </ul>
 
             {!started && !gameOver && (
