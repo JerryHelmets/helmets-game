@@ -785,3 +785,28 @@ input, select, textarea { font-size: 16px; }
 .path-block{ margin-bottom:6px; }      /* was 12px */
 
 /* Status row visuals unchanged; colon added in TSX already */
+
+/* History calendar states for numbered games */
+.calendar-grid-button.played-release{
+  background:#3b3b3b;
+  color:#fff;
+  border-color:#555;
+}
+.calendar-grid-button.played-replayed{
+  background:#5a5340;      /* dark yellow/gray */
+  color:#fff;
+  border-color:#a5903a;
+  position:relative;
+}
+.calendar-grid-button.played-replayed::after{
+  content:"*";
+  position:absolute;
+  top:2px; right:4px;
+  font-size:10px;
+  opacity:0.9;
+}
+.calendar-note{
+  margin-top:6px;
+  font-size:10px;
+  color:#9aa3af;
+}
