@@ -332,17 +332,24 @@ const GameComponent: React.FC = () => {
     raf=requestAnimationFrame(step); return ()=> cancelAnimationFrame(raf);
   }, [gameOver, score]);
 
-  /* completion → confetti (extra bursts) */
-  useEffect(() => {
-    if (gameOver && !confettiFired) {
-      const burst = (count:number, o:{x:number,y:number}) =>
-        confetti({ particleCount: count, spread: 170, startVelocity: 60, origin: o });
-      burst(1600, { y: 0.5, x: 0.5 });
-      setTimeout(()=> burst(900, { y: 0.4, x: 0.2 }), 180);
-      setTimeout(()=> burst(900, { y: 0.45, x: 0.8 }), 360);
-      setConfettiFired(true);
-    }
-  }, [gameOver, confettiFired]);
+  /* completion → confetti (fewer blasts, lower, almost straight up) */
+useEffect(() => {
+  if (gameOver && !confettiFired) {
+    const blast = (angle: number, x: number) =>
+      confetti({
+        particleCount: 420,
+        spread: 50,
+        startVelocity: 58,
+        angle,                    // ~straight up with slight tilt
+        origin: { x, y: 0.75 }    // lower on the screen
+      });
+
+    setTimeout(() => blast(85, 0.46), 140);  // slight left tilt
+    setTimeout(() => blast(95, 0.54), 340);  // slight right tilt
+    setConfettiFired(true);
+  }
+}, [gameOver, confettiFired]);
+
 
   /* ---- LIVE COMMUNITY % ---- */
   const refreshCommunity = async () => {
@@ -652,7 +659,7 @@ www.helmets-game.com`;
         {gameOver && (
           <div className="top-status-row">
             <div className="nextgame-wrap">
-              <div className="nextgame-label">Next Game</div>
+              <div className="nextgame-label">Next Game:</div>
               <div className="nextgame-time">{formatHMS(nextSecs)}</div>
             </div>
             <button className="prev-games-link" onClick={() => setShowHistory(true)}>Previous Games</button>
@@ -660,18 +667,18 @@ www.helmets-game.com`;
         )}
       </header>
 
-      {/* TOP Game Complete banner (dark blue + gold) */}
-      {gameOver && (
-        <div className="complete-banner complete-banner--top">
-          {gotPerfect && <p className="banner-bonus">+100! (5/5)</p>}
-          <h3>🎯 Game Complete</h3>
-          <EmojiSummary />
-          <BannerScoreLine />
-          <div className="banner-share-wrap">
-            <button className="banner-share-button" onClick={shareNow}>Share Score!</button>
-          </div>
-        </div>
-      )}
+      {/* TOP Game Complete banner */}
+{gameOver && (
+  <div className="complete-banner complete-banner--top">
+    <h3>🎯 Game Complete</h3>
+    <EmojiSummary />
+    <BannerScoreLine />
+    {gotPerfect && <p className="banner-bonus">+100! (5/5)</p>}
+    <div className="banner-share-wrap">
+      <button className="banner-share-button" onClick={shareNow}>Share Score!</button>
+    </div>
+  </div>
+)}
 
       {duringActive && <div className="level-backdrop" aria-hidden="true" />}
 
@@ -849,16 +856,17 @@ www.helmets-game.com`;
       })}
 
       {/* BOTTOM Game Complete banner */}
-      {gameOver && (
-        <div className="complete-banner complete-banner--bottom">
-          {gotPerfect && <p className="banner-bonus">+100! (5/5)</p>}
-          <EmojiSummary />
-          <BannerScoreLine />
-          <div className="banner-share-wrap">
-            <button className="banner-share-button" onClick={shareNow}>Share Score!</button>
-          </div>
-        </div>
-      )}
+{gameOver && (
+  <div className="complete-banner complete-banner--bottom">
+    <div className="banner-share-wrap" style={{ marginBottom: 6 }}>
+      <button className="banner-share-button" onClick={shareNow}>Share Score!</button>
+    </div>
+    <EmojiSummary />
+    <BannerScoreLine />
+    {gotPerfect && <p className="banner-bonus">+100! (5/5)</p>}
+  </div>
+)}
+
 
       {/* History modal */}
       {showHistory && (
@@ -929,12 +937,13 @@ www.helmets-game.com`;
 
             <h4 className="fine-print-title">Fine Print:</h4>
             <ul className="rules-list football-bullets rules-fineprint">
-              <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
-              <li>Player must have played in the year 2000 or later</li>
-              <li>College helmet is the player's draft college</li>
-              <li>Some paths may have multiple possible answers</li>
-              <li><strong>100 bonus points if you get all 5 levels correct</strong></li>
-            </ul>
+  <li>Each level has a points multiplier (Level 1 = 1x points, Level 5 = 5x points)</li>
+  <li>100 bonus points if you get all 5 levels correct</li>
+  <li>Player must have played in the year 2000 or later</li>
+  <li>College helmet is the player's draft college</li>
+  <li>Some paths may have multiple possible answers</li>
+</ul>
+
 
             {!started && !gameOver && (
               <button onClick={handleStartGame} className="primary-button" style={{ marginTop: 12 }}>
