@@ -760,8 +760,8 @@ input, select, textarea { font-size: 16px; }
 .complete-banner{
   text-align:center;
   padding:12px 12px;
-  margin:6px auto 8px;                 /* tighter spacing */
-  background:#252405;                   /* more black/yellow */
+  margin:4px auto 6px;                 /* tighter spacing */
+  background:#444539;                   /* more black/yellow */
   color:#E5E7EB;
   border:1.5px solid #D4AF37;           /* gold */
   border-radius:12px;
@@ -782,6 +782,6 @@ input, select, textarea { font-size: 16px; }
 .banner-share-button:hover{ filter:brightness(1.06); }
 
 /* Slightly tighten spacing around cards too */
-.path-block{ margin-bottom:8px; }      /* was 12px */
+.path-block{ margin-bottom:6px; }      /* was 12px */
 
 /* Status row visuals unchanged; colon added in TSX already */
