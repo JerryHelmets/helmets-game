@@ -447,41 +447,32 @@ const GameComponent: React.FC = () => {
     }
   }, [gameOver, confettiFired]);
 
-  /* ---- LIVE COMMUNITY % ---- */
+  /* ---- LIVE COMMUNITY % (force fresh on refresh + at game end) ---- */
   const refreshCommunity = async () => {
     try {
-      const res = await fetch(`/api/stats?date=${gameDate}`, { cache: 'no-store' });
+      const res = await fetch(`/api/stats?date=${gameDate}&_=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data?.levels)) {
-        setCommunityPct(data.levels.map((v: number) => Math.max(0, Math.min(100, Math.round(v)))));
+        setCommunityPct(
+          data.levels.map((v: number) => Math.max(0, Math.min(100, Math.round(v))))
+        );
       }
     } catch {/* ignore */}
   };
+
+  // Fetch fresh on load/refresh for this date
   useEffect(() => {
     if (!dailyPaths.length) return;
-    const computeLocal = () => {
-      const totals = new Array(dailyPaths.length).fill(0);
-      const rights = new Array(dailyPaths.length).fill(0);
-      const history = JSON.parse(localStorage.getItem(LS_HISTORY) || '{}');
-      Object.values(history).forEach((rec: any) => {
-        if (!rec?.guesses || !Array.isArray(rec.guesses)) return;
-        if (rec.guesses.length !== dailyPaths.length) return;
-        rec.guesses.forEach((g: Guess | null, i: number) => {
-          if (g) { totals[i] += 1; if (g.correct) rights[i] += 1; }
-        });
-      });
-      const pct = totals.map((t, i) => (t ? Math.round((rights[i] / t) * 100) : 50));
-      setCommunityPct(pct);
-    };
-    (async () => {
-      try {
-        await refreshCommunity();
-        if (!communityPct.length) computeLocal();
-      } catch { computeLocal(); }
-    })();
+    refreshCommunity();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dailyPaths.length, gameDate]);
+  }, [gameDate, dailyPaths.length]);
+
+  // Also fetch fresh right when the game ends
+  useEffect(() => {
+    if (gameOver) refreshCommunity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameOver]);
 
   // Preload helmets
   const sanitizeImageName = (name: string) => name.trim().replace(/\s+/g, '_');
@@ -949,8 +940,8 @@ www.helmets-game.com`;
               {gameOver && (
                 <div className="community-wrap">
                   <div className="community-row">
-                    <span>Users Correct</span>
-                    <span>{(communityPct[idx] ?? 0)}%</span>
+                    <strong>Users Correct</strong>
+                    <strong>{(communityPct[idx] ?? 0)}%</strong>
                   </div>
                   <div className="community-bar">
                     <div className="community-bar-fill" style={{ ['--pct' as any]: `${communityPct[idx] ?? 0}` }} />
