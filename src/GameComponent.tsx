@@ -153,9 +153,16 @@ const GameComponent: React.FC = () => {
   const gameDateHeader = isoToMDYYYY(gameDate);
   const gameDateMMDDYY = isoToMDYY(gameDate);
 
-  // NEW: game numbering baseline + current game number
-  const game0 = useMemo(() => getOrInitGame0(todayPT), [todayPT]);
-  const gameNumber = useMemo(() => gameNumberFor(gameDate, game0), [gameDate, game0]);
+  // NEW: server daily payload (from /api/daily)
+  const [serverBaseISO, setServerBaseISO] = useState<string | null>(null);
+  const [serverKeys, setServerKeys] = useState<string[] | null>(null);
+  const [serverGameNumber, setServerGameNumber] = useState<number | null>(null);
+
+  // Game numbering baseline + current game number
+  const localGame0 = useMemo(() => getOrInitGame0(todayPT), [todayPT]);
+  const localGameNumber = useMemo(() => gameNumberFor(gameDate, localGame0), [gameDate, localGame0]);
+  const game0 = serverBaseISO ?? localGame0;
+  const gameNumber = serverGameNumber ?? localGameNumber;
 
   const [players, setPlayers] = useState<PlayerPath[]>([]);
   const [guesses, setGuesses] = useState<(Guess | null)[]>([]);
@@ -222,7 +229,36 @@ const GameComponent: React.FC = () => {
     return () => { document.documentElement.style.overflow=oh; document.body.style.overflow=ob; };
   }, [started, gameOver, showRules, showHistory, showFeedback]);
 
-  /* load players */
+
+  /* NEW: fetch baseline + locked keys from server for this date */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/daily?date=${gameDate}`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('daily API not ok');
+        const data = await res.json();
+        if (cancelled) return;
+        setServerBaseISO(data?.baseISO ?? null);
+        setServerGameNumber(typeof data?.gameNumber === 'number' ? data.gameNumber : null);
+        setServerKeys(Array.isArray(data?.keys) ? data.keys : null);
+      } catch (e) {
+        setServerBaseISO(null);
+        setServerGameNumber(null);
+        setServerKeys(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [gameDate]);
+
+  
+  // Sync server keys into local lock (offline fallback)
+  useEffect(() => {
+    if (serverKeys && serverKeys.length) {
+      try { setLockedKeys(gameDate, serverKeys); } catch {}
+    }
+  }, [serverKeys, gameDate]);
+/* load players */
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -249,21 +285,25 @@ const GameComponent: React.FC = () => {
   // ---------- NEW: build today's dailyPaths with per-day lock ----------
   const dailyPaths = useMemo(() => {
     if (!players.length) return [];
-    // If we already locked this date, rebuild from keys
+    // 1) Prefer server-locked keys
+    if (serverKeys && serverKeys.length) {
+      const built = buildFromKeys(players, serverKeys);
+      if (built.length) return built;
+    }
+    // 2) Fallback: local locked keys
     const locked = getLockedKeys(gameDate);
     if (locked && locked.length) {
       const built = buildFromKeys(players, locked);
       if (built.length) return built;
     }
-    // Else pick deterministically
+    // 3) Deterministic local pick and (for released days) save local lock
     const picked = pickDailyPaths(players, gameDate);
-    // Lock only for released days (<= today)
     if (gameDate <= todayPT) {
       const keys = picked.map(p => p.path.join('>'));
       setLockedKeys(gameDate, keys);
     }
     return picked;
-  }, [players, gameDate, todayPT]);
+  }, [players, gameDate, todayPT, serverKeys]);
 
   const answerLists = useMemo(() => buildAnswerLists(players, dailyPaths), [players, dailyPaths]);
 
