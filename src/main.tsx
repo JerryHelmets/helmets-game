@@ -14,9 +14,7 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
-      
       {/* Vercel Web Analytics */}
-      
       <Analytics />
     </BrowserRouter>
   </React.StrictMode>
