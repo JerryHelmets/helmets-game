@@ -161,7 +161,7 @@ const GameComponent: React.FC = () => {
   // Game numbering baseline + current game number
   const localGame0 = useMemo(() => getOrInitGame0(todayPT), [todayPT]);
   const localGameNumber = useMemo(() => gameNumberFor(gameDate, localGame0), [gameDate, localGame0]);
-  const game0 = serverBaseISO ?? localGame0;
+  const game0 = React.useMemo(() => serverBaseISO ?? localGame0, [serverBaseISO, localGame0]);
   const gameNumber = serverGameNumber ?? localGameNumber;
 
   const [players, setPlayers] = useState<PlayerPath[]>([]);
