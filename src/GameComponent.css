@@ -788,14 +788,14 @@ input, select, textarea { font-size: 16px; }
 
 /* History states */
 .calendar-grid-button.played-release {
-  background: #3b3b3b;  /* dark gray for played on release day */
+  background: #b5a409;  /* Gold for played on release day */
   color: #fff;
   border-color: #555;
 }
 
 /* lighter gray for REPLAYED games (class name matches TSX: played-replay) */
 .calendar-grid-button.played-replay {
-  background: #e5e7eb;      /* light gray */
+  background: #b8babf;      /* light gray */
   color: #374151;           /* slate-700 */
   border-color: #d1d5db;    /* gray-300 */
 }
