@@ -788,7 +788,7 @@ input, select, textarea { font-size: 16px; }
 
 /* History states */
 .calendar-grid-button.played-release {
-  background: #b5a409;  /* Gold for played on release day */
+  background: #340a78;  /* Dark Blue/Purp for played on release day */
   color: #fff;
   border-color: #555;
 }
