@@ -786,18 +786,20 @@ input, select, textarea { font-size: 16px; }
 
 /* Status row visuals unchanged; colon added in TSX already */
 
-/* History calendar states for numbered games */
-.calendar-grid-button.played-release{
-  background:#3b3b3b;
-  color:#fff;
-  border-color:#555;
+/* History states */
+.calendar-grid-button.played-release {
+  background: #3b3b3b;  /* dark gray for played on release day */
+  color: #fff;
+  border-color: #555;
 }
-.calendar-grid-button.played-replayed{
-  background:#5a5340;      /* dark yellow/gray */
-  color:#fff;
-  border-color:#a5903a;
-  position:relative;
+
+/* lighter gray for REPLAYED games (class name matches TSX: played-replay) */
+.calendar-grid-button.played-replay {
+  background: #e5e7eb;      /* light gray */
+  color: #374151;           /* slate-700 */
+  border-color: #d1d5db;    /* gray-300 */
 }
+
 .calendar-grid-button.played-replayed::after{
   content:"*";
   position:absolute;
