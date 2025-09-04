@@ -812,3 +812,18 @@ input, select, textarea { font-size: 16px; }
   font-size:10px;
   color:#9aa3af;
 }
+/* Dropdown: show only 3 rows at a time, but allow scrolling */
+:root {
+  --suggest-item-h: 38px; /* approx row height; adjust to taste */
+}
+.suggestion-box {
+  max-height: calc(3 * var(--suggest-item-h));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* smooth on iOS */
+}
+
+.suggestion-item {
+  min-height: var(--suggest-item-h);
+  display: flex;
+  align-items: center;
+}
