@@ -876,7 +876,7 @@ www.helmets-game.com`;
 
                       {inputEnabled && filteredSuggestions[idx]?.length > 0 && (
                         <div className="suggestion-box fade-in-fast">
-                          {filteredSuggestions[idx].slice(0, 3).map((name, i) => {
+                          {filteredSuggestions[idx].map((name, i) => {
                             const typed = inputRefs.current[idx]?.value || '';
                             const match = name.toLowerCase().indexOf(typed.toLowerCase());
                             return (
