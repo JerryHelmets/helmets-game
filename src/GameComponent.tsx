@@ -52,6 +52,17 @@ function toDayIndex(iso: string) {
   return Math.floor(t / 86400000);
 }
 function diffDays(aISO: string, bISO: string) { return toDayIndex(aISO) - toDayIndex(bISO); }
+/* Shift an ISO date string by whole days using UTC math (avoids PT double-shift) */
+function shiftISO(iso: string, deltaDays: number) {
+  const [y, m, d] = iso.split('-').map(x => parseInt(x, 10));
+  const dt = new Date(Date.UTC(y, (m - 1), d));
+  dt.setUTCDate(dt.getUTCDate() + deltaDays);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
 
 /* ---------- Game # baseline helpers ---------- */
 function getOrInitGame0(todayISO: string) {
@@ -739,9 +750,7 @@ www.helmets-game.com`;
     let d = todayPT;
     for (let i = 0; i < 60; i++) { // generous cap; we’ll slice below
       if (d >= game0) out.push(d);
-      const tmp = new Date(d);
-      tmp.setDate(tmp.getDate() - 1);
-      d = toPTISO(tmp);
+      d = shiftISO(d, -1);
       if (d < game0) break;
     }
     return out.slice(0, 30);
