@@ -1023,7 +1023,7 @@ www.helmets-game.com`;
         <div className="popup-modal">
           <div className="popup-content">
             <button className="close-button" onClick={() => setShowFeedback(false)}>✖</button>
-            <h3>Thoughts for Jerry?</h3>
+            <h3>Thoughts for the game?</h3>
             <div className="email-row">
               <span className="email-emoji">📧</span>
               <span className="email-text">jerry.helmetsgame@gmail.com</span>
