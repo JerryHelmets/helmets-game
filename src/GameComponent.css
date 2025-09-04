@@ -827,3 +827,36 @@ input, select, textarea { font-size: 16px; }
   display: flex;
   align-items: center;
 }
+/* === Suggestion dropdown: exactly 3 visible rows with scrolling === */
+:root {
+  --suggest-row: 44px; /* total height per row (including padding) */
+}
+
+.suggestion-box {
+  max-height: calc(3 * var(--suggest-row));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* optional: keeps layout from shifting when scrollbar appears */
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Force each item to the fixed row height */
+.suggestion-item {
+  height: var(--suggest-row);
+  padding: 0 10px;               /* remove vertical padding so height stays exact */
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Keep name truncation/styles as before */
+.suggestion-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion-pos {
+  margin-left: auto;
+}
