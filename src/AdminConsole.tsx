@@ -1,200 +1,250 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from 'react';
 
-/* PT date helper */
-function getPTISO(d = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(d);
-  const y = parts.find((p) => p.type === "year")!.value;
-  const m = parts.find((p) => p.type === "month")!.value;
-  const dd = parts.find((p) => p.type === "day")!.value;
-  return `${y}-${m}-${dd}`;
+/** ---------- PT helpers (mirror your game’s behavior) ---------- */
+function getPTDateParts(date: Date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const y = parts.find((p) => p.type === 'year')!.value;
+  const m = parts.find((p) => p.type === 'month')!.value;
+  const d = parts.find((p) => p.type === 'day')!.value;
+  return { y, m, d };
 }
+function toPTISO(date = new Date()) {
+  const { y, m, d } = getPTDateParts(date);
+  return `${y}-${m}-${d}`;
+}
+const todayPTISO = () => toPTISO(new Date());
 
-type Mode = "csv" | "keys" | "names";
+/** ---------- tiny helpers ---------- */
+const sanitizePart = (s: string) =>
+  s
+    .replace(/^"+|"+$/g, '')     // strip stray quotes
+    .replace(/\s+/g, ' ')        // collapse spaces
+    .trim();
 
-const LS_ADMIN_TOKEN = "helmets-admin-token";
+const parseLinesToKeys = (raw: string): { keys: string[]; pretty: string[][] } => {
+  const lines = raw
+    .split(/\r?\n/)
+    .map((ln) => ln.trim())
+    .filter(Boolean);
+
+  const pretty: string[][] = [];
+  const keys: string[] = [];
+
+  for (const ln of lines) {
+    const parts = ln.split(',').map(sanitizePart).filter(Boolean);
+    if (!parts.length) continue;
+    pretty.push(parts);
+    keys.push(parts.join('>')); // this matches how daily keys are built in your API
+  }
+  return { keys, pretty };
+};
+
+const LinePreview: React.FC<{ parts: string[] }> = ({ parts }) => {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 14 }}>
+      {parts.map((p, i) => (
+        <React.Fragment key={`${p}-${i}`}>
+          <span>{p}</span>
+          {i < parts.length - 1 && <span style={{ opacity: 0.7 }}>→</span>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
 const AdminConsole: React.FC = () => {
-  const [token, setToken] = React.useState<string>(() => localStorage.getItem(LS_ADMIN_TOKEN) || "");
-  const [dateISO, setDateISO] = React.useState(getPTISO());
-  const [mode, setMode] = React.useState<Mode>("csv");
+  /** ---------- gate with token first ---------- */
+  const [token, setToken] = useState<string>('');
+  const [authed, setAuthed] = useState<boolean>(false);
 
-  const [keysText, setKeysText] = React.useState("");
-  const [namesText, setNamesText] = React.useState("");
+  useEffect(() => {
+    const t = sessionStorage.getItem('adminToken') || '';
+    if (t) {
+      setToken(t);
+      setAuthed(true);
+    }
+  }, []);
 
-  const [busy, setBusy] = React.useState(false);
-  const [result, setResult] = React.useState<any>(null);
-  const [preview, setPreview] = React.useState<any>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token.trim()) return;
+    // UI gate; the API will still verify the token on submit.
+    sessionStorage.setItem('adminToken', token.trim());
+    setAuthed(true);
+  };
 
-  React.useEffect(() => {
-    localStorage.setItem(LS_ADMIN_TOKEN, token || "");
-  }, [token]);
+  /** ---------- form state ---------- */
+  const [dateISO, setDateISO] = useState<string>(todayPTISO());
+  const [pathsText, setPathsText] = useState<string>('');
+  const [confirmToken, setConfirmToken] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
-  function parseFiveLines(raw: string) {
-    return raw
-      .split(/\r?\n/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
+  const { keys, pretty } = useMemo(() => parseLinesToKeys(pathsText), [pathsText]);
 
-  async function runAction() {
-    setError(null);
+  const canSubmit =
+    authed &&
+    !submitting &&
+    token.trim().length > 0 &&
+    confirmToken.trim().length > 0 &&
+    token.trim() === confirmToken.trim() &&
+    dateISO &&
+    keys.length > 0;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
     setResult(null);
-    if (!token) {
-      setError("Enter ADMIN_TOKEN.");
-      return;
-    }
     try {
-      setBusy(true);
-      let body: any = { date: dateISO };
-
-      if (mode === "csv") {
-        body.fromCsv = true;
-      } else if (mode === "keys") {
-        const arr = parseFiveLines(keysText);
-        if (arr.length !== 5) throw new Error("Provide exactly 5 path keys (one per line).");
-        body.keys = arr;
-      } else {
-        const arr = parseFiveLines(namesText);
-        if (arr.length !== 5) throw new Error("Provide exactly 5 player names (one per line).");
-        body.names = arr;
-      }
-
-      const res = await fetch("/api/admin/set-game", {
-        method: "POST",
+      const res = await fetch('/api/admin/set-game', {
+        method: 'POST',
         headers: {
-          authorization: `Bearer ${token}`,
-          "content-type": "application/json",
+          'content-type': 'application/json',
+          'authorization': `Bearer ${token.trim()}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ dateISO, keys }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Request failed");
-      setResult(json);
-    } catch (e: any) {
-      setError(e.message || "Error");
+      if (!res.ok) {
+        const text = await res.text();
+        setResult({ ok: false, msg: text || `HTTP ${res.status}` });
+      } else {
+        setResult({ ok: true, msg: '✅ Override saved. This date is now locked to the supplied paths.' });
+        setConfirmToken('');
+      }
+    } catch (err: any) {
+      setResult({ ok: false, msg: String(err?.message || err) });
     } finally {
-      setBusy(false);
+      setSubmitting(false);
     }
-  }
+  };
 
-  async function previewDaily() {
-    setPreview(null);
-    try {
-      const url = `/api/daily?date=${dateISO}&_=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store" });
-      const json = await res.json();
-      setPreview(json);
-    } catch (e) {
-      setPreview({ error: "failed to load /api/daily" });
-    }
-  }
-
-  
+  /** ---------- UI ---------- */
   return (
-    <div style={{ maxWidth: 720, margin: "24px auto", padding: "12px" }}>
-      <h2 style={{ marginBottom: 8 }}>Admin Console — Helmets</h2>
-      <p style={{ marginTop: 0 }}>
-        Use this to <strong>re-pick</strong> from current <code>players.csv</code> or to <strong>override</strong> a day’s 5 paths.
-      </p>
-
-      <div style={{ margin: "12px 0 8px" }}>
-        <label style={{ display: "block", fontWeight: 700, marginBottom: 4 }}>Admin Token</label>
-        <input
-          type="password"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="ADMIN_TOKEN"
-          className="guess-input-field"
-          style={{ width: "100%", maxWidth: 360 }}
-        />
-      </div>
-
-      <div style={{ margin: "12px 0 8px" }}>
-        <label style={{ display: "block", fontWeight: 700, marginBottom: 4 }}>Date (PT)</label>
-        <input
-          type="date"
-          value={dateISO}
-          onChange={(e) => setDateISO(e.target.value)}
-          className="guess-input-field"
-          style={{ width: 200 }}
-        />
-      </div>
-
-      <div style={{ margin: "12px 0 8px" }}>
-        <label style={{ display: "block", fontWeight: 700, marginBottom: 8 }}>Mode</label>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <label><input type="radio" name="mode" checked={mode === "csv"} onChange={() => setMode("csv")} /> From CSV</label>
-          <label><input type="radio" name="mode" checked={mode === "keys"} onChange={() => setMode("keys")} /> Set 5 Path Keys</label>
-          <label><input type="radio" name="mode" checked={mode === "names"} onChange={() => setMode("names")} /> Set 5 Player Names</label>
-        </div>
-      </div>
-
-      {mode === "keys" && (
-        <div style={{ margin: "8px 0" }}>
-          <label style={{ display: "block", fontWeight: 700, marginBottom: 4 }}>5 Path Keys (one per line)</label>
-          <textarea
-            value={keysText}
-            onChange={(e) => setKeysText(e.target.value)}
-            rows={6}
-            placeholder={`Example:\nPittsburgh Steelers>Las Vegas Raiders\nChicago Bears>Cleveland Browns\nIndianapolis Colts>New York Jets\nSeattle Seahawks>Green Bay Packers\nAlabama Crimson Tide>Buffalo Bills`}
-            className="guess-input-field"
-            style={{ width: "100%", maxWidth: 660, fontFamily: "monospace" }}
+    <div style={{
+      maxWidth: 760,
+      margin: '40px auto',
+      padding: '16px',
+      fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+      color: '#111',
+    }}>
+      <h1 style={{ margin: '0 0 8px', textAlign: 'center' }}>HELMETS — Admin</h1>
+      {!authed ? (
+        <form onSubmit={handleLogin}
+              style={{ margin: '16px auto', maxWidth: 420, background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+          <h3 style={{ marginTop: 0 }}>Enter Admin Token</h3>
+          <p style={{ marginTop: 0, opacity: .8 }}>Access is gated. Token is not stored server-side; UI unlocks and API still verifies on save.</p>
+          <input
+            type="password"
+            placeholder="Admin token"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #ccc' }}
           />
-        </div>
+          <button type="submit"
+                  style={{ marginTop: 12, padding: '10px 16px', borderRadius: 10, border: 'none', background: '#2e6bff', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+            Unlock
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleSubmit}
+              style={{ margin: '16px auto', background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,.12)' }}>
+          <h3 style={{ marginTop: 0 }}>Override a Day’s Game</h3>
+
+          <div style={{ display: 'grid', gap: 10 }}>
+            <label>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>Date (PT):</div>
+              <input
+                type="date"
+                value={dateISO}
+                onChange={(e) => setDateISO(e.target.value)}
+                style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid #ccc' }}
+              />
+            </label>
+
+            <label>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>Paths (one per line, helmets separated by commas)</div>
+              <textarea
+                value={pathsText}
+                onChange={(e) => setPathsText(e.target.value)}
+                rows={8}
+                placeholder={`Example (5 lines for 5 levels):\nGeorgia Bulldogs, Detroit Lions, Los Angeles Rams\nLSU Tigers, New York Giants\n...`}
+                style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ccc', fontFamily: 'inherit' }}
+              />
+              <div style={{ marginTop: 6, fontSize: 12, opacity: .8 }}>
+                We’ll convert each line into a path key by joining with <code>&gt;</code> (this matches the API). Lines with no text are ignored.
+              </div>
+            </label>
+
+            {/* Live preview */}
+            {pretty.length > 0 && (
+              <div style={{ background: '#f7faff', border: '1px solid #cfe0ff', padding: 12, borderRadius: 10 }}>
+                <div style={{ fontWeight: 700, marginBottom: 6 }}>Preview ({pretty.length} line{pretty.length === 1 ? '' : 's'})</div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {pretty.map((parts, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontWeight: 700, minWidth: 56 }}>Level {i + 1}</span>
+                      <LinePreview parts={parts} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <label>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>Confirm Admin Token</div>
+              <input
+                type="password"
+                placeholder="Re-enter admin token to confirm"
+                value={confirmToken}
+                onChange={(e) => setConfirmToken(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #ccc' }}
+              />
+            </label>
+
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 10,
+                  border: 'none',
+                  background: canSubmit ? '#2e6bff' : '#a7b8ff',
+                  color: '#fff',
+                  fontWeight: 800,
+                  cursor: canSubmit ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {submitting ? 'Saving…' : 'Save Override'}
+              </button>
+              <div style={{ fontSize: 12, opacity: .8 }}>
+                Sending {keys.length} key{keys.length === 1 ? '' : 's'} to <code>/api/admin/set-game</code>
+              </div>
+            </div>
+
+            {result && (
+              <div style={{
+                marginTop: 6,
+                padding: 10,
+                borderRadius: 10,
+                background: result.ok ? '#e6ffe6' : '#ffe6e6',
+                border: `1px solid ${result.ok ? '#28a745' : '#dc3545'}`
+              }}>
+                {result.msg}
+              </div>
+            )}
+          </div>
+        </form>
       )}
 
-      {mode === "names" && (
-        <div style={{ margin: "8px 0" }}>
-          <label style={{ display: "block", fontWeight: 700, marginBottom: 4 }}>5 Player Names (one per line)</label>
-          <textarea
-            value={namesText}
-            onChange={(e) => setNamesText(e.target.value)}
-            rows={6}
-            placeholder={`Example:\nTom Brady\nMarshawn Lynch\n...`}
-            className="guess-input-field"
-            style={{ width: "100%", maxWidth: 660, fontFamily: "monospace" }}
-          />
-        </div>
-      )}
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-        <button onClick={runAction} className="primary-button" disabled={busy}>
-          {busy ? "Working..." : mode === "csv" ? "Re-pick From CSV" : "Apply Override"}
-        </button>
-        <button onClick={previewDaily} className="secondary-button">
-          Preview /api/daily
-        </button>
+      <div style={{ marginTop: 20, textAlign: 'center', opacity: .7, fontSize: 12 }}>
+        Tip: Each line = one level. You can override fewer than 5 levels; missing ones will follow the normal daily generation.
       </div>
-
-      {error && (
-        <div style={{ marginTop: 12, color: "#b91c1c", fontWeight: 700 }}>
-          Error: {error}
-        </div>
-      )}
-
-      {result && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Result</div>
-          <pre style={{ background: "#f7f7f7", padding: 10, borderRadius: 8, overflow: "auto" }}>
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {preview && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Preview</div>
-          <pre style={{ background: "#f7f7f7", padding: 10, borderRadius: 8, overflow: "auto" }}>
-            {JSON.stringify(preview, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 };
