@@ -61,7 +61,6 @@ const AdminConsole: React.FC = () => {
     }
   }
 
-  // Re-validate any stored token on load
   useEffect(() => {
     (async () => {
       const saved = sessionStorage.getItem('adminToken') || '';
@@ -120,7 +119,8 @@ const AdminConsole: React.FC = () => {
           'content-type': 'application/json',
           'authorization': `Bearer ${token.trim()}`
         },
-        body: JSON.stringify({ dateISO, keys }),
+        // IMPORTANT: send "date" (not "dateISO")
+        body: JSON.stringify({ date: dateISO, keys }),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -136,7 +136,6 @@ const AdminConsole: React.FC = () => {
     }
   };
 
-  /* ---------- UI ---------- */
   return (
     <div style={{
       maxWidth: 760, margin: '40px auto', padding: '16px',
