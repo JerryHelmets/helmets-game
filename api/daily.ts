@@ -18,7 +18,6 @@ function toDayIndex(iso: string) {
   const [y,m,d] = iso.split('-').map(n=>parseInt(n,10));
   return Math.floor(Date.UTC(y,(m-1),d) / 86400000);
 }
-/** deterministic shuffle */
 function shuffle<T>(arr: T[], seed: number) {
   const a = arr.slice();
   let s = seed;
@@ -29,40 +28,47 @@ function shuffle<T>(arr: T[], seed: number) {
 
 type PlayerPath = { name: string; path: string[]; path_level: number; position?: string; difficulty?: number; };
 
+function sanitizeCell(s?: string) {
+  if (!s) return '';
+  return s.trim().replace(/^"+|"+$/g, '');
+}
+
 async function loadPlayers(): Promise<PlayerPath[]> {
-  // assumes players.csv is under /public/data/players.csv
   const csvPath = path.join(process.cwd(), 'public', 'data', 'players.csv');
   const text = await fs.readFile(csvPath, 'utf8');
-  // lightweight parse (no dependency on papaparse server-side)
   const lines = text.split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) return [];
+
   const header = lines.shift()!;
-  const cols = header.split(',').map(s=>s.trim().toLowerCase());
+  const cols = header.split(',').map(s => sanitizeCell(s).toLowerCase());
   const idx = (k:string)=> cols.indexOf(k);
-  const iName = idx('name'), iPath = idx('path'), iLevel = idx('path_level'), iPos = idx('position'), iDiff = idx('difficulty');
+  const iName = idx('name'), iPath = idx('path'), iLevel = idx('path_level');
+  const iPos = idx('position'), iDiff = idx('difficulty');
 
   const out: PlayerPath[] = [];
   for (const line of lines) {
-    const parts = line.split(','); // simple CSV (your file is simple/flat)
-    const name = parts[iName]?.trim();
-    const pathStr = parts[iPath]?.trim();
-    const lvl = parseInt(parts[iLevel] || '', 10);
+    const parts = line.split(',');
+    const name = sanitizeCell(parts[iName]);
+    const pathStr = sanitizeCell(parts[iPath]);
+    const lvl = parseInt(sanitizeCell(parts[iLevel]), 10);
     if (!name || !pathStr || !lvl || Number.isNaN(lvl)) continue;
-    out.push({
-      name,
-      path: pathStr.split(/\s*,\s*/),
-      path_level: lvl,
-      position: parts[iPos]?.trim() || undefined,
-      difficulty: parts[iDiff] ? Number(parts[iDiff]) : undefined
-    });
+    const position = sanitizeCell(parts[iPos]) || undefined;
+    const difficulty = parts[iDiff] ? Number(sanitizeCell(parts[iDiff])) : undefined;
+    const path = pathStr.split(/\s*,\s*/).map(s => sanitizeCell(s));
+    out.push({ name, path, path_level: lvl, position, difficulty });
   }
   return out;
+}
+
+function toPathKey(pathArr: string[]) {
+  return pathArr.map(s => s.trim()).join('>');
 }
 
 function pickForDate(players: PlayerPath[], dateISO: string) {
   const buckets: Record<number, Map<string, PlayerPath>> = {1:new Map(),2:new Map(),3:new Map(),4:new Map(),5:new Map()};
   players.forEach(p => {
     if (p.path_level>=1 && p.path_level<=5) {
-      const k = p.path.join('>');
+      const k = toPathKey(p.path);
       if (!buckets[p.path_level].has(k)) buckets[p.path_level].set(k, p);
     }
   });
@@ -86,9 +92,7 @@ const redis = new Redis({
 
 /**
  * GET /api/daily?date=YYYY-MM-DD
- * - ensures baseline at first call: baseISO = today's PT ISO
- * - ensures that date's keys are locked exactly once
- * - returns { baseISO, gameNumber, keys }
+ * Returns { baseISO, gameNumber, keys, source }
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -96,32 +100,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? req.query.date
       : getPTISO();
 
-    // 1) ensure baseline (first call after deploy)
+    // 1) ensure baseline
     const todayISO = getPTISO();
     let baseISO = await redis.get<string>('game:baseISO');
     if (!baseISO) {
-      // SETNX behavior
       const ok = await redis.set('game:baseISO', todayISO, { nx: true });
       baseISO = (ok === 'OK') ? todayISO : (await redis.get<string>('game:baseISO'))!;
     }
 
-    // 2) ensure locked keys for qDate
-    const dateKey = `game:${qDate}:keys`;
-    let keys = await redis.get<string[]>(dateKey);
+    const overrideKey = `game:${qDate}:keys:override`;
+    const lockKey = `game:${qDate}:keys`;
+
+    // 2) override wins
+    let keys = await redis.get<string[]>(overrideKey);
+    let source: 'override' | 'locked' | 'picked' = 'override';
+
     if (!Array.isArray(keys) || !keys.length) {
+      // 3) otherwise locked
+      keys = await redis.get<string[]>(lockKey);
+      source = 'locked';
+    }
+    if (!Array.isArray(keys) || !keys.length) {
+      // 4) otherwise pick+lock (first time)
       const players = await loadPlayers();
       const picked = pickForDate(players, qDate);
-      // lock with NX to avoid races
-      const ok = await redis.set(dateKey, picked, { nx: true });
-      keys = (ok === 'OK') ? picked : (await redis.get<string[]>(dateKey))!;
+      const ok = await redis.set(lockKey, picked, { nx: true });
+      keys = (ok === 'OK') ? picked : (await redis.get<string[]>(lockKey))!;
+      source = 'picked';
     }
 
-    const gameNumber =
-      qDate < baseISO ? null : (toDayIndex(qDate) - toDayIndex(baseISO) + 1);
+    const gameNumber = qDate < baseISO ? null : (toDayIndex(qDate) - toDayIndex(baseISO) + 1);
 
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ baseISO, gameNumber, dateISO: qDate, keys });
-  } catch (e: any) {
+    res.status(200).json({ baseISO, gameNumber, dateISO: qDate, keys, source });
+  } catch (e:any) {
     console.error('daily API error', e);
     res.status(200).json({ baseISO: null, gameNumber: null, keys: null });
   }
