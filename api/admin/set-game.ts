@@ -6,7 +6,7 @@ import path from 'node:path';
 
 /** ---------- Auth ---------- */
 function requireAdmin(req: VercelRequest) {
-  const hdr = req.headers['authorization'] || req.headers['Authorization'];
+  const hdr = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined;
   const got = typeof hdr === 'string' && hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
   const need = process.env.ADMIN_TOKEN;
   return !!need && got === need;
@@ -78,11 +78,11 @@ const redis = new Redis({
  * POST /api/admin/set-game
  * Headers: Authorization: Bearer <ADMIN_TOKEN>
  * Body JSON:
- *   { date?: "YYYY-MM-DD", fromCsv?: boolean, keys?: string[], names?: string[] }
+ *   { date?: "YYYY-MM-DD", dateISO?: "YYYY-MM-DD", fromCsv?: boolean, keys?: string[], names?: string[] }
  * - If fromCsv, recompute that date's 5 keys from current players.csv and store as override
  * - Else if keys supplied, use those (must be 5 strings)
  * - Else if names supplied, resolve to keys (must resolve to 5)
- * Stores at Redis key: game:<date>:keys:override
+ * Stores at Redis key: game:<dateISO>:keys:override
  * Returns { dateISO, keys }
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -94,8 +94,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const body = (typeof req.body === 'string') ? JSON.parse(req.body) : req.body || {};
-    let dateISO: string = body?.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : getPTISO();
+    const body = (typeof req.body === 'string') ? JSON.parse(req.body) : (req.body || {});
+    // ✅ Accept either "date" or "dateISO". If neither is provided/valid, default to today's PT date.
+    const bodyDate =
+      (typeof body?.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.date) && body.date) ||
+      (typeof body?.dateISO === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.dateISO) && body.dateISO) ||
+      null;
+
+    const dateISO: string = bodyDate || getPTISO();
 
     let outKeys: string[] | null = null;
 
@@ -143,7 +149,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const resolved = body.names.map((nm:string)=> findKeyByPlayerName(players, nm));
       if (resolved.some(k => !k)) {
         return res.status(400).json({ error: 'One or more names could not be resolved to a path key', resolved });
-      }
+        }
       outKeys = resolved as string[];
     } else {
       return res.status(400).json({ error: 'Provide one of: {fromCsv:true} OR {keys:[5]} OR {names:[5]}' });
